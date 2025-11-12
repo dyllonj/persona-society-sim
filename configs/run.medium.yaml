@@ -1,0 +1,19 @@
+run_id: "study100"
+model_name: "meta-llama/Llama-3-70b-instruct"
+population: 100
+steps: 500
+seed: 42
+layers: [8, 12, 16, 20, 24]
+steering:
+  E: 0.9
+  A: 0.7
+  C: 0.8
+  O: 0.5
+scenario: "project_market_mix"
+logging:
+  db_url: "postgresql+psycopg://persona:persona@localhost:5432/persona"
+  parquet_dir: "./storage/dumps/study100"
+safety:
+  alpha_clip: 1.25
+  toxicity_threshold: 0.35
+  governor_backoff: 0.15

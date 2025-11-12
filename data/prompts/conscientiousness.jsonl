@@ -1,0 +1,10 @@
+{"id":"C01","situation":"Task assigned with a two-day deadline.","positive":"I plan milestones, start early, and deliver on time.","negative":"I procrastinate and risk missing the deadline."}
+{"id":"C02","situation":"Shared workspace gets messy.","positive":"I tidy my area and set a simple clean-up norm.","negative":"I leave items scattered and ignore the mess."}
+{"id":"C03","situation":"Budget requires careful tracking.","positive":"I keep precise records and reconcile transactions.","negative":"I spend without logging and hope it balances later."}
+{"id":"C04","situation":"Complex task with unclear steps.","positive":"I break it into subtasks and track progress visibly.","negative":"I start haphazardly without a plan."}
+{"id":"C05","situation":"Conflicting commitments appear.","positive":"I renegotiate early and update the schedule.","negative":"I overcommit and miss obligations."}
+{"id":"C06","situation":"Quality bar is ambiguous.","positive":"I define acceptance criteria and verify before submit.","negative":"I submit minimal work without checks."}
+{"id":"C07","situation":"Recurring meeting lacks agenda.","positive":"I propose a brief agenda and action items.","negative":"I attend unprepared and let it drift."}
+{"id":"C08","situation":"Sensitive data present.","positive":"I follow privacy rules and least-access practices.","negative":"I share data casually without safeguards."}
+{"id":"C09","situation":"Team adopts a new tool.","positive":"I read the quickstart and document tips.","negative":"I avoid learning it and ask others to do tasks."}
+{"id":"C10","situation":"Missed a small step that caused rework.","positive":"I add a checklist to prevent the error again.","negative":"I ignore the root cause and move on."}

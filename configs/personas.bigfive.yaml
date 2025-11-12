@@ -1,0 +1,13 @@
+ranges:
+  E: { min: -1.5, max: 1.5, distribution: "normal", mean: 0.2, std: 0.7 }
+  A: { min: -1.5, max: 1.5, distribution: "normal", mean: 0.4, std: 0.5 }
+  C: { min: -1.5, max: 1.5, distribution: "normal", mean: 0.5, std: 0.4 }
+  O: { min: -1.5, max: 1.5, distribution: "normal", mean: 0.3, std: 0.6 }
+  N: { min: -1.5, max: 1.5, distribution: "normal", mean: -0.1, std: 0.5 }
+percentiles:
+  low: 0.1
+  mid: 0.5
+  high: 0.9
+sampling:
+  strategy: "latin-hypercube"
+  seed: 1337

@@ -1,0 +1,18 @@
+run_id: "debug32"
+model_name: "meta-llama/Llama-3-8b-instruct"
+population: 32
+steps: 200
+seed: 7
+layers: [12, 16, 20]
+steering:
+  E: 0.8
+  A: 0.5
+  C: 0.6
+scenario: "market_voting_baseline"
+logging:
+  db_url: "sqlite:///./storage/sim_debug32.db"
+  parquet_dir: "./storage/dumps/debug32"
+safety:
+  alpha_clip: 1.5
+  toxicity_threshold: 0.4
+  governor_backoff: 0.2

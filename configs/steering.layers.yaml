@@ -1,0 +1,10 @@
+layer_bands:
+  default: [8, 26]
+  high_control: [12, 32]
+  low_latency: [4, 18]
+apply:
+  extraversion: [12, 18, 24]
+  agreeableness: [10, 16, 22]
+  conscientiousness: [14, 20, 26]
+  openness: [16, 22, 28]
+  neuroticism: [8, 12, 30]
