@@ -28,12 +28,17 @@ Agents live inside a lightweight world containing locations, resources, institut
 
 4. **Telemetry + storage**
    - Pydantic schemas in `schemas/` enforce structured logging. They map directly onto SQL tables defined in `storage/db.py`.
-   - Logs stream to both SQLite/Postgres and Parquet snapshots in `storage/dumps` to enable scalable analysis.
+   - `storage/log_sink.py` fans out logs to SQL + Parquet, enabling incremental snapshotting per tick.
 
-5. **Metrics + evaluation**
+5. **Safety + metrics**
    - `metrics/graphs.py` constructs social graphs per tick and computes centrality/assortativity.
    - `metrics/social_dynamics.py` tracks cooperation, polarization, productivity, and well-being proxies.
+   - `safety/governor.py` clamps coefficients and emits `SafetyEvent`s when heuristics fire.
    - `docs/eval.md` details evaluation protocols for the research questions.
+
+6. **Runner CLI**
+   - `python3 -m orchestrator.cli <config>` loads YAML configs, instantiates agents/world, and streams logs via `SimulationRunner`.
+   - `--mock-model` flag runs without HF weights for fast development; defaults to HF backend once vectors exist.
 
 ## Data flow
 ```

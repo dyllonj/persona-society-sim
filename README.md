@@ -12,14 +12,21 @@ Text-only social town simulator where 30–300 activation-steered LLM agents liv
 1. **Steering vectors** — `steering/compute_caa.py` builds trait vectors from JSONL prompt pairs and saves per-layer `.npy` blobs; `steering/hooks.py` adds them to model residuals with per-agent coefficients.
 2. **Agents & memory** — `agents/agent.py` wires the perceive→reflect→plan loop; `agents/memory.py` implements observation/reflection/planning stores inspired by Generative Agents; `agents/planner.py` converts goals + world state into next actions or utterances.
 3. **World & scheduler** — `env/world.py`, `env/actions.py`, and `env/economy.py` encode the text town, actions, and markets; `orchestrator/scheduler.py` samples encounters; `orchestrator/runner.py` executes multi-agent ticks and logs outputs.
-4. **Storage & metrics** — `schemas/*.py` define Pydantic models mirrored in SQL; `storage/db.py` wraps SQLite/Postgres; `metrics/*.py` compute graph, cooperation, and polarization metrics; logs stream into Parquet/DB for notebooks in `metrics/` and reports in `docs/`.
+4. **Storage & metrics** — `schemas/*.py` define Pydantic models mirrored in SQL; `storage/db.py` wraps SQLite/Postgres; `storage/log_sink.py` streams logs to DB + Parquet; `metrics/*.py` compute graph, cooperation, and polarization metrics for notebooks in `metrics/` and reports in `docs/`.
 5. **Data & configs** — `data/prompts/*.jsonl` host IPIP-derived contrast pairs; `configs/run.*.yaml` store reproducible run configs (population, steps, steering, safety bounds).
 
 ## Getting started
 ```bash
 python -m venv .venv && source .venv/bin/activate
 pip install -e .[dev]
-poetry run pytest  # if using poetry instead of pip; optional
+
+# dry-run without heavyweight models
+python3 -m orchestrator.cli configs/run.small.yaml --mock-model
+
+# run with HF weights + steering vectors
+python3 -m orchestrator.cli configs/run.small.yaml
+
+pytest  # optional
 ```
 
 Key scripts:
@@ -54,7 +61,7 @@ persona-society-sim/
 ## Research questions & evaluation hooks
 - **RQ1 — Personality controllability**: log persona adherence metrics (self-report probes, behavioral probes) and compare CAA vs prompt-only loops.
 - **RQ2 — Social structure/outcomes**: compute homophily, polarization, productivity metrics at regular ticks.
-- **RQ3 — Method validity**: capability probes to ensure CAA preserves base performance vs prompt steering.
+- **RQ3 — Method validity**: capability probes to ensure CAA preserves base performance vs prompt steering, plus safety governor logs for alpha backoff events.
 - **RQ4 — Macro dynamics**: seed opinion topics and measure homophily/polarization trajectories across populations 30/100/300.
 
 For detailed evaluation protocols, see `docs/eval.md`.

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Iterable
+
 from sqlalchemy import text
 from sqlalchemy.engine import Engine, create_engine
 
@@ -144,3 +146,14 @@ class Database:
         with self.engine.begin() as conn:
             for statement in filter(None, DDL.split(";")):
                 conn.execute(text(statement))
+
+    def insert_many(self, table: str, rows: Iterable[dict]) -> None:
+        rows = list(rows)
+        if not rows:
+            return
+        columns = rows[0].keys()
+        cols_sql = ", ".join(columns)
+        vals_sql = ", ".join(f":{col}" for col in columns)
+        statement = text(f"INSERT INTO {table} ({cols_sql}) VALUES ({vals_sql})")
+        with self.engine.begin() as conn:
+            conn.execute(statement, rows)

@@ -3,7 +3,7 @@ set -euo pipefail
 
 RUN_ID=${1:-debug32}
 
-python <<'PY'
+python3 <<'PY'
 from pathlib import Path
 
 run_id = "${RUN_ID}"

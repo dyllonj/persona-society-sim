@@ -44,5 +44,11 @@ class World:
                 return f"You are at {location.name} with {peer_list}."
         return "You are wandering the outskirts alone."
 
+    def agent_location(self, agent_id: str) -> str:
+        for location in self.locations.values():
+            if agent_id in location.occupants:
+                return location.name
+        return "unknown"
+
     def step(self) -> None:
         self.tick += 1

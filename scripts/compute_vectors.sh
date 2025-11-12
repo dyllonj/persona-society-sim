@@ -15,7 +15,7 @@ trait_code() {
 
 for trait in "${traits[@]}"; do
   code=$(trait_code "$trait")
-  python -m steering.compute_caa \
+  python3 -m steering.compute_caa \
     "$code" \
     "data/prompts/${trait}.jsonl" \
     data/vectors \

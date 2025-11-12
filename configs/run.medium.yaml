@@ -17,3 +17,7 @@ safety:
   alpha_clip: 1.25
   toxicity_threshold: 0.35
   governor_backoff: 0.15
+inference:
+  temperature: 0.65
+  top_p: 0.92
+  max_new_tokens: 160

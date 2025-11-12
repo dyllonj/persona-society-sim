@@ -2,63 +2,125 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from dataclasses import dataclass
+from typing import Dict, List, Optional
 
-import torch
-
+from agents.language_backend import GenerationResult, LanguageBackend
 from agents.memory import MemoryStore
 from agents.planner import PlanSuggestion, Planner
+from agents.retrieval import MemoryRetriever
+from safety.governor import SafetyGovernor
 from schemas.agent import AgentState
+from schemas.logs import SafetyEvent
+
+
+@dataclass
+class ActionDecision:
+    action_type: str
+    params: Dict[str, str]
+    utterance: str
+    prompt: str
+    tokens_in: int
+    tokens_out: int
+    steering_snapshot: Dict[str, float]
+    layers_used: List[int]
+    safety_event: Optional[SafetyEvent]
 
 
 class Agent:
     def __init__(
         self,
+        run_id: str,
         state: AgentState,
-        model,
-        tokenizer,
+        language_backend: LanguageBackend,
         memory: MemoryStore,
+        retriever: MemoryRetriever,
         planner: Planner,
-        steering_controller: Optional[Any] = None,
+        safety_governor: SafetyGovernor,
+        max_new_tokens: int = 120,
     ):
+        self.run_id = run_id
         self.state = state
-        self.model = model
-        self.tokenizer = tokenizer
+        self.language_backend = language_backend
         self.memory = memory
+        self.retriever = retriever
         self.planner = planner
-        self.steering_controller = steering_controller
+        self.safety_governor = safety_governor
+        self.max_new_tokens = max_new_tokens
+
+    # ---- persona helpers ----
+
+    def persona_alphas(self) -> Dict[str, float]:
+        base = self.state.persona_coeffs.model_dump()
+        alphas = {}
+        for trait, coef in base.items():
+            delta = self.state.active_alpha_overrides.get(trait, 0.0)
+            alphas[trait] = self._clamp(coef + delta)
+        return alphas
+
+    def _clamp(self, value: float) -> float:
+        clip = self.safety_governor.config.alpha_clip
+        return max(-clip, min(clip, value))
+
+    def apply_alpha_delta(self, delta: Dict[str, float]) -> None:
+        for trait, change in delta.items():
+            self.state.active_alpha_overrides[trait] = self._clamp(
+                self.state.active_alpha_overrides.get(trait, 0.0) + change
+            )
+
+    # ---- cognitive loop ----
 
     def perceive(self, observation: str, tick: int) -> None:
         importance = min(1.0, 0.3 + 0.05 * len(observation.split()))
         self.memory.add_event(self.state.agent_id, "observation", tick, observation, importance)
 
     def reflect_and_plan(self, tick: int) -> PlanSuggestion:
-        recent = self.memory.recent_events(limit=5)
-        summary = " \n".join(ev.text for ev in recent)
-        reflection_text = f"Key focus areas: {', '.join(self.state.goals) or 'open exploration'}"
-        self.memory.add_reflection(self.state.agent_id, tick, reflection_text, implications=[reflection_text])
+        summary, events = self.retriever.summarize(self.state.goals, current_tick=tick)
+        reflection_text = f"Focus: {', '.join(self.state.goals) or 'open exploration'}"
+        implications = [f"Reference memory {ev.memory_id}" for ev in events]
+        self.memory.add_reflection(self.state.agent_id, tick, reflection_text, implications=implications)
         suggestion = self.planner.plan(self.state.goals, summary)
         self.memory.add_plan(self.state.agent_id, tick, tick + 3, [suggestion.action_type])
         return suggestion
 
-    def generate(self, prompt: str, max_new_tokens: int = 128) -> str:
-        inputs = self.tokenizer(prompt, return_tensors="pt").to(self.model.device)
-        with torch.no_grad():
-            output = self.model.generate(**inputs, max_new_tokens=max_new_tokens)
-        return self.tokenizer.decode(output[0], skip_special_tokens=True)
-
-    def act(self, observation: str, tick: int) -> Dict[str, Any]:
-        self.perceive(observation, tick)
-        suggestion = self.reflect_and_plan(tick)
-        prompt = (
-            f"System: Maintain persona per coefficients {self.state.persona_coeffs.model_dump()}\n"
-            f"Agent: {self.state.display_name}\n"
+    def _build_prompt(self, observation: str, suggestion: PlanSuggestion) -> str:
+        goals_text = ", ".join(self.state.goals) or "explore town"
+        return (
+            f"System: Maintain persona coefficients {self.state.persona_coeffs.model_dump()} and goals {goals_text}.\n"
+            f"Agent: {self.state.display_name}.\n"
             f"Context: {observation}\n"
             f"Intent: {suggestion.utterance}\n"
         )
-        utterance = self.generate(prompt)
-        return {
-            "action_type": suggestion.action_type,
-            "params": suggestion.params,
-            "utterance": utterance,
-        }
+
+    def generate(self, prompt: str, alphas: Dict[str, float]) -> GenerationResult:
+        return self.language_backend.generate(prompt, self.max_new_tokens, alphas)
+
+    def act(self, observation: str, tick: int) -> ActionDecision:
+        self.perceive(observation, tick)
+        suggestion = self.reflect_and_plan(tick)
+        prompt = self._build_prompt(observation, suggestion)
+        alphas = self.persona_alphas()
+        generation = self.generate(prompt, alphas)
+        safety_event = self.safety_governor.evaluate(
+            run_id=self.run_id,
+            agent_id=self.state.agent_id,
+            text=generation.text,
+            tick=tick,
+            current_alphas=alphas,
+        )
+        if safety_event:
+            self.apply_alpha_delta(safety_event.applied_alpha_delta)
+        params = dict(suggestion.params)
+        if suggestion.action_type == "talk":
+            params["utterance"] = generation.text
+        return ActionDecision(
+            action_type=suggestion.action_type,
+            params=params,
+            utterance=generation.text,
+            prompt=prompt,
+            tokens_in=generation.tokens_in,
+            tokens_out=generation.tokens_out,
+            steering_snapshot=alphas,
+            layers_used=self.language_backend.layers_used(),
+            safety_event=safety_event,
+        )
