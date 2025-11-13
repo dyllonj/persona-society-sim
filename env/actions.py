@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from typing import Dict
 
@@ -65,10 +66,15 @@ def research(world: World, agent_id: str, query: str | None = None, doc_id: str 
         note = "research outside library"
     else:
         note = "ok"
-    info = world.research_access(agent_id, doc_id=doc_id, query=query)
-    info.update({"note": note})
+    raw_info = world.research_access(agent_id, doc_id=doc_id, query=query)
+    # Serialize complex objects to strings for ActionLog.info
+    info: Dict[str, str] = {
+        "note": note,
+        "doc_id": str(raw_info.get("doc_id") or ""),
+        "facts_found": json.dumps(raw_info.get("facts_found", [])),
+    }
     room_id = location if location != "unknown" else None
-    world.broadcast(f"{agent_id} researched {info.get('doc_id') or 'unknown'}", room_id=room_id)
+    world.broadcast(f"{agent_id} researched {raw_info.get('doc_id') or 'unknown'}", room_id=room_id)
     return ActionResult("research", True, info)
 
 
@@ -98,7 +104,8 @@ def submit_report(world: World, agent_id: str) -> ActionResult:
         f"{agent_id} submitted report: {result['facts_correct']}/{result['targets_total']} facts, {result['citations_valid']} cites",
         room_id=room_id,
     )
-    return ActionResult("submit_report", True, {"grading": result})
+    # Serialize grading result to string for ActionLog.info
+    return ActionResult("submit_report", True, {"grading": json.dumps(result)})
 
 
 # Attach dynamically to the router now that functions are defined

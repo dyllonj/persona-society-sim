@@ -22,6 +22,10 @@ ActionLiteral = Literal[
     "rest",
     "join_group",
     "leave_group",
+    "research",
+    "cite",
+    "submit_report",
+    "scan",
 ]
 OutcomeLiteral = Literal["success", "fail", "sanctioned", "noop"]
 SanctionLiteral = Literal["fine", "ostracize", "ban", "warning"]
