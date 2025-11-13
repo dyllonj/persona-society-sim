@@ -50,10 +50,10 @@ class MemoryStore:
         self.plans.append(plan)
         return plan
 
-    def recent_events(self, limit: int = 20) -> List[MemoryEvent]:
+    def recent_events(self, limit: int = 30) -> List[MemoryEvent]:
         return sorted(self.events, key=lambda ev: (ev.tick, ev.timestamp), reverse=True)[:limit]
 
-    def relevant_events(self, query: str, current_tick: int | None = None, limit: int = 5) -> List[MemoryEvent]:
+    def relevant_events(self, query: str, current_tick: int | None = None, limit: int = 10) -> List[MemoryEvent]:
         """Score events by naive keyword overlap × recency × importance."""
 
         keywords = set(query.lower().split())

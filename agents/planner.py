@@ -39,6 +39,34 @@ class Planner:
                 "action": "talk",
                 "utterance": "I'm focusing on research findings to share with others.",
             },
+            "explore": {
+                "location": "town_square",
+                "action": "move",
+                "utterance": "I'm exploring different areas to learn more about the town.",
+            },
+            "socialize": {
+                "location": "community_center",
+                "action": "talk",
+                "utterance": "I'm here to meet and connect with others.",
+            },
+            "trade": {
+                "location": "market",
+                "action": "trade",
+                "item": "goods",
+                "qty": "1",
+                "utterance": "I'm looking to trade and support the local market.",
+            },
+            "work": {
+                "location": "community_center",
+                "action": "work",
+                "task": "community project",
+                "utterance": "I'm contributing my time to help with town projects.",
+            },
+            "community": {
+                "location": "community_center",
+                "action": "talk",
+                "utterance": "I'm working to build stronger community connections.",
+            },
         }
 
     def plan(
@@ -105,7 +133,15 @@ class Planner:
                 "item": heuristic.get("item", "goods"),
                 "qty": heuristic.get("qty", "1"),
             }
+        elif action_type == "work":
+            params = {"task": heuristic.get("task", "project")}
+        elif action_type == "move":
+            # For explore objectives, pick a destination different from current location
+            destinations = ["town_square", "community_center", "market", "library"]
+            available = [d for d in destinations if d != current_location]
+            params = {"destination": available[0] if available else "town_square"}
         else:
-            return None
+            # Fallback for unknown action types
+            params = {}
 
         return PlanSuggestion(action_type=action_type, params=params, utterance=utterance)

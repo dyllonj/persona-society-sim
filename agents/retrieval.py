@@ -11,7 +11,7 @@ class MemoryRetriever:
     def __init__(self, store):
         self.store = store
 
-    def summarize(self, goals: List[str], current_tick: int, limit: int = 5) -> Tuple[str, List[MemoryEvent]]:
+    def summarize(self, goals: List[str], current_tick: int, limit: int = 10) -> Tuple[str, List[MemoryEvent]]:
         query = " ".join(goals) if goals else "daily goings"
         events = self.store.relevant_events(query=query, current_tick=current_tick, limit=limit)
         if not events:

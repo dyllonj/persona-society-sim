@@ -25,4 +25,4 @@ optimization:
   use_quantization: true     # Enable 4-bit quantization
   batch_size: 8              # Batch 8 agents at once (future feature)
 objectives:
-  enabled: false
+  enabled: true

@@ -78,8 +78,13 @@ class SimulationRunner:
                     if self.objective_manager
                     else None
                 )
+
+                # Integrate room history into observation for spatial memory
+                room_context = self.world.recent_room_context(current_location, limit=3)
+                full_context = f"{encounter.context}\n{room_context}" if room_context else encounter.context
+
                 decision = agent.act(
-                    encounter.context,
+                    full_context,
                     self.world.tick,
                     current_location=current_location,
                     active_objective=active_objective,

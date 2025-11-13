@@ -66,6 +66,41 @@ DEFAULT_OBJECTIVE_TEMPLATES: Dict[str, ObjectiveTemplate] = {
         requirements={"trade": 1, "gift": 1},
         reward={"satisfaction": 2.5},
     ),
+    "explore": ObjectiveTemplate(
+        name="explore",
+        type="explore",
+        description="Visit three different locations to explore the town.",
+        requirements={"move": 3},
+        reward={"satisfaction": 2.0},
+    ),
+    "collaborate": ObjectiveTemplate(
+        name="collaborate",
+        type="collaborate",
+        description="Work together with others on shared goals.",
+        requirements={"talk": 2, "work": 1},
+        reward={"satisfaction": 3.5},
+    ),
+    "gather": ObjectiveTemplate(
+        name="gather",
+        type="gather",
+        description="Collect resources through trading.",
+        requirements={"trade": 2},
+        reward={"satisfaction": 2.0},
+    ),
+    "research": ObjectiveTemplate(
+        name="research",
+        type="research",
+        description="Engage in focused study and knowledge sharing.",
+        requirements={"talk": 2},
+        reward={"satisfaction": 2.5},
+    ),
+    "community_builder": ObjectiveTemplate(
+        name="community_builder",
+        type="community",
+        description="Foster community connections through diverse interactions.",
+        requirements={"talk": 2, "gift": 1, "move": 1},
+        reward={"satisfaction": 4.0},
+    ),
 }
 
 
