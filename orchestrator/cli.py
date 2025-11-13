@@ -19,6 +19,7 @@ from agents.memory import MemoryStore
 from agents.planner import Planner
 from agents.retrieval import MemoryRetriever
 from env.world import World
+from orchestrator.console_logger import ConsoleLogger
 from orchestrator.runner import SimulationRunner
 from orchestrator.scheduler import Scheduler
 from safety.governor import SafetyConfig, SafetyGovernor
@@ -139,6 +140,8 @@ def main() -> None:
     parser.add_argument("--mock-model", action="store_true", help="Use mock backend instead of HF model")
     parser.add_argument("--max-events", type=int, default=16, help="Max encounters per tick")
     parser.add_argument("--vector-dir", type=Path, default=Path("data/vectors"), help="Directory with steering vectors")
+    parser.add_argument("--live", action="store_true", help="Enable live console output showing agent actions and dialogues")
+    parser.add_argument("--no-color", action="store_true", help="Disable colored output")
     args = parser.parse_args()
 
     config = load_config(args.config)
@@ -161,6 +164,13 @@ def main() -> None:
     logging_cfg = config.get("logging", {})
     log_sink = LogSink(run_id, logging_cfg.get("db_url"), logging_cfg.get("parquet_dir"))
     inference = config.get("inference", {})
+
+    # Create console logger if live mode is enabled
+    console_logger = ConsoleLogger(enabled=args.live, use_colors=not args.no_color)
+    if args.live:
+        console_logger.log_info(f"Starting simulation: {run_id}")
+        console_logger.log_info(f"Agents: {len(agents)}, Steps: {config.get('steps', 200)}, Events/tick: {args.max_events}")
+
     runner = SimulationRunner(
         run_id=run_id,
         world=world,
@@ -169,9 +179,12 @@ def main() -> None:
         log_sink=log_sink,
         temperature=inference.get("temperature", 0.7),
         top_p=inference.get("top_p", 0.9),
+        console_logger=console_logger,
     )
     runner.run(config.get("steps", 200), max_events_per_tick=args.max_events)
-    print(f"Run {run_id} completed {config.get('steps', 200)} steps with {len(agents)} agents.")
+
+    if not args.live:
+        print(f"Run {run_id} completed {config.get('steps', 200)} steps with {len(agents)} agents.")
 
 
 if __name__ == "__main__":
