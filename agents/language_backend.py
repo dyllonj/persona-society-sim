@@ -38,12 +38,31 @@ class HFBackend(LanguageBackend):
         trait_vectors: Dict[str, Dict[int, torch.Tensor]],
         temperature: float = 0.7,
         top_p: float = 0.9,
+        use_quantization: bool = False,
     ):
         super().__init__(temperature=temperature, top_p=top_p)
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.model = AutoModelForCausalLM.from_pretrained(
-            model_name, torch_dtype=torch.float16, device_map="auto"
-        )
+
+        # Load model with optional quantization
+        if use_quantization:
+            from transformers import BitsAndBytesConfig
+
+            quantization_config = BitsAndBytesConfig(
+                load_in_4bit=True,
+                bnb_4bit_compute_dtype=torch.float16,
+                bnb_4bit_use_double_quant=True,
+                bnb_4bit_quant_type="nf4",
+            )
+            self.model = AutoModelForCausalLM.from_pretrained(
+                model_name,
+                quantization_config=quantization_config,
+                device_map="auto",
+            )
+        else:
+            self.model = AutoModelForCausalLM.from_pretrained(
+                model_name, torch_dtype=torch.float16, device_map="auto"
+            )
+
         self.controller = SteeringController(self.model, trait_vectors)
         self.controller.register()
         self._layers = layers
