@@ -115,12 +115,22 @@ class Agent:
         self._last_plan_suggestion = suggestion
         return suggestion
 
-    def _build_prompt(self, observation: str, suggestion: PlanSuggestion) -> str:
+    def _build_prompt(
+        self,
+        observation: str,
+        suggestion: PlanSuggestion,
+        *,
+        current_location: Optional[str] = None,
+    ) -> str:
         goals_text = ", ".join(self.state.goals) or "explore town"
+        location_text = current_location or "unknown"
         return (
-            "System: Respond naturally to the situation described.\n"
-            f"Observation: {observation}\n"
+            "System: Write a concise, natural first-person message (no 'You:' prefix, no hashtags).\n"
+            "- Keep perspective consistent and avoid narrating stage directions.\n"
+            "- Do not contradict the stated current location.\n"
+            f"Current location: {location_text}\n"
             f"Current goals: {goals_text}\n"
+            f"Observation: {observation}\n"
             f"Intended utterance guidance: {suggestion.utterance}\n"
         )
 
@@ -140,7 +150,19 @@ class Agent:
             current_location=current_location,
             active_objective=active_objective,
         )
-        prompt = self._build_prompt(observation, suggestion)
+        # Add a brief pre-talk sync at the very beginning to reduce immediate moves.
+        if tick == 0 and suggestion.action_type == "move":
+            suggestion = PlanSuggestion(
+                action_type="talk",
+                params={"utterance": "Quick sync: confirm roles and plan, then head out."},
+                utterance="Let's quickly align on roles and objectives before moving.",
+            )
+
+        prompt = self._build_prompt(
+            observation,
+            suggestion,
+            current_location=current_location,
+        )
         alphas = self.persona_alphas()
         generation = self.generate(prompt, alphas)
         safety_event = self.safety_governor.evaluate(

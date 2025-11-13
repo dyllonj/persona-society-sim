@@ -57,12 +57,19 @@ class World:
         return f"Recent activity here:\n{formatted}"
 
     def sample_context(self, agent_id: str) -> str:
+        """Provide a neutral scene description without second-person voice.
+
+        This avoids POV drift like leading with "You:" and reduces
+        contradictions when move actions immediately follow planning.
+        """
         for location in self.locations.values():
             if agent_id in location.occupants:
                 peers = location.occupants - {agent_id}
-                peer_list = ", ".join(sorted(peers)) or "no one else"
-                return f"You are at {location.name} with {peer_list}."
-        return "You are wandering the outskirts alone."
+                peer_list = ", ".join(sorted(peers)) or "no other agents"
+                return (
+                    f"Location: {location.name}. Nearby agents: {peer_list}."
+                )
+        return "Location: outskirts. Nearby agents: none."
 
     def agent_location(self, agent_id: str) -> str:
         for location in self.locations.values():

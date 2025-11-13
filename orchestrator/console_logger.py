@@ -89,7 +89,12 @@ class ConsoleLogger:
         # Build action details
         details = []
         if "destination" in action_log.params:
-            details.append(f"→ {action_log.params['destination']}")
+            if "from" in action_log.params:
+                details.append(
+                    f"{action_log.params['from']} → {action_log.params['destination']}"
+                )
+            else:
+                details.append(f"→ {action_log.params['destination']}")
         if "item" in action_log.params:
             details.append(f"item: {action_log.params['item']}")
         if "qty" in action_log.params:
@@ -142,7 +147,12 @@ class ConsoleLogger:
             f"{self._color(steering_str, 'gray')}"
         )
 
-    def log_tick_end(self, tick: int, duration_ms: Optional[float] = None) -> None:
+    def log_tick_end(
+        self,
+        tick: int,
+        duration_ms: Optional[float] = None,
+        collab_ratio: Optional[float] = None,
+    ) -> None:
         """Log the end of a tick."""
         if not self.enabled:
             return
@@ -150,6 +160,9 @@ class ConsoleLogger:
         if duration_ms:
             duration_str = f"{duration_ms/1000:.2f}s"
             print(f"  {self._color('⏱', 'gray')}  Tick completed in {self._color(duration_str, 'dim')}")
+        if collab_ratio is not None:
+            pct = f"{collab_ratio*100:.0f}%"
+            print(f"  {self._color('🤝', 'gray')}  Collaboration actions: {self._color(pct, 'dim')}")
 
     def log_summary(self, run_id: str, total_ticks: int, total_agents: int, total_time_s: float) -> None:
         """Log simulation summary."""

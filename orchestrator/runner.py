@@ -66,6 +66,9 @@ class SimulationRunner:
             tick_start_time = time.time()
             tick_logs: List[ActionLog] = []
             encounters = self.scheduler.sample(list(self.agents.keys()), max_events_per_tick)
+            # Simple collaboration metric: share of actions happening with peers present
+            collab_actions = 0
+            total_actions = 0
 
             # Log tick start
             self.console_logger.log_tick_start(self.world.tick, len(encounters))
@@ -89,12 +92,17 @@ class SimulationRunner:
                     current_location=current_location,
                     active_objective=active_objective,
                 )
+                src_location = current_location
                 env_result = actions.execute(
                     self.world,
                     agent.state.agent_id,
                     decision.action_type,
                     decision.params,
                 )
+                # Attach source location for moves to improve logging clarity
+                if decision.action_type == "move" and "destination" in decision.params:
+                    decision.params = {**decision.params, "from": src_location}
+
                 action_log = ActionLog(
                     action_id=str(uuid4()),
                     run_id=self.run_id,
@@ -107,6 +115,18 @@ class SimulationRunner:
                 )
                 tick_logs.append(action_log)
                 self.log_sink.log_action(action_log)
+
+                # Update collaboration metric using current room occupancy
+                try:
+                    room = self.world.agent_location(agent.state.agent_id)
+                    occupants = len(self.world.locations.get(room).occupants) if room in self.world.locations else 0
+                    if decision.action_type in {"talk", "trade", "work"}:
+                        total_actions += 1
+                        if occupants and occupants > 1:
+                            collab_actions += 1
+                except Exception:
+                    # Metric collection should never interfere with the run
+                    pass
 
                 if self.objective_manager:
                     completed_objective = self.objective_manager.process_action_log(action_log)
@@ -145,7 +165,8 @@ class SimulationRunner:
 
             # Log tick end with duration
             tick_duration_ms = (time.time() - tick_start_time) * 1000
-            self.console_logger.log_tick_end(self.world.tick, tick_duration_ms)
+            ratio = (collab_actions / total_actions) if total_actions else 0.0
+            self.console_logger.log_tick_end(self.world.tick, tick_duration_ms, ratio)
 
             history.append(TickResult(tick=self.world.tick, action_logs=tick_logs))
 
