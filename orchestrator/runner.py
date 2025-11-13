@@ -72,7 +72,18 @@ class SimulationRunner:
 
             for encounter in encounters:
                 agent = self.agents[encounter.agent_id]
-                decision = agent.act(encounter.context, self.world.tick)
+                current_location = self.world.agent_location(agent.state.agent_id)
+                active_objective = (
+                    self.objective_manager.current_objective(agent.state.agent_id)
+                    if self.objective_manager
+                    else None
+                )
+                decision = agent.act(
+                    encounter.context,
+                    self.world.tick,
+                    current_location=current_location,
+                    active_objective=active_objective,
+                )
                 env_result = actions.execute(
                     self.world,
                     agent.state.agent_id,
