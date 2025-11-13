@@ -125,14 +125,22 @@ class Agent:
     ) -> str:
         goals_text = ", ".join(self.state.goals) or "explore town"
         location_text = current_location or "unknown"
+        agent_name = self.state.agent_id
         return (
-            "System: Write a concise, natural first-person message (no 'You:' prefix, no hashtags).\n"
-            "- Keep perspective consistent and avoid narrating stage directions.\n"
-            "- Do not contradict the stated current location.\n"
-            f"Current location: {location_text}\n"
+            f"System: You are {agent_name}. Write ONLY your own single response as {agent_name}.\n"
+            "IMPORTANT RULES:\n"
+            f"- Write ONLY what {agent_name} would say - do NOT write dialogue for other agents\n"
+            "- Do NOT include agent names, prefixes like 'You:', or stage directions\n"
+            "- Do NOT write a multi-turn conversation or imagine what others would say\n"
+            "- The observation below shows what OTHERS said - you respond as yourself only\n"
+            "- Write in natural first-person ('I...', not 'You...')\n"
+            "- Keep your response concise and in-character\n"
+            "- Do not contradict your current location\n"
+            f"\nCurrent location: {location_text}\n"
             f"Current goals: {goals_text}\n"
             f"Observation: {observation}\n"
             f"Intended utterance guidance: {suggestion.utterance}\n"
+            f"\n{agent_name}'s response:"
         )
 
     def generate(self, prompt: str, alphas: Dict[str, float]) -> GenerationResult:
