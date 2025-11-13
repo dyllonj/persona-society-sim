@@ -8,7 +8,7 @@ prompts.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, TYPE_CHECKING
 
 from agents.language_backend import GenerationResult, LanguageBackend
 from agents.memory import MemoryStore
@@ -16,6 +16,11 @@ from agents.planner import PlanSuggestion, Planner
 from agents.retrieval import MemoryRetriever
 from safety.governor import SafetyGovernor
 from schemas.agent import AgentState
+
+if TYPE_CHECKING:  # pragma: no cover - typing only
+    from schemas.objectives import Objective
+else:  # pragma: no cover - runtime fallback for optional dependency
+    Objective = object
 from schemas.logs import SafetyEvent
 
 
@@ -82,7 +87,12 @@ class Agent:
         importance = min(1.0, 0.3 + 0.05 * len(observation.split()))
         self.memory.add_event(self.state.agent_id, "observation", tick, observation, importance)
 
-    def reflect_and_plan(self, tick: int) -> PlanSuggestion:
+    def reflect_and_plan(
+        self,
+        tick: int,
+        current_location: Optional[str] = None,
+        active_objective: Optional[Objective] = None,
+    ) -> PlanSuggestion:
         # Skip reflection if not on reflection cycle and we have a cached plan
         should_reflect = (tick % self.reflect_every_n_ticks == 0)
 
@@ -95,7 +105,12 @@ class Agent:
         reflection_text = f"Focus: {', '.join(self.state.goals) or 'open exploration'}"
         implications = [f"Reference memory {ev.memory_id}" for ev in events]
         self.memory.add_reflection(self.state.agent_id, tick, reflection_text, implications=implications)
-        suggestion = self.planner.plan(self.state.goals, summary)
+        suggestion = self.planner.plan(
+            self.state.goals,
+            summary,
+            current_location=current_location,
+            active_objective=active_objective,
+        )
         self.memory.add_plan(self.state.agent_id, tick, tick + 3, [suggestion.action_type])
         self._last_plan_suggestion = suggestion
         return suggestion
@@ -112,9 +127,19 @@ class Agent:
     def generate(self, prompt: str, alphas: Dict[str, float]) -> GenerationResult:
         return self.language_backend.generate(prompt, self.max_new_tokens, alphas)
 
-    def act(self, observation: str, tick: int) -> ActionDecision:
+    def act(
+        self,
+        observation: str,
+        tick: int,
+        current_location: Optional[str] = None,
+        active_objective: Optional[Objective] = None,
+    ) -> ActionDecision:
         self.perceive(observation, tick)
-        suggestion = self.reflect_and_plan(tick)
+        suggestion = self.reflect_and_plan(
+            tick,
+            current_location=current_location,
+            active_objective=active_objective,
+        )
         prompt = self._build_prompt(observation, suggestion)
         alphas = self.persona_alphas()
         generation = self.generate(prompt, alphas)
