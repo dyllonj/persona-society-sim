@@ -33,10 +33,16 @@ class ConsoleLogger:
         "work": "cyan",
     }
 
-    def __init__(self, enabled: bool = True, use_colors: bool = True):
+    def __init__(
+        self,
+        enabled: bool = True,
+        use_colors: bool = True,
+        truncate: bool = True,
+    ):
         self.enabled = enabled
         self.use_colors = use_colors and sys.stdout.isatty()
         self.current_tick = -1
+        self.truncate = truncate
 
     def _color(self, text: str, color: str) -> str:
         """Apply color to text if colors are enabled."""
@@ -46,6 +52,8 @@ class ConsoleLogger:
 
     def _truncate(self, text: str, max_len: int = 100) -> str:
         """Truncate text to max length."""
+        if not self.truncate:
+            return text
         if len(text) <= max_len:
             return text
         return text[: max_len - 3] + "..."
