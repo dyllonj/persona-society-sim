@@ -20,17 +20,17 @@ Text-only social town simulator where 30–300 activation-steered LLM agents liv
 python -m venv .venv && source .venv/bin/activate
 pip install -e .[dev]
 
-# dry-run without heavyweight models
-python3 -m orchestrator.cli configs/run.small.yaml --mock-model
+# dry-run without heavyweight models (Research Sprint default)
+python3 -m orchestrator.cli configs/run.small.yaml --mock-model --env research --difficulty 3
 
-# run with HF weights + steering vectors
-python3 -m orchestrator.cli configs/run.small.yaml
+# run with HF weights + steering vectors (Research Sprint)
+python3 -m orchestrator.cli configs/run.small.yaml --env research --difficulty 3
 
 # follow live logs with colored, truncated output
-python3 -m orchestrator.cli configs/run.small.yaml --live
+python3 -m orchestrator.cli configs/run.small.yaml --live --env research
 
 # disable truncation when tailing live output (may be very verbose)
-python3 -m orchestrator.cli configs/run.small.yaml --live --full-messages
+python3 -m orchestrator.cli configs/run.small.yaml --live --full-messages --env research
 
 pytest  # optional
 ```
@@ -77,3 +77,25 @@ persona-society-sim/
 - **RQ4 — Macro dynamics**: seed opinion topics and measure homophily/polarization trajectories across populations 30/100/300.
 
 For detailed evaluation protocols, see `docs/eval.md`.
+### Experiment environments
+
+You can select among a few RL-style environments using `--env` and a simple difficulty parameter with `--difficulty`:
+
+- `--env research` (Research Sprint):
+  - Goal: collect facts at the library and `submit_report`.
+  - Difficulty: target facts count (used for dataset sizing; grader reports correctness regardless).
+  - Example: `python3 -m orchestrator.cli configs/run.small.yaml --env research --difficulty 3 --live`
+
+- `--env policy` (Policy Checklist):
+  - Goal: fill checklist fields and `submit_plan` for compliance.
+  - Difficulty: number of fields (planned actions `fill_field`, `propose_plan`, `submit_plan`).
+  - Example: `python3 -m orchestrator.cli configs/run.small.yaml --env policy --difficulty 5 --live`
+
+- `--env nav` (Navigation + Discovery):
+  - Goal: visit unique rooms and `scan` tokens while coordinating coverage.
+  - Difficulty: tokens required per agent.
+  - Example: `python3 -m orchestrator.cli configs/run.small.yaml --env nav --difficulty 6 --live`
+
+Notes:
+- Research Sprint is fully wired with actions (`research`, `cite`, `submit_report`) and grading.
+- Policy and Navigation templates are available; actions and graders are being implemented next. Runs will still execute with those objectives, but completion logic is minimal until their actions are added.

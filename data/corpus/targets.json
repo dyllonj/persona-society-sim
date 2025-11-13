@@ -1,0 +1,22 @@
+{
+  "docs": {
+    "doc1": {
+      "fact_a": "The town library opens at 9am.",
+      "fact_b": "Library cards are free for residents."
+    },
+    "doc2": {
+      "fact_c": "The market runs every Saturday.",
+      "fact_d": "Stalls close by 3pm."
+    },
+    "doc3": {
+      "fact_e": "Community center hosts policy meetings monthly.",
+      "fact_f": "Volunteers can reserve rooms at no cost."
+    }
+  },
+  "targets": {
+    "fact_a": { "doc_id": "doc1", "answer": "The town library opens at 9am." },
+    "fact_c": { "doc_id": "doc2", "answer": "The market runs every Saturday." },
+    "fact_e": { "doc_id": "doc3", "answer": "Community center hosts policy meetings monthly." }
+  }
+}
+

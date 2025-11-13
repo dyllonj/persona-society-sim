@@ -110,6 +110,7 @@ class Agent:
             summary,
             current_location=current_location,
             active_objective=active_objective,
+            tick=tick,
         )
         self.memory.add_plan(self.state.agent_id, tick, tick + 3, [suggestion.action_type])
         self._last_plan_suggestion = suggestion

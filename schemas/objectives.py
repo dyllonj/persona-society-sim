@@ -52,6 +52,27 @@ DEFAULT_OBJECTIVE_TEMPLATES: Dict[str, ObjectiveTemplate] = {
         requirements={"talk": 3},
         reward={"satisfaction": 3.0},
     ),
+    "policy_checklist": ObjectiveTemplate(
+        name="policy_checklist",
+        type="policy",
+        description="Fill all required checklist fields and submit a compliant plan.",
+        requirements={"submit_plan": 1},
+        reward={"satisfaction": 3.0},
+    ),
+    "navigation_discovery": ObjectiveTemplate(
+        name="navigation_discovery",
+        type="navigation",
+        description="Visit multiple locations, scan tokens, and coordinate to minimize overlap.",
+        requirements={"move": 3, "scan": 3},
+        reward={"satisfaction": 2.5},
+    ),
+    "research_facts": ObjectiveTemplate(
+        name="research_facts",
+        type="research",
+        description="Collect facts from the corpus at the library and submit a report.",
+        requirements={"submit_report": 1},
+        reward={"satisfaction": 3.0},
+    ),
     "work_project": ObjectiveTemplate(
         name="work_project",
         type="work",

@@ -15,6 +15,7 @@ from orchestrator.objectives import ObjectiveManager
 from orchestrator.scheduler import Scheduler
 from schemas.logs import ActionLog, MsgLog
 from storage.log_sink import LogSink
+from metrics.tracker import MetricTracker
 
 
 @dataclass
@@ -46,6 +47,7 @@ class SimulationRunner:
         self.console_logger = console_logger or ConsoleLogger(enabled=False)
         self.objective_manager = objective_manager
         self.agent_satisfaction: Dict[str, float] = {agent_id: 0.0 for agent_id in self.agents}
+        self.metric_tracker = MetricTracker(run_id)
 
         if self.objective_manager:
             self.objective_manager.register_reward_callback(self._handle_objective_reward)
@@ -124,6 +126,8 @@ class SimulationRunner:
                         total_actions += 1
                         if occupants and occupants > 1:
                             collab_actions += 1
+                    # Metrics tracker for per-agent summaries
+                    self.metric_tracker.on_action(action_log, occupants)
                 except Exception:
                     # Metric collection should never interfere with the run
                     pass
@@ -167,6 +171,10 @@ class SimulationRunner:
             tick_duration_ms = (time.time() - tick_start_time) * 1000
             ratio = (collab_actions / total_actions) if total_actions else 0.0
             self.console_logger.log_tick_end(self.world.tick, tick_duration_ms, ratio)
+            try:
+                self.metric_tracker.on_tick_end(self.world.tick, ratio)
+            except Exception:
+                pass
 
             history.append(TickResult(tick=self.world.tick, action_logs=tick_logs))
 
@@ -174,4 +182,8 @@ class SimulationRunner:
         total_time = time.time() - sim_start_time
         self.console_logger.log_summary(self.run_id, steps, len(self.agents), total_time)
 
+        try:
+            self.metric_tracker.flush()
+        except Exception:
+            pass
         return history

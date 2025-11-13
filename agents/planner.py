@@ -36,8 +36,13 @@ class Planner:
             },
             "research": {
                 "location": "library",
-                "action": "talk",
+                "action": "research",
                 "utterance": "I'm focusing on research findings to share with others.",
+            },
+            "research_facts": {
+                "location": "library",
+                "action": "research",
+                "utterance": "I'll look up documents relevant to our fact targets.",
             },
             "explore": {
                 "location": "town_square",
@@ -75,11 +80,12 @@ class Planner:
         memory_summary: str,
         current_location: Optional[str] = None,
         active_objective: Optional[Objective] = None,
+        tick: int = 0,
     ) -> PlanSuggestion:
         location = current_location or self.default_location
 
         if active_objective:
-            objective_plan = self._plan_for_objective(active_objective, location)
+            objective_plan = self._plan_for_objective(active_objective, location, tick)
             if objective_plan:
                 return objective_plan
 
@@ -105,7 +111,7 @@ class Planner:
         return PlanSuggestion(action_type=action, params=params, utterance=utterance)
 
     def _plan_for_objective(
-        self, objective: Objective, current_location: str
+        self, objective: Objective, current_location: str, tick: int
     ) -> Optional[PlanSuggestion]:
         heuristic = self._objective_heuristics.get(objective.type.lower())
         if not heuristic:
@@ -126,6 +132,15 @@ class Planner:
             return PlanSuggestion("move", move_params, move_utterance)
 
         action_type = heuristic["action"]
+        # Special handling for research-style objectives: schedule research → cite → submit
+        if objective.type.lower() in {"research", "research_facts"}:
+            step = tick % 4
+            if step in (0, 1):
+                return PlanSuggestion("research", {"query": description.split()[0] if description else ""}, utterance)
+            if step == 2:
+                return PlanSuggestion("cite", {}, "I'll add a supporting citation.")
+            return PlanSuggestion("submit_report", {}, "Submitting a brief report of findings.")
+
         if action_type == "talk":
             params = {"utterance": utterance}
         elif action_type == "trade":

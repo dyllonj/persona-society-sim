@@ -25,7 +25,7 @@ from orchestrator.runner import SimulationRunner
 from orchestrator.scheduler import Scheduler
 from safety.governor import SafetyConfig, SafetyGovernor
 from schemas.agent import AgentState, PersonaCoeffs
-from schemas.objectives import ObjectiveTemplate
+from schemas.objectives import ObjectiveTemplate, DEFAULT_OBJECTIVE_TEMPLATES
 from storage.log_sink import LogSink
 
 TRAIT_KEYS = ["E", "A", "C", "O", "N"]
@@ -143,7 +143,7 @@ def build_agents(
     return agents
 
 
-def build_objective_manager(config: Dict) -> Optional[ObjectiveManager]:
+def build_objective_manager(config: Dict, env_choice: str, difficulty: int) -> Optional[ObjectiveManager]:
     objectives_cfg = config.get("objectives") or {}
     if not objectives_cfg.get("enabled", False):
         return None
@@ -161,7 +161,13 @@ def build_objective_manager(config: Dict) -> Optional[ObjectiveManager]:
             reward=payload.get("reward", {}),
         )
     if not templates:
-        templates = None  # type: ignore[assignment]
+        # Choose default template by environment flag
+        if env_choice == "research":
+            templates = {"research_facts": DEFAULT_OBJECTIVE_TEMPLATES["research_facts"]}
+        elif env_choice == "policy":
+            templates = {"policy_checklist": DEFAULT_OBJECTIVE_TEMPLATES["policy_checklist"]}
+        else:  # "nav"
+            templates = {"navigation_discovery": DEFAULT_OBJECTIVE_TEMPLATES["navigation_discovery"]}
     return ObjectiveManager(
         templates=templates,
         enabled=True,
@@ -175,6 +181,8 @@ def main() -> None:
     parser.add_argument("--mock-model", action="store_true", help="Use mock backend instead of HF model")
     parser.add_argument("--max-events", type=int, default=16, help="Max encounters per tick")
     parser.add_argument("--vector-dir", type=Path, default=Path("data/vectors"), help="Directory with steering vectors")
+    parser.add_argument("--env", choices=["research", "policy", "nav"], default="research", help="Select experiment environment (research, policy, nav)")
+    parser.add_argument("--difficulty", type=int, default=3, help="Difficulty parameter (facts, checklist fields, or tokens)")
     parser.add_argument(
         "--live",
         action="store_true",
@@ -208,7 +216,7 @@ def main() -> None:
     logging_cfg = config.get("logging", {})
     log_sink = LogSink(run_id, logging_cfg.get("db_url"), logging_cfg.get("parquet_dir"))
     inference = config.get("inference", {})
-    objective_manager = build_objective_manager(config)
+    objective_manager = build_objective_manager(config, args.env, args.difficulty)
 
     # Create console logger if live mode is enabled
     console_logger = ConsoleLogger(
