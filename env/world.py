@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from collections import deque
 from dataclasses import dataclass, field
-from typing import Dict, List, Set
+from typing import Deque, Dict, List, Set
 
 
 @dataclass
@@ -14,7 +15,7 @@ class Location:
 
 
 class World:
-    def __init__(self):
+    def __init__(self, room_history_limit: int = 8):
         self.locations: Dict[str, Location] = {
             "town_square": Location("town_square", "Central gathering spot"),
             "community_center": Location("community_center", "Meetings, classes, and civic events"),
@@ -22,6 +23,8 @@ class World:
             "library": Location("library", "Quiet work and study"),
         }
         self.noticeboard: List[str] = []
+        self.room_history: Dict[str, Deque[str]] = {}
+        self._room_history_limit = room_history_limit
         self.tick = 0
 
     def add_agent(self, agent_id: str, location_id: str) -> None:
@@ -33,8 +36,25 @@ class World:
             location.occupants.discard(agent_id)
         self.locations.setdefault(destination, Location(destination, "")).occupants.add(agent_id)
 
-    def broadcast(self, msg: str) -> None:
+    def broadcast(self, msg: str, room_id: str | None = None) -> None:
         self.noticeboard.append(msg)
+        if not room_id:
+            return
+        history = self.room_history.setdefault(
+            room_id, deque(maxlen=self._room_history_limit)
+        )
+        history.append(msg)
+
+    def recent_room_context(self, room_id: str, limit: int = 3) -> str:
+        """Return a formatted snippet of recent messages for ``room_id``."""
+
+        history = self.room_history.get(room_id)
+        if not history:
+            return ""
+
+        tail = list(history)[-limit:]
+        formatted = "\n".join(f"- {entry}" for entry in tail)
+        return f"Recent activity here:\n{formatted}"
 
     def sample_context(self, agent_id: str) -> str:
         for location in self.locations.values():

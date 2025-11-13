@@ -24,6 +24,12 @@ class Scheduler:
         picks = self.random.sample(agent_ids, k=min(max_events, len(agent_ids)))
         encounters = []
         for agent_id in picks:
-            context = self.world.sample_context(agent_id)
+            base_context = self.world.sample_context(agent_id)
+            room_id = self.world.agent_location(agent_id)
+            room_context = self.world.recent_room_context(room_id, limit=3)
+            if room_context:
+                context = f"{base_context}\n\n{room_context}"
+            else:
+                context = base_context
             encounters.append(Encounter(agent_id=agent_id, context=context))
         return encounters
