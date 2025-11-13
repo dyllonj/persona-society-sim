@@ -26,8 +26,20 @@ python3 -m orchestrator.cli configs/run.small.yaml --mock-model
 # run with HF weights + steering vectors
 python3 -m orchestrator.cli configs/run.small.yaml
 
+# follow live logs with colored, truncated output
+python3 -m orchestrator.cli configs/run.small.yaml --live
+
+# disable truncation when tailing live output (may be very verbose)
+python3 -m orchestrator.cli configs/run.small.yaml --live --full-messages
+
 pytest  # optional
 ```
+
+### Live console options
+
+Use `--live` to see tick-by-tick actions and dialogues streamed to the terminal. Output is truncated to keep multi-agent runs
+readable, but you can disable truncation with `--full-messages` (pairs well with log tailing or when debugging a single agent).
+Combine with `--no-color` if your terminal cannot render ANSI sequences.
 
 Key scripts:
 - `scripts/compute_vectors.sh` — run CAA extraction for all traits.

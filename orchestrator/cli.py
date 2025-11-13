@@ -147,8 +147,17 @@ def main() -> None:
     parser.add_argument("--mock-model", action="store_true", help="Use mock backend instead of HF model")
     parser.add_argument("--max-events", type=int, default=16, help="Max encounters per tick")
     parser.add_argument("--vector-dir", type=Path, default=Path("data/vectors"), help="Directory with steering vectors")
-    parser.add_argument("--live", action="store_true", help="Enable live console output showing agent actions and dialogues")
+    parser.add_argument(
+        "--live",
+        action="store_true",
+        help="Enable live console output showing agent actions and dialogues",
+    )
     parser.add_argument("--no-color", action="store_true", help="Disable colored output")
+    parser.add_argument(
+        "--full-messages",
+        action="store_true",
+        help="Show complete dialogue content in live console output",
+    )
     args = parser.parse_args()
 
     config = load_config(args.config)
@@ -173,7 +182,11 @@ def main() -> None:
     inference = config.get("inference", {})
 
     # Create console logger if live mode is enabled
-    console_logger = ConsoleLogger(enabled=args.live, use_colors=not args.no_color)
+    console_logger = ConsoleLogger(
+        enabled=args.live,
+        use_colors=not args.no_color,
+        truncate=not args.full_messages,
+    )
     if args.live:
         console_logger.log_info(f"Starting simulation: {run_id}")
         console_logger.log_info(f"Agents: {len(agents)}, Steps: {config.get('steps', 200)}, Events/tick: {args.max_events}")
