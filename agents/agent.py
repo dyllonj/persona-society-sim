@@ -1,4 +1,9 @@
-"""Agent loop wiring observation → reflection → planning → action."""
+"""Agent loop wiring observation → reflection → planning → action.
+
+Steering happens through ``persona_alphas`` (contrastive activation addition)
+rather than by injecting persona descriptions or coefficient dumps into
+prompts.
+"""
 
 from __future__ import annotations
 
@@ -98,10 +103,10 @@ class Agent:
     def _build_prompt(self, observation: str, suggestion: PlanSuggestion) -> str:
         goals_text = ", ".join(self.state.goals) or "explore town"
         return (
-            f"System: Maintain persona coefficients {self.state.persona_coeffs.model_dump()} and goals {goals_text}.\n"
-            f"Agent: {self.state.display_name}.\n"
-            f"Context: {observation}\n"
-            f"Intent: {suggestion.utterance}\n"
+            "System: Respond naturally to the situation described.\n"
+            f"Observation: {observation}\n"
+            f"Current goals: {goals_text}\n"
+            f"Intended utterance guidance: {suggestion.utterance}\n"
         )
 
     def generate(self, prompt: str, alphas: Dict[str, float]) -> GenerationResult:
