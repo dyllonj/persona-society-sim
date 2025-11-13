@@ -66,3 +66,6 @@ idna==3.7
 # matplotlib==3.8.4
 # seaborn==0.13.2
 # plotly==5.21.0
+
+# Viewer bridge (WebSocket server)
+websockets==12.0

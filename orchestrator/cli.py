@@ -194,6 +194,11 @@ def main() -> None:
         action="store_true",
         help="Show complete dialogue content in live console output",
     )
+    parser.add_argument(
+        "--viewer",
+        action="store_true",
+        help="Start WebSocket bridge and static web viewer (http://127.0.0.1:8000)",
+    )
     args = parser.parse_args()
 
     config = load_config(args.config)
@@ -228,6 +233,25 @@ def main() -> None:
         console_logger.log_info(f"Starting simulation: {run_id}")
         console_logger.log_info(f"Agents: {len(agents)}, Steps: {config.get('steps', 200)}, Events/tick: {args.max_events}")
 
+    # Optionally start viewer bridge
+    event_bridge = None
+    http_server = None
+    if args.viewer:
+        try:
+            from viewer.ws_bridge import ViewerServer
+            from viewer.http_server import StaticServer
+
+            event_bridge = ViewerServer()
+            event_bridge.start()
+            http_server = StaticServer()
+            http_server.start()
+            if args.live:
+                console_logger.log_info("Viewer: WebSocket ws://127.0.0.1:8765/ws")
+                console_logger.log_info("Viewer: Open http://127.0.0.1:8000 in your browser")
+        except Exception as e:
+            if args.live:
+                console_logger.log_warning(f"Failed to start viewer: {e}")
+
     runner = SimulationRunner(
         run_id=run_id,
         world=world,
@@ -238,6 +262,7 @@ def main() -> None:
         top_p=inference.get("top_p", 0.9),
         console_logger=console_logger,
         objective_manager=objective_manager,
+        event_bridge=event_bridge,
     )
     runner.run(config.get("steps", 200), max_events_per_tick=args.max_events)
 

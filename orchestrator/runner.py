@@ -36,6 +36,7 @@ class SimulationRunner:
         top_p: float,
         console_logger: Optional[ConsoleLogger] = None,
         objective_manager: Optional[ObjectiveManager] = None,
+        event_bridge: Optional[object] = None,
     ):
         self.run_id = run_id
         self.world = world
@@ -48,6 +49,7 @@ class SimulationRunner:
         self.objective_manager = objective_manager
         self.agent_satisfaction: Dict[str, float] = {agent_id: 0.0 for agent_id in self.agents}
         self.metric_tracker = MetricTracker(run_id)
+        self.event_bridge = event_bridge
 
         if self.objective_manager:
             self.objective_manager.register_reward_callback(self._handle_objective_reward)
@@ -63,6 +65,26 @@ class SimulationRunner:
     def run(self, steps: int, max_events_per_tick: int = 16) -> List[TickResult]:
         history: List[TickResult] = []
         sim_start_time = time.time()
+
+        # Broadcast initialization snapshot to viewer if available
+        if self.event_bridge and hasattr(self.event_bridge, "broadcast"):
+            try:
+                init_agents = [
+                    {
+                        "agent_id": a.state.agent_id,
+                        "display_name": a.state.display_name,
+                        "persona_coeffs": a.state.persona_coeffs.model_dump(),
+                        "location_id": a.state.location_id,
+                    }
+                    for a in self.agents.values()
+                ]
+                world_payload = {
+                    "locations": {lid: {"name": loc.name, "description": loc.description} for lid, loc in self.world.locations.items()},
+                    "tick": self.world.tick,
+                }
+                self.event_bridge.broadcast({"type": "init", "world": world_payload, "agents": init_agents})
+            except Exception:
+                pass
 
         for step_idx in range(steps):
             tick_start_time = time.time()
@@ -118,6 +140,22 @@ class SimulationRunner:
                 tick_logs.append(action_log)
                 self.log_sink.log_action(action_log)
 
+                # Broadcast action to viewer
+                if self.event_bridge and hasattr(self.event_bridge, "broadcast"):
+                    try:
+                        self.event_bridge.broadcast(
+                            {
+                                "type": "action",
+                                "tick": self.world.tick,
+                                "agent_id": action_log.agent_id,
+                                "action_type": action_log.action_type,
+                                "params": action_log.params,
+                                "outcome": action_log.outcome,
+                            }
+                        )
+                    except Exception:
+                        pass
+
                 # Update collaboration metric using current room occupancy
                 try:
                     room = self.world.agent_location(agent.state.agent_id)
@@ -161,6 +199,21 @@ class SimulationRunner:
                 # Log message to console
                 self.console_logger.log_message(msg_log)
 
+                # Broadcast chat to viewer
+                if self.event_bridge and hasattr(self.event_bridge, "broadcast"):
+                    try:
+                        self.event_bridge.broadcast(
+                            {
+                                "type": "chat",
+                                "tick": self.world.tick,
+                                "from_agent": msg_log.from_agent,
+                                "room_id": msg_log.room_id,
+                                "content": msg_log.content,
+                            }
+                        )
+                    except Exception:
+                        pass
+
                 if decision.safety_event:
                     self.log_sink.log_safety(decision.safety_event)
 
@@ -175,6 +228,21 @@ class SimulationRunner:
                 self.metric_tracker.on_tick_end(self.world.tick, ratio)
             except Exception:
                 pass
+
+            # Broadcast tick summary with positions
+            if self.event_bridge and hasattr(self.event_bridge, "broadcast"):
+                try:
+                    positions = {agent_id: self.world.agent_location(agent_id) for agent_id in self.agents}
+                    self.event_bridge.broadcast(
+                        {
+                            "type": "tick",
+                            "tick": self.world.tick,
+                            "positions": positions,
+                            "stats": {"collab_ratio": ratio, "duration_ms": tick_duration_ms},
+                        }
+                    )
+                except Exception:
+                    pass
 
             history.append(TickResult(tick=self.world.tick, action_logs=tick_logs))
 

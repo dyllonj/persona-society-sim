@@ -38,12 +38,23 @@ Agents live inside a lightweight world containing locations, resources, institut
 
 6. **Runner CLI**
    - `python3 -m orchestrator.cli <config>` loads YAML configs, instantiates agents/world, and streams logs via `SimulationRunner`.
+   - Optional: start a WebSocket bridge and web viewer with `--viewer` to visualize rooms and agent movement in 3D.
    - `--mock-model` flag runs without HF weights for fast development; defaults to HF backend once vectors exist.
 
 ## Data flow
 ```
 trait prompts -> steering/compute_caa.py -> data/vectors/*.npy -> steering hooks -> agent generation
 agent observation -> memory store -> scheduler -> env -> logs -> metrics
+
+## 3D viewer integration (prototype → engine)
+
+- Bridge: `viewer/ws_bridge.py` starts `ws://127.0.0.1:8765/ws` and accepts JSON events:
+  - `{"type":"init", "world": {"locations": {...}}, "agents": [{agent_id, display_name, persona_coeffs, location_id}]}`
+  - `{"type":"tick", "tick": int, "positions": {agent_id: room_id}, "stats": {collab_ratio, duration_ms}}`
+  - `{"type":"action", "tick": int, "agent_id": str, "action_type": str, "params": {...}}`
+  - `{"type":"chat", "tick": int, "from_agent": str, "room_id": str, "content": str}`
+- Viewer: `viewer/static/index.html` (Three.js) renders a radial layout with room anchors and agent spheres.
+- Engine path: replicate the same WebSocket protocol in Unity/Godot/Unreal to render a richer world (NavMesh, animations, UI). The simulation remains the source of truth.
 ```
 
 ## Safety + governance

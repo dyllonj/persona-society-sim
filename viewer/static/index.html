@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Persona Society — 3D Viewer</title>
+  <style>
+    html, body { margin: 0; padding: 0; overflow: hidden; background: #0e0f12; color: #dde; font-family: system-ui, sans-serif; }
+    #hud { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.4); padding: 8px 12px; border-radius: 6px; font-size: 12px; }
+    #log { position: absolute; right: 10px; top: 10px; width: 380px; height: 40vh; overflow: auto; background: rgba(0,0,0,0.4); padding: 8px; border-radius: 6px; }
+    .line { margin: 2px 0; white-space: pre-wrap; }
+    .room-label { color: #9cf; }
+  </style>
+  <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+  <script src="https://unpkg.com/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
+  <script>
+    let scene, camera, renderer, controls;
+    let agentMeshes = {}; // agent_id -> mesh
+    let roomAnchors = {}; // room_id -> THREE.Vector3
+    let agentTargets = {}; // agent_id -> target Vector3
+    let agentColors = {};  // agent_id -> color
+
+    function addLog(text) {
+      const el = document.createElement('div');
+      el.className = 'line';
+      el.textContent = text;
+      document.getElementById('log').prepend(el);
+    }
+
+    function init() {
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
+      camera.position.set(0, 25, 40);
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+
+      const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+      scene.add(ambient);
+      const dir = new THREE.DirectionalLight(0xffffff, 0.6);
+      dir.position.set(30, 50, -20);
+      scene.add(dir);
+
+      const grid = new THREE.GridHelper(100, 20, 0x333333, 0x222222);
+      scene.add(grid);
+
+      window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth/window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      animate();
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      // simple interpolation towards targets
+      for (const id in agentMeshes) {
+        const mesh = agentMeshes[id];
+        const target = agentTargets[id];
+        if (target) {
+          mesh.position.lerp(target, 0.08);
+        }
+      }
+      renderer.render(scene, camera);
+    }
+
+    function placeRooms(rooms) {
+      // radial layout
+      const keys = Object.keys(rooms);
+      const radius = 18;
+      const geom = new THREE.CylinderGeometry(3.5, 3.5, 1, 18);
+      const mat = new THREE.MeshStandardMaterial({ color: 0x284a7a, metalness: 0.1, roughness: 0.8 });
+      for (let i = 0; i < keys.length; i++) {
+        const angle = (i / keys.length) * Math.PI * 2;
+        const pos = new THREE.Vector3(Math.cos(angle) * radius, 0.5, Math.sin(angle) * radius);
+        roomAnchors[keys[i]] = pos;
+        const mesh = new THREE.Mesh(geom, mat);
+        mesh.position.copy(pos);
+        scene.add(mesh);
+        // label
+        const div = document.createElement('div');
+        div.className = 'room-label';
+        div.textContent = keys[i];
+        const label = new CSS2DObject(div);
+        label.position.set(0, 1.5, 0);
+      }
+    }
+
+    function colorForPersona(persona) {
+      // Map Big Five to color hue; focus on Extraversion and Openness
+      const E = (persona?.E ?? 0) + 1.5; // 0..3
+      const O = (persona?.O ?? 0) + 1.5; // 0..3
+      const hue = (E / 3) * 240; // blue-ish to red-ish
+      const light = 0.35 + (O / 3) * 0.25;
+      const c = new THREE.Color().setHSL(hue/360, 0.65, light);
+      return c.getHex();
+    }
+
+    function upsertAgent(agent) {
+      const id = agent.agent_id;
+      if (!agentMeshes[id]) {
+        const geom = new THREE.SphereGeometry(0.8, 16, 16);
+        const color = colorForPersona(agent.persona_coeffs);
+        agentColors[id] = color;
+        const mat = new THREE.MeshStandardMaterial({ color, metalness: 0.1, roughness: 0.6 });
+        const mesh = new THREE.Mesh(geom, mat);
+        mesh.position.set(0, 1, 0);
+        scene.add(mesh);
+        agentMeshes[id] = mesh;
+      }
+      const room = agent.location_id;
+      const anchor = roomAnchors[room] || new THREE.Vector3(0, 0, 0);
+      agentTargets[id] = new THREE.Vector3(anchor.x, 1, anchor.z).add(new THREE.Vector3(Math.random()-0.5, 0, Math.random()-0.5));
+    }
+
+    function handleEvent(evt) {
+      if (evt.type === 'init') {
+        placeRooms(evt.world.locations);
+        for (const a of evt.agents) upsertAgent(a);
+        addLog(`Init: ${evt.agents.length} agents, ${Object.keys(evt.world.locations).length} rooms`);
+      } else if (evt.type === 'tick') {
+        for (const [id, room] of Object.entries(evt.positions)) {
+          upsertAgent({ agent_id: id, location_id: room, persona_coeffs: {} });
+        }
+        document.getElementById('hud').textContent = `Tick ${evt.tick} | collab ${(evt.stats?.collab_ratio ?? 0).toFixed(2)}`;
+      } else if (evt.type === 'action') {
+        addLog(`${evt.tick} ${evt.agent_id} ${evt.action_type} ${JSON.stringify(evt.params)}`);
+      } else if (evt.type === 'chat') {
+        const snippet = (evt.content || '').slice(0, 140);
+        addLog(`${evt.tick} ${evt.from_agent}@${evt.room_id}: ${snippet}`);
+      }
+    }
+
+    function connect() {
+      const url = `ws://127.0.0.1:8765/ws`;
+      const ws = new WebSocket(url);
+      ws.onopen = () => addLog('Connected to simulation');
+      ws.onmessage = (ev) => {
+        try { handleEvent(JSON.parse(ev.data)); } catch (e) { /* ignore */ }
+      };
+      ws.onclose = () => {
+        addLog('Disconnected. Reconnecting...');
+        setTimeout(connect, 2000);
+      };
+    }
+
+    // Minimal CSS2D renderer substitute for labels: use DOM overlay for speed.
+    class CSS2DObject { constructor(el) { this.el = el; } }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      init();
+      connect();
+    });
+  </script>
+</head>
+<body>
+  <div id="hud">Initializing…</div>
+  <div id="log"></div>
+</body>
+</html>
+
