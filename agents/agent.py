@@ -38,6 +38,7 @@ class Agent:
         planner: Planner,
         safety_governor: SafetyGovernor,
         max_new_tokens: int = 120,
+        reflect_every_n_ticks: int = 1,
     ):
         self.run_id = run_id
         self.state = state
@@ -47,6 +48,8 @@ class Agent:
         self.planner = planner
         self.safety_governor = safety_governor
         self.max_new_tokens = max_new_tokens
+        self.reflect_every_n_ticks = reflect_every_n_ticks
+        self._last_plan_suggestion: Optional[PlanSuggestion] = None
 
     # ---- persona helpers ----
 
@@ -75,12 +78,21 @@ class Agent:
         self.memory.add_event(self.state.agent_id, "observation", tick, observation, importance)
 
     def reflect_and_plan(self, tick: int) -> PlanSuggestion:
+        # Skip reflection if not on reflection cycle and we have a cached plan
+        should_reflect = (tick % self.reflect_every_n_ticks == 0)
+
+        if not should_reflect and self._last_plan_suggestion is not None:
+            # Reuse last plan suggestion (fast path)
+            return self._last_plan_suggestion
+
+        # Full reflection path
         summary, events = self.retriever.summarize(self.state.goals, current_tick=tick)
         reflection_text = f"Focus: {', '.join(self.state.goals) or 'open exploration'}"
         implications = [f"Reference memory {ev.memory_id}" for ev in events]
         self.memory.add_reflection(self.state.agent_id, tick, reflection_text, implications=implications)
         suggestion = self.planner.plan(self.state.goals, summary)
         self.memory.add_plan(self.state.agent_id, tick, tick + 3, [suggestion.action_type])
+        self._last_plan_suggestion = suggestion
         return suggestion
 
     def _build_prompt(self, observation: str, suggestion: PlanSuggestion) -> str:

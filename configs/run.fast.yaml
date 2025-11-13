@@ -1,0 +1,26 @@
+run_id: "fast_test"
+model_name: "meta-llama/Llama-3.1-8B-Instruct"
+population: 32
+steps: 200
+seed: 7
+layers: [16]  # Use only 1 layer instead of 3 for faster steering
+steering:
+  E: 0.8
+  A: 0.5
+  C: 0.6
+scenario: "market_voting_baseline"
+logging:
+  db_url: "sqlite:///./storage/sim_fast_test.db"
+  parquet_dir: "./storage/dumps/fast_test"
+safety:
+  alpha_clip: 1.5
+  toxicity_threshold: 0.4
+  governor_backoff: 0.2
+inference:
+  temperature: 0.7
+  top_p: 0.9
+  max_new_tokens: 48  # Reduced from 128 to 48 (3x faster)
+optimization:
+  reflect_every_n_ticks: 5  # Only reflect every 5 ticks instead of every tick
+  use_quantization: true     # Enable 4-bit quantization
+  batch_size: 8              # Batch 8 agents at once (future feature)

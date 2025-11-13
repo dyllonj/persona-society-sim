@@ -2,11 +2,27 @@
 set -euo pipefail
 
 RUN_ID=${1:-debug32}
+DUMP_DIR="storage/dumps/${RUN_ID}"
 
-python3 <<'PY'
-from pathlib import Path
+echo "Analyzing simulation run: ${RUN_ID}"
+echo "==========================================="
 
-run_id = "${RUN_ID}"
-print(f"Analysis placeholder for run {run_id}.")
-print("Load Parquet logs from storage/dumps and generate metrics when available.")
-PY
+# Check if dump directory exists
+if [ ! -d "$DUMP_DIR" ]; then
+    echo "ERROR: Dump directory not found: $DUMP_DIR"
+    echo "Run a simulation first to generate data."
+    exit 1
+fi
+
+# Run comprehensive analysis
+echo ""
+echo "Running comprehensive analysis..."
+python3 scripts/analyze_simulation.py --dump-dir "$DUMP_DIR"
+
+echo ""
+echo "Verifying steering vectors..."
+python3 scripts/verify_steering.py --messages-dir "$DUMP_DIR/messages"
+
+echo ""
+echo "==========================================="
+echo "Analysis complete! Check storage/analysis/ for plots."

@@ -68,8 +68,11 @@ def build_language_backend(
     mock: bool,
 ) -> LanguageBackend:
     inference = config.get("inference", {})
+    optimization = config.get("optimization", {})
     temperature = inference.get("temperature", 0.7)
     top_p = inference.get("top_p", 0.9)
+    use_quantization = optimization.get("use_quantization", False)
+
     if mock:
         return MockBackend(seed=config.get("seed", 0), temperature=temperature, top_p=top_p)
     torch_vectors = {
@@ -82,6 +85,7 @@ def build_language_backend(
         trait_vectors=torch_vectors,
         temperature=temperature,
         top_p=top_p,
+        use_quantization=use_quantization,
     )
 
 
@@ -96,7 +100,9 @@ def build_agents(
     rng = random.Random(config.get("seed", 7))
     base_persona = config.get("steering", {})
     inference = config.get("inference", {})
+    optimization = config.get("optimization", {})
     max_tokens = inference.get("max_new_tokens", 120)
+    reflect_every_n = optimization.get("reflect_every_n_ticks", 1)
     locations = list(world.locations.keys())
     agents: List[Agent] = []
     for idx in range(population):
@@ -129,6 +135,7 @@ def build_agents(
             planner=planner,
             safety_governor=safety_governor,
             max_new_tokens=max_tokens,
+            reflect_every_n_ticks=reflect_every_n,
         )
         agents.append(agent)
     return agents
