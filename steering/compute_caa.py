@@ -73,7 +73,7 @@ def main() -> None:
     parser.add_argument("trait", help="Trait identifier (e.g., E, A, C)")
     parser.add_argument("prompt_file", type=Path, help="Path to trait JSONL prompt pairs")
     parser.add_argument("output_dir", type=Path, help="Directory to store vectors")
-    parser.add_argument("--model", default="meta-llama/Llama-3-8b-instruct")
+    parser.add_argument("--model", default="meta-llama/Llama-3.1-8B-Instruct")
     parser.add_argument("--layers", nargs="*", type=int, default=DEFAULT_LAYERS)
     args = parser.parse_args()
 

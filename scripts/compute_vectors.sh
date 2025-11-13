@@ -2,7 +2,7 @@
 set -euo pipefail
 
 traits=(extraversion agreeableness conscientiousness)
-model="meta-llama/Llama-3-8b-instruct"
+model="meta-llama/Llama-3.1-8B-Instruct"
 
 trait_code() {
   case "$1" in

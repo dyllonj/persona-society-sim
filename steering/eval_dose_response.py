@@ -41,7 +41,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Sweep steering coefficients and log generations.")
     parser.add_argument("vector_store_id")
     parser.add_argument("--trait", required=True)
-    parser.add_argument("--model", default="meta-llama/Llama-3-8b-instruct")
+    parser.add_argument("--model", default="meta-llama/Llama-3.1-8B-Instruct")
     parser.add_argument("--layers", nargs="*", type=int, default=[12, 16, 20])
     parser.add_argument("--alphas", nargs="*", type=float, default=[-1.0, -0.5, 0.0, 0.5, 1.0])
     args = parser.parse_args()

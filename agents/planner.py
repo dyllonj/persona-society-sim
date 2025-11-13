@@ -36,5 +36,5 @@ class Planner:
             params = {"item": "produce", "qty": "1"}
         else:
             action = "talk"
-            params = {"topic": goal}
+            params = {"utterance": goal}
         return PlanSuggestion(action_type=action, params=params, utterance=utterance)
