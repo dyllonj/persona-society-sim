@@ -6,7 +6,7 @@ import argparse
 import random
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional
 from uuid import uuid4
 
 import numpy as np
@@ -20,10 +20,12 @@ from agents.planner import Planner
 from agents.retrieval import MemoryRetriever
 from env.world import World
 from orchestrator.console_logger import ConsoleLogger
+from orchestrator.objectives import ObjectiveManager
 from orchestrator.runner import SimulationRunner
 from orchestrator.scheduler import Scheduler
 from safety.governor import SafetyConfig, SafetyGovernor
 from schemas.agent import AgentState, PersonaCoeffs
+from schemas.objectives import ObjectiveTemplate
 from storage.log_sink import LogSink
 
 TRAIT_KEYS = ["E", "A", "C", "O", "N"]
@@ -141,6 +143,32 @@ def build_agents(
     return agents
 
 
+def build_objective_manager(config: Dict) -> Optional[ObjectiveManager]:
+    objectives_cfg = config.get("objectives") or {}
+    if not objectives_cfg.get("enabled", False):
+        return None
+    templates_cfg = objectives_cfg.get("templates") or {}
+    templates: Dict[str, ObjectiveTemplate] = {}
+    for name, payload in templates_cfg.items():
+        requirements = payload.get("requirements", {})
+        if not requirements:
+            continue
+        templates[name] = ObjectiveTemplate(
+            name=name,
+            type=payload.get("type", name),
+            description=payload.get("description", name),
+            requirements=requirements,
+            reward=payload.get("reward", {}),
+        )
+    if not templates:
+        templates = None  # type: ignore[assignment]
+    return ObjectiveManager(
+        templates=templates,
+        enabled=True,
+        seed=objectives_cfg.get("seed", config.get("seed", 7)),
+    )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Persona Society Sim runner")
     parser.add_argument("config", type=Path, help="Path to YAML config")
@@ -180,6 +208,7 @@ def main() -> None:
     logging_cfg = config.get("logging", {})
     log_sink = LogSink(run_id, logging_cfg.get("db_url"), logging_cfg.get("parquet_dir"))
     inference = config.get("inference", {})
+    objective_manager = build_objective_manager(config)
 
     # Create console logger if live mode is enabled
     console_logger = ConsoleLogger(
@@ -200,6 +229,7 @@ def main() -> None:
         temperature=inference.get("temperature", 0.7),
         top_p=inference.get("top_p", 0.9),
         console_logger=console_logger,
+        objective_manager=objective_manager,
     )
     runner.run(config.get("steps", 200), max_events_per_tick=args.max_events)
 

@@ -11,6 +11,7 @@ from agents.agent import ActionDecision, Agent
 from env import actions
 from env.world import World
 from orchestrator.console_logger import ConsoleLogger
+from orchestrator.objectives import ObjectiveManager
 from orchestrator.scheduler import Scheduler
 from schemas.logs import ActionLog, MsgLog
 from storage.log_sink import LogSink
@@ -33,6 +34,7 @@ class SimulationRunner:
         temperature: float,
         top_p: float,
         console_logger: Optional[ConsoleLogger] = None,
+        objective_manager: Optional[ObjectiveManager] = None,
     ):
         self.run_id = run_id
         self.world = world
@@ -42,6 +44,19 @@ class SimulationRunner:
         self.temperature = temperature
         self.top_p = top_p
         self.console_logger = console_logger or ConsoleLogger(enabled=False)
+        self.objective_manager = objective_manager
+        self.agent_satisfaction: Dict[str, float] = {agent_id: 0.0 for agent_id in self.agents}
+
+        if self.objective_manager:
+            self.objective_manager.register_reward_callback(self._handle_objective_reward)
+            for agent_id in self.agents:
+                self.objective_manager.ensure_objective(agent_id)
+
+    def _handle_objective_reward(self, agent_id: str, reward: Dict[str, float], _objective) -> None:
+        if agent_id not in self.agent_satisfaction:
+            self.agent_satisfaction[agent_id] = 0.0
+        satisfaction_delta = reward.get("satisfaction", 0.0)
+        self.agent_satisfaction[agent_id] += satisfaction_delta
 
     def run(self, steps: int, max_events_per_tick: int = 16) -> List[TickResult]:
         history: List[TickResult] = []
@@ -76,6 +91,11 @@ class SimulationRunner:
                 )
                 tick_logs.append(action_log)
                 self.log_sink.log_action(action_log)
+
+                if self.objective_manager:
+                    completed_objective = self.objective_manager.process_action_log(action_log)
+                    if completed_objective is not None:
+                        self.objective_manager.ensure_objective(agent.state.agent_id)
 
                 # Log action to console
                 self.console_logger.log_action(action_log)
