@@ -15,20 +15,28 @@ class ActionResult:
     info: Dict[str, str]
 
 
+MAX_BROADCAST_CHARS = 280
+
+
 def move(world: World, agent_id: str, destination: str) -> ActionResult:
     world.move_agent(agent_id, destination)
     return ActionResult("move", True, {"destination": destination})
 
 
 def talk(world: World, agent_id: str, utterance: str) -> ActionResult:
-    world.broadcast(f"{agent_id}: {utterance}")
-    return ActionResult("talk", True, {"utterance": utterance})
+    location = world.agent_location(agent_id)
+    truncated = utterance[:MAX_BROADCAST_CHARS]
+    room_id = location if location != "unknown" else None
+    world.broadcast(f"{agent_id}: {truncated}", room_id=room_id)
+    return ActionResult("talk", True, {"utterance": truncated})
 
 
 def trade(world: World, agent_id: str, item: str, qty: str) -> ActionResult:
     qty_int = int(qty)
     note = f"{agent_id} offers {qty_int} {item} at tick {world.tick}"
-    world.broadcast(note)
+    location = world.agent_location(agent_id)
+    room_id = location if location != "unknown" else None
+    world.broadcast(note[:MAX_BROADCAST_CHARS], room_id=room_id)
     return ActionResult("trade", True, {"item": item, "qty": str(qty_int)})
 
 

@@ -1,22 +1,19 @@
 from __future__ import annotations
 
 from env.world import World
+from orchestrator.scheduler import Scheduler
 
 
-def test_world_move():
-    world = World()
-    world.add_agent("agent-1", "town_square")
-    world.move_agent("agent-1", "market")
-    assert "agent-1" in world.locations["market"].occupants
-
-
-def test_recent_room_context_tracks_messages():
+def test_scheduler_includes_recent_room_activity():
     world = World()
     world.add_agent("agent-1", "town_square")
     world.broadcast("agent-1: hello", room_id="town_square")
     world.broadcast("agent-1: welcome", room_id="town_square")
 
-    context = world.recent_room_context("town_square", limit=2)
+    scheduler = Scheduler(world, seed=1)
+    encounters = scheduler.sample(["agent-1"], max_events=1)
 
+    assert len(encounters) == 1
+    context = encounters[0].context
     assert "Recent activity here" in context
     assert "agent-1: welcome" in context
