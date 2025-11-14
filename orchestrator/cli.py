@@ -161,13 +161,43 @@ def build_objective_manager(config: Dict, env_choice: str, difficulty: int) -> O
             reward=payload.get("reward", {}),
         )
     if not templates:
-        # Choose default template by environment flag
+        diff = max(1, difficulty)
         if env_choice == "research":
-            templates = {"research_facts": DEFAULT_OBJECTIVE_TEMPLATES["research_facts"]}
+            base = DEFAULT_OBJECTIVE_TEMPLATES["research_facts"]
+            requirements = {"research": diff, "submit_report": 1}
+            templates = {
+                base.name: ObjectiveTemplate(
+                    name=base.name,
+                    type=base.type,
+                    description=base.description,
+                    requirements=requirements,
+                    reward=base.reward,
+                )
+            }
         elif env_choice == "policy":
-            templates = {"policy_checklist": DEFAULT_OBJECTIVE_TEMPLATES["policy_checklist"]}
-        else:  # "nav"
-            templates = {"navigation_discovery": DEFAULT_OBJECTIVE_TEMPLATES["navigation_discovery"]}
+            base = DEFAULT_OBJECTIVE_TEMPLATES["policy_checklist"]
+            requirements = {"fill_field": diff, "submit_plan": 1}
+            templates = {
+                base.name: ObjectiveTemplate(
+                    name=base.name,
+                    type=base.type,
+                    description=base.description,
+                    requirements=requirements,
+                    reward=base.reward,
+                )
+            }
+        else:  # nav
+            base = DEFAULT_OBJECTIVE_TEMPLATES["navigation_discovery"]
+            requirements = {"scan": diff}
+            templates = {
+                base.name: ObjectiveTemplate(
+                    name=base.name,
+                    type=base.type,
+                    description=base.description,
+                    requirements=requirements,
+                    reward=base.reward,
+                )
+            }
     return ObjectiveManager(
         templates=templates,
         enabled=True,
@@ -216,6 +246,7 @@ def main() -> None:
     )
     backend = build_language_backend(config, layers, trait_vectors, mock=args.mock_model)
     world = World()
+    world.configure_environment(args.env, args.difficulty)
     scheduler = Scheduler(world, seed=config.get("seed", 7))
     agents = build_agents(run_id, config, world, backend, safety)
     logging_cfg = config.get("logging", {})

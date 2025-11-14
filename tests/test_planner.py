@@ -34,3 +34,36 @@ def test_planner_uses_objective_specific_action_when_at_location():
     assert plan.action_type == "talk"
     assert "collaborate" in plan.params["utterance"].lower()
     assert "collaborate" in plan.utterance.lower()
+
+
+def test_planner_handles_policy_objective_fields():
+    planner = Planner()
+    objective = SimpleNamespace(
+        objective_id="obj-2",
+        agent_id="agent-77",
+        type="policy",
+        description="Complete the compliance checklist",
+        requirements={"fill_field": 2, "submit_plan": 1},
+        progress={"fill_field": 1, "submit_plan": 0},
+    )
+
+    plan = planner.plan([], "", current_location="community_center", active_objective=objective, tick=5)
+
+    assert plan.action_type == "fill_field"
+    assert plan.params["field_name"].startswith("policy_field_")
+
+
+def test_planner_scans_when_navigation_objective_active():
+    planner = Planner()
+    objective = SimpleNamespace(
+        objective_id="obj-3",
+        agent_id="agent-99",
+        type="navigation",
+        description="Scan new areas",
+        requirements={"scan": 2},
+        progress={"scan": 0},
+    )
+
+    plan = planner.plan([], "", current_location="town_square", active_objective=objective, tick=3)
+
+    assert plan.action_type == "scan"

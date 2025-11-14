@@ -75,6 +75,10 @@ class ObjectiveManager:
             return None
         if action_log.outcome not in {"success", "noop"}:
             return None
+        if requirement_key == "fill_field" and action_log.info.get("unique") != "1":
+            return None
+        if requirement_key == "scan" and action_log.info.get("token_acquired") != "1":
+            return None
         objective.progress[requirement_key] = min(
             objective.progress.get(requirement_key, 0) + 1,
             objective.requirements[requirement_key],

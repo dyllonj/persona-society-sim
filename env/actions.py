@@ -51,10 +51,106 @@ def trade(world: World, agent_id: str, item: str, qty: str) -> ActionResult:
     return ActionResult("trade", True, {"item": item, "qty": str(qty_int)})
 
 
+# ---- Town economy + policy actions ----
+
+def work(world: World, agent_id: str, task: str = "town project") -> ActionResult:
+    location = world.agent_location(agent_id)
+    new_balance = world.adjust_resource(agent_id, "credits", 1)
+    note = f"{agent_id} worked on {task} at {location}"
+    room_id = location if location != "unknown" else None
+    world.broadcast(note[:MAX_BROADCAST_CHARS], room_id=room_id, speaker=agent_id, utterance=note)
+    return ActionResult(
+        "work",
+        True,
+        {"task": task, "resource": "credits", "balance": str(new_balance)},
+    )
+
+
+def gift(
+    world: World, agent_id: str, recipient: str, item: str = "credits", qty: str = "1"
+) -> ActionResult:
+    qty_int = max(1, int(qty))
+    balance = world.resource_balance(agent_id, item)
+    if balance < qty_int:
+        return ActionResult("gift", False, {"error": "insufficient", "item": item})
+    world.adjust_resource(agent_id, item, -qty_int)
+    world.adjust_resource(recipient, item, qty_int)
+    location = world.agent_location(agent_id)
+    room_id = location if location != "unknown" else None
+    note = f"{agent_id} gifted {qty_int} {item} to {recipient}"
+    world.broadcast(note[:MAX_BROADCAST_CHARS], room_id=room_id, speaker=agent_id, utterance=note)
+    return ActionResult("gift", True, {"item": item, "qty": str(qty_int), "to": recipient})
+
+
+def scan(world: World, agent_id: str) -> ActionResult:
+    location = world.agent_location(agent_id)
+    token = world.acquire_scan_token(agent_id, location)
+    if not token:
+        return ActionResult("scan", False, {"note": "no_tokens"})
+    room_id = location if location != "unknown" else None
+    note = f"{agent_id} scanned {location} and found {token}"
+    world.broadcast(note[:MAX_BROADCAST_CHARS], room_id=room_id, speaker=agent_id, utterance=note)
+    return ActionResult("scan", True, {"token": token, "token_acquired": "1"})
+
+
+def fill_field(world: World, agent_id: str, field_name: str, value: str) -> ActionResult:
+    if not field_name:
+        field_name = f"field_{world.tick}"
+    saved = world.record_checklist_field(agent_id, field_name, value)
+    location = world.agent_location(agent_id)
+    room_id = location if location != "unknown" else None
+    note = f"{agent_id} updated checklist field {field_name}"
+    world.broadcast(note[:MAX_BROADCAST_CHARS], room_id=room_id, speaker=agent_id, utterance=note)
+    if not saved:
+        return ActionResult(
+            "fill_field",
+            False,
+            {"field": field_name, "unique": "0", "note": "already_completed"},
+        )
+    return ActionResult("fill_field", True, {"field": field_name, "unique": "1"})
+
+
+def propose_plan(world: World, agent_id: str, summary: str = "") -> ActionResult:
+    plan = {
+        "summary": summary or "Coordinate civic improvements",
+        "fields": str(world.checklist_fields_completed(agent_id)),
+    }
+    world.agent_policy_plans[agent_id] = plan
+    location = world.agent_location(agent_id)
+    room_id = location if location != "unknown" else None
+    note = f"{agent_id} drafted a plan proposal"
+    world.broadcast(note[:MAX_BROADCAST_CHARS], room_id=room_id, speaker=agent_id, utterance=note)
+    return ActionResult("propose_plan", True, plan)
+
+
+def submit_plan(world: World, agent_id: str) -> ActionResult:
+    ready = world.policy_plan_ready(agent_id)
+    location = world.agent_location(agent_id)
+    room_id = location if location != "unknown" else None
+    fields_completed = world.checklist_fields_completed(agent_id)
+    status = "submitted" if ready else "incomplete"
+    note = (
+        f"{agent_id} attempted to submit a plan ({fields_completed}/{world.policy_required_fields} fields)"
+    )
+    world.broadcast(note[:MAX_BROADCAST_CHARS], room_id=room_id, speaker=agent_id, utterance=note)
+    info = {
+        "fields_completed": str(fields_completed),
+        "required": str(world.policy_required_fields),
+        "status": status,
+    }
+    return ActionResult("submit_plan", ready, info)
+
+
 ACTION_ROUTER = {
     "move": move,
     "talk": talk,
     "trade": trade,
+    "work": None,
+    "gift": None,
+    "scan": None,
+    "fill_field": None,
+    "propose_plan": None,
+    "submit_plan": None,
     "research": None,  # patched below
     "cite": None,
     "submit_report": None,
@@ -133,6 +229,12 @@ def submit_report(world: World, agent_id: str) -> ActionResult:
 
 # Attach dynamically to the router now that functions are defined
 ACTION_ROUTER.update({
+    "work": work,
+    "gift": gift,
+    "scan": scan,
+    "fill_field": fill_field,
+    "propose_plan": propose_plan,
+    "submit_plan": submit_plan,
     "research": research,
     "cite": cite,
     "submit_report": submit_report,
