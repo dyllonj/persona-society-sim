@@ -37,11 +37,33 @@ class World:
         self.tick = 0
         self.data_dir = Path(data_dir)
 
+        # Lightweight economy + policy state
+        self.agent_resources: Dict[str, Dict[str, int]] = {}
+        self.agent_checklists: Dict[str, Dict[str, str]] = {}
+        self.agent_policy_plans: Dict[str, Dict[str, str]] = {}
+        self.agent_scan_tokens: Dict[str, Set[str]] = {}
+        self.location_scan_tokens: Dict[str, List[str]] = {}
+        self.policy_required_fields = 3
+        self.nav_token_goal = 3
+        self.research_fact_goal = 3
+        self.environment = "research"
+
         # Research Sprint corpus and per-agent scratchpads
         self.corpus: Dict[str, Dict[str, str]] = {}
         self.targets: Dict[str, Dict[str, str]] = {}
         self.agent_research: Dict[str, Dict[str, object]] = {}
         self._load_corpus()
+        self._seed_scan_tokens()
+
+    def configure_environment(self, env_name: str, difficulty: int) -> None:
+        self.environment = env_name
+        if env_name == "policy":
+            self.policy_required_fields = max(1, difficulty)
+        elif env_name == "nav":
+            self.nav_token_goal = max(1, difficulty)
+        elif env_name == "research":
+            self.research_fact_goal = max(1, difficulty)
+        self._seed_scan_tokens()
 
     def add_agent(self, agent_id: str, location_id: str) -> None:
         location = self.locations.setdefault(location_id, Location(location_id, ""))
@@ -51,6 +73,54 @@ class World:
         for location in self.locations.values():
             location.occupants.discard(agent_id)
         self.locations.setdefault(destination, Location(destination, "")).occupants.add(agent_id)
+
+    # ---- economy + inventory helpers ----
+
+    def _ensure_inventory(self, agent_id: str) -> Dict[str, int]:
+        return self.agent_resources.setdefault(agent_id, {})
+
+    def adjust_resource(self, agent_id: str, item: str, delta: int) -> int:
+        inventory = self._ensure_inventory(agent_id)
+        new_balance = max(0, inventory.get(item, 0) + delta)
+        inventory[item] = new_balance
+        return new_balance
+
+    def resource_balance(self, agent_id: str, item: str) -> int:
+        inventory = self.agent_resources.get(agent_id, {})
+        return inventory.get(item, 0)
+
+    # ---- checklist helpers ----
+
+    def record_checklist_field(self, agent_id: str, field_name: str, value: str) -> bool:
+        checklist = self.agent_checklists.setdefault(agent_id, {})
+        if field_name in checklist:
+            return False
+        checklist[field_name] = value
+        return True
+
+    def checklist_fields_completed(self, agent_id: str) -> int:
+        return len(self.agent_checklists.get(agent_id, {}))
+
+    def policy_plan_ready(self, agent_id: str) -> bool:
+        return self.checklist_fields_completed(agent_id) >= self.policy_required_fields
+
+    # ---- scan token helpers ----
+
+    def _seed_scan_tokens(self) -> None:
+        tokens_per_location = max(3, self.nav_token_goal * 2)
+        self.location_scan_tokens = {
+            loc_id: [f"{loc_id}_token_{i}" for i in range(1, tokens_per_location + 1)]
+            for loc_id in self.locations
+        }
+
+    def acquire_scan_token(self, agent_id: str, location_id: str) -> str | None:
+        tokens = self.location_scan_tokens.setdefault(location_id, [])
+        if not tokens:
+            return None
+        token = tokens.pop(0)
+        owned = self.agent_scan_tokens.setdefault(agent_id, set())
+        owned.add(token)
+        return token
 
     def broadcast(
         self,

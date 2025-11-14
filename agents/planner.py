@@ -72,7 +72,18 @@ class Planner:
                 "action": "talk",
                 "utterance": "I'm working to build stronger community connections.",
             },
+            "policy": {
+                "location": "community_center",
+                "action": "fill_field",
+                "utterance": "Completing the compliance checklist.",
+            },
+            "navigation": {
+                "location": "town_square",
+                "action": "scan",
+                "utterance": "Covering new ground to find scan tokens.",
+            },
         }
+        self._nav_cycle = ["town_square", "market", "library", "community_center"]
 
     def plan(
         self,
@@ -113,7 +124,13 @@ class Planner:
     def _plan_for_objective(
         self, objective: Objective, current_location: str, tick: int
     ) -> Optional[PlanSuggestion]:
-        heuristic = self._objective_heuristics.get(objective.type.lower())
+        obj_type = objective.type.lower()
+        if obj_type == "policy":
+            return self._plan_policy_objective(objective, current_location)
+        if obj_type == "navigation":
+            return self._plan_navigation_objective(objective, current_location, tick)
+
+        heuristic = self._objective_heuristics.get(obj_type)
         if not heuristic:
             return None
 
@@ -133,7 +150,7 @@ class Planner:
 
         action_type = heuristic["action"]
         # Special handling for research-style objectives: schedule research → cite → submit
-        if objective.type.lower() in {"research", "research_facts"}:
+        if obj_type in {"research", "research_facts"}:
             step = tick % 4
             if step in (0, 1):
                 return PlanSuggestion("research", {"query": description.split()[0] if description else ""}, utterance)
@@ -160,3 +177,60 @@ class Planner:
             params = {}
 
         return PlanSuggestion(action_type=action_type, params=params, utterance=utterance)
+
+    def _plan_policy_objective(
+        self, objective: Objective, current_location: str
+    ) -> Optional[PlanSuggestion]:
+        target_location = "community_center"
+        if current_location != target_location:
+            return PlanSuggestion(
+                "move",
+                {"destination": target_location},
+                "Heading to the community center to finish the checklist.",
+            )
+        fields_required = objective.requirements.get("fill_field", 0)
+        fields_completed = objective.progress.get("fill_field", 0)
+        if fields_completed < fields_required:
+            field_name = f"policy_field_{fields_completed + 1}"
+            params = {
+                "field_name": field_name,
+                "value": f"Action plan item {fields_completed + 1}",
+            }
+            utterance = f"Filling checklist field {field_name}."
+            return PlanSuggestion("fill_field", params, utterance)
+        if objective.requirements.get("propose_plan"):
+            needed = objective.requirements["propose_plan"]
+            done = objective.progress.get("propose_plan", 0)
+            if done < needed:
+                return PlanSuggestion(
+                    "propose_plan",
+                    {"summary": objective.description},
+                    "Drafting the compliance plan summary.",
+                )
+        if objective.requirements.get("submit_plan"):
+            submitted = objective.progress.get("submit_plan", 0)
+            if submitted < objective.requirements["submit_plan"]:
+                return PlanSuggestion(
+                    "submit_plan",
+                    {},
+                    "Submitting the checklist for approval.",
+                )
+        return None
+
+    def _plan_navigation_objective(
+        self, objective: Objective, current_location: str, tick: int
+    ) -> Optional[PlanSuggestion]:
+        scan_goal = objective.requirements.get("scan", 0)
+        scans_completed = objective.progress.get("scan", 0)
+        # Rotate through known destinations based on tick + progress to avoid crowding
+        target_index = (scans_completed + tick) % len(self._nav_cycle)
+        target_location = self._nav_cycle[target_index]
+        if current_location != target_location and tick % 2 == 0:
+            utterance = f"Moving to {target_location.replace('_', ' ')} to scan for tokens."
+            return PlanSuggestion("move", {"destination": target_location}, utterance)
+        if scans_completed < scan_goal:
+            return PlanSuggestion("scan", {}, "Scanning the area for discovery tokens.")
+        # Once scans are complete, keep exploring to assist others
+        next_location = self._nav_cycle[(target_index + 1) % len(self._nav_cycle)]
+        utterance = "Coverage complete; relocating to coordinate with others."
+        return PlanSuggestion("move", {"destination": next_location}, utterance)

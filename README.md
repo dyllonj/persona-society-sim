@@ -101,15 +101,16 @@ You can select among a few RL-style environments using `--env` and a simple diff
   - Example: `python3 -m orchestrator.cli configs/run.small.yaml --env research --difficulty 3 --live`
 
 - `--env policy` (Policy Checklist):
-  - Goal: fill checklist fields and `submit_plan` for compliance.
-  - Difficulty: number of fields (planned actions `fill_field`, `propose_plan`, `submit_plan`).
+  - Goal: fill checklist fields, draft a summary, and `submit_plan` for compliance.
+  - Difficulty: number of required fields (actions `fill_field`, `propose_plan`, `submit_plan`).
   - Example: `python3 -m orchestrator.cli configs/run.small.yaml --env policy --difficulty 5 --live`
 
 - `--env nav` (Navigation + Discovery):
   - Goal: visit unique rooms and `scan` tokens while coordinating coverage.
-  - Difficulty: tokens required per agent.
+  - Difficulty: discovery tokens required per agent (`scan` actions consume finite room tokens).
   - Example: `python3 -m orchestrator.cli configs/run.small.yaml --env nav --difficulty 6 --live`
 
 Notes:
-- Research Sprint is fully wired with actions (`research`, `cite`, `submit_report`) and grading.
-- Policy and Navigation templates are available; actions and graders are being implemented next. Runs will still execute with those objectives, but completion logic is minimal until their actions are added.
+- Research Sprint uses `research`, `cite`, and `submit_report` plus a grader tied to the reference corpus.
+- Policy runs now track checklist progress in-world. Agents must complete unique `fill_field` actions, optionally `propose_plan`, and only a successful `submit_plan` counts toward their objective.
+- Navigation runs mint a limited pool of tokens per room. Agents must move around to `scan` fresh rooms; repeat scans that fail to collect a token no longer advance their goals.
