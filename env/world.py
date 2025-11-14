@@ -16,6 +16,13 @@ class Location:
     occupants: Set[str] = field(default_factory=set)
 
 
+@dataclass
+class RoomUtterance:
+    speaker: str
+    content: str
+    tick: int
+
+
 class World:
     def __init__(self, room_history_limit: int = 8, data_dir: str = "data"):
         self.locations: Dict[str, Location] = {
@@ -25,7 +32,7 @@ class World:
             "library": Location("library", "Quiet work and study"),
         }
         self.noticeboard: List[str] = []
-        self.room_history: Dict[str, Deque[str]] = {}
+        self.room_history: Dict[str, Deque[RoomUtterance]] = {}
         self._room_history_limit = room_history_limit
         self.tick = 0
         self.data_dir = Path(data_dir)
@@ -45,14 +52,27 @@ class World:
             location.occupants.discard(agent_id)
         self.locations.setdefault(destination, Location(destination, "")).occupants.add(agent_id)
 
-    def broadcast(self, msg: str, room_id: str | None = None) -> None:
+    def broadcast(
+        self,
+        msg: str,
+        room_id: str | None = None,
+        *,
+        speaker: Optional[str] = None,
+        utterance: Optional[str] = None,
+    ) -> None:
         self.noticeboard.append(msg)
         if not room_id:
             return
         history = self.room_history.setdefault(
             room_id, deque(maxlen=self._room_history_limit)
         )
-        history.append(msg)
+        history.append(
+            RoomUtterance(
+                speaker=speaker or "system",
+                content=utterance or msg,
+                tick=self.tick,
+            )
+        )
 
     # ---- Research corpus helpers ----
 
@@ -128,15 +148,25 @@ class World:
             "reward_points": reward_points,
         }
 
-    def recent_room_context(self, room_id: str, limit: int = 3) -> str:
-        """Return a formatted snippet of recent messages for ``room_id``."""
+    def recent_room_transcript(self, room_id: str, limit: int = 3) -> List[RoomUtterance]:
+        """Return the most recent structured utterances for ``room_id``."""
 
         history = self.room_history.get(room_id)
         if not history:
+            return []
+        tail = list(history)[-limit:]
+        return tail
+
+    def recent_room_context(self, room_id: str, limit: int = 3) -> str:
+        """Return a formatted snippet of recent messages for ``room_id``."""
+
+        transcript = self.recent_room_transcript(room_id, limit=limit)
+        if not transcript:
             return ""
 
-        tail = list(history)[-limit:]
-        formatted = "\n".join(f"- {entry}" for entry in tail)
+        formatted = "\n".join(
+            f"- {entry.speaker}: {entry.content}" for entry in transcript
+        )
         return f"Recent activity here:\n{formatted}"
 
     def sample_context(self, agent_id: str) -> str:
