@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from typing import Dict, List, Optional, TYPE_CHECKING
 
 from agents.language_backend import GenerationResult, LanguageBackend
+from utils.sanitize import sanitize_agent_output
 from agents.memory import MemoryStore
 from agents.planner import PlanSuggestion, Planner
 from agents.retrieval import MemoryRetriever
@@ -174,6 +175,10 @@ class Agent:
         )
         alphas = self.persona_alphas()
         generation = self.generate(prompt, alphas)
+        cleaned_text = sanitize_agent_output(generation.text)
+        # Fallback if cleaning removed everything
+        if not cleaned_text:
+            cleaned_text = suggestion.utterance or ""
         safety_event = self.safety_governor.evaluate(
             run_id=self.run_id,
             agent_id=self.state.agent_id,
@@ -185,11 +190,11 @@ class Agent:
             self.apply_alpha_delta(safety_event.applied_alpha_delta)
         params = dict(suggestion.params)
         if suggestion.action_type == "talk":
-            params["utterance"] = generation.text
+            params["utterance"] = cleaned_text
         return ActionDecision(
             action_type=suggestion.action_type,
             params=params,
-            utterance=generation.text,
+            utterance=cleaned_text,
             prompt=prompt,
             tokens_in=generation.tokens_in,
             tokens_out=generation.tokens_out,

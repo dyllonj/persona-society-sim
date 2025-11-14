@@ -20,6 +20,10 @@ MAX_BROADCAST_CHARS = 280
 
 
 def move(world: World, agent_id: str, destination: str) -> ActionResult:
+    # Suppress no-op moves
+    current = world.agent_location(agent_id)
+    if current == destination:
+        return ActionResult("move", True, {"destination": destination, "note": "no_op"})
     world.move_agent(agent_id, destination)
     return ActionResult("move", True, {"destination": destination})
 

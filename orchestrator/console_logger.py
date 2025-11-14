@@ -5,6 +5,7 @@ from __future__ import annotations
 import sys
 from datetime import datetime
 from typing import Dict, Optional
+import json
 
 from schemas.logs import ActionLog, MsgLog
 
@@ -90,11 +91,30 @@ class ConsoleLogger:
         details = []
         if "destination" in action_log.params:
             if "from" in action_log.params:
-                details.append(
-                    f"{action_log.params['from']} → {action_log.params['destination']}"
-                )
+                # Suppress no-op move logs (e.g., library → library)
+                if (
+                    action_log.action_type == "move"
+                    and action_log.params.get("from") == action_log.params.get("destination")
+                ):
+                    return
+                details.append(f"{action_log.params['from']} → {action_log.params['destination']}")
             else:
                 details.append(f"→ {action_log.params['destination']}")
+        if action_log.action_type == "cite":
+            doc = action_log.info.get("doc_id")
+            if doc:
+                details.append(f"doc:{doc}")
+        if action_log.action_type == "research":
+            doc = action_log.info.get("doc_id")
+            if doc:
+                details.append(f"doc:{doc}")
+            ff = action_log.info.get("facts_found")
+            if ff:
+                try:
+                    facts = json.loads(ff)
+                    details.append(f"facts:{len(facts)}")
+                except Exception:
+                    pass
         if "item" in action_log.params:
             details.append(f"item: {action_log.params['item']}")
         if "qty" in action_log.params:
@@ -130,8 +150,12 @@ class ConsoleLogger:
 
         print(f"    {self._color('💬', 'gray')} {self._color(agent_id, 'bold')} @ {self._color(room, 'magenta')}")
 
-        # Handle multi-line content
-        lines = content.split('\n')
+        # Handle multi-line content with light de-duplication
+        raw_lines = content.split('\n')
+        lines: list[str] = []
+        for ln in raw_lines:
+            if not lines or ln != lines[-1]:
+                lines.append(ln)
         for i, line in enumerate(lines[:3]):  # Show max 3 lines
             if i == 0:
                 print(f"       {self._color(line, 'white')}")

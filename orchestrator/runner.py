@@ -156,16 +156,34 @@ class SimulationRunner:
                     except Exception:
                         pass
 
-                # Update collaboration metric using current room occupancy
+                # Update collaboration metric using occupancy at source room for
+                # actions that represent room-level collaboration (speak/share/work)
                 try:
-                    room = self.world.agent_location(agent.state.agent_id)
-                    occupants = len(self.world.locations.get(room).occupants) if room in self.world.locations else 0
-                    if decision.action_type in {"talk", "trade", "work"}:
+                    # Count actions that broadcast or imply collaboration in-room
+                    executed_type = env_result.action_type
+                    collab_like = {"talk", "trade", "work", "research", "cite", "submit_report"}
+                    if executed_type in collab_like:
+                        # Use source location occupancy (pre-move context)
+                        room = src_location
+                        occupants = (
+                            len(self.world.locations.get(room).occupants)
+                            if room in self.world.locations
+                            else 0
+                        )
                         total_actions += 1
                         if occupants and occupants > 1:
                             collab_actions += 1
-                    # Metrics tracker for per-agent summaries
-                    self.metric_tracker.on_action(action_log, occupants)
+                        # Metrics tracker for per-agent summaries
+                        self.metric_tracker.on_action(action_log, occupants)
+                    else:
+                        # Still feed metrics with current occupancy for visibility
+                        room_now = self.world.agent_location(agent.state.agent_id)
+                        occ_now = (
+                            len(self.world.locations.get(room_now).occupants)
+                            if room_now in self.world.locations
+                            else 0
+                        )
+                        self.metric_tracker.on_action(action_log, occ_now)
                 except Exception:
                     # Metric collection should never interfere with the run
                     pass

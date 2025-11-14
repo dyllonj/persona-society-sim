@@ -7,6 +7,7 @@ from typing import Dict, List, Optional
 
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers.utils import logging as hf_logging
 
 from steering.hooks import SteeringController
 
@@ -54,6 +55,11 @@ class HFBackend(LanguageBackend):
     ):
         super().__init__(temperature=temperature, top_p=top_p)
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        # Reduce Transformers log verbosity (e.g., pad_token warnings)
+        try:
+            hf_logging.set_verbosity_error()
+        except Exception:
+            pass
 
         # Load model with optional quantization
         if use_quantization:
@@ -88,6 +94,7 @@ class HFBackend(LanguageBackend):
                 max_new_tokens=max_new_tokens,
                 temperature=self.temperature,
                 top_p=self.top_p,
+                pad_token_id=self.tokenizer.pad_token_id or self.tokenizer.eos_token_id,
             )
         tokens_in = tokens["input_ids"].shape[-1]
         generated = output[0][tokens_in:]
