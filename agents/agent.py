@@ -8,7 +8,7 @@ prompts.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, List, Optional, TYPE_CHECKING
+from typing import Dict, List, Optional, TYPE_CHECKING, Sequence
 
 from agents.language_backend import GenerationResult, LanguageBackend
 from utils.sanitize import sanitize_agent_output
@@ -17,6 +17,7 @@ from agents.planner import PlanSuggestion, Planner
 from agents.retrieval import MemoryRetriever
 from safety.governor import SafetyGovernor
 from schemas.agent import AgentState
+from env.world import RoomUtterance
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from schemas.objectives import Objective
@@ -123,10 +124,18 @@ class Agent:
         suggestion: PlanSuggestion,
         *,
         current_location: Optional[str] = None,
+        recent_dialogue: Optional[Sequence[RoomUtterance]] = None,
     ) -> str:
         goals_text = ", ".join(self.state.goals) or "explore town"
         location_text = current_location or "unknown"
         agent_name = self.state.agent_id
+        dialogue_section = ""
+        if recent_dialogue:
+            formatted_dialogue = "\n".join(
+                f"- {entry.speaker} (tick {entry.tick}): {entry.content}"
+                for entry in recent_dialogue
+            )
+            dialogue_section = f"Recent dialogue:\n{formatted_dialogue}\n"
         return (
             f"System: You are {agent_name}. Write ONLY your own single response as {agent_name}.\n"
             "IMPORTANT RULES:\n"
@@ -140,6 +149,7 @@ class Agent:
             f"\nCurrent location: {location_text}\n"
             f"Current goals: {goals_text}\n"
             f"Observation: {observation}\n"
+            f"{dialogue_section}"
             f"Intended utterance guidance: {suggestion.utterance}\n"
             f"\n{agent_name}'s response:"
         )
@@ -153,6 +163,7 @@ class Agent:
         tick: int,
         current_location: Optional[str] = None,
         active_objective: Optional[Objective] = None,
+        recent_dialogue: Optional[Sequence[RoomUtterance]] = None,
     ) -> ActionDecision:
         self.perceive(observation, tick)
         suggestion = self.reflect_and_plan(
@@ -172,6 +183,7 @@ class Agent:
             observation,
             suggestion,
             current_location=current_location,
+            recent_dialogue=recent_dialogue,
         )
         alphas = self.persona_alphas()
         generation = self.generate(prompt, alphas)
