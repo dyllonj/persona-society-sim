@@ -1,0 +1,14 @@
+{
+  "docs": {
+    "doc_alpha": {
+      "fact_alpha": "Alpha fact about the town",
+      "fact_beta": "Secondary detail"
+    },
+    "doc_beta": {
+      "fact_gamma": "Gamma insight"
+    }
+  },
+  "targets": {
+    "fact_alpha": {"doc_id": "doc_alpha", "answer": "Alpha fact about the town"}
+  }
+}
