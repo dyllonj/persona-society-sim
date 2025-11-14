@@ -6,10 +6,13 @@
   <title>Persona Society — 3D Viewer</title>
   <style>
     html, body { margin: 0; padding: 0; overflow: hidden; background: #0e0f12; color: #dde; font-family: system-ui, sans-serif; }
-    #hud { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.4); padding: 8px 12px; border-radius: 6px; font-size: 12px; }
-    #log { position: absolute; right: 10px; top: 10px; width: 380px; height: 40vh; overflow: auto; background: rgba(0,0,0,0.4); padding: 8px; border-radius: 6px; }
+    #hud { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.45); padding: 8px 12px; border-radius: 6px; font-size: 12px; min-width: 220px; }
+    #log { position: absolute; right: 10px; top: 10px; width: 380px; height: 40vh; overflow: auto; background: rgba(0,0,0,0.45); padding: 8px; border-radius: 6px; }
     .line { margin: 2px 0; white-space: pre-wrap; }
-    .room-label { color: #9cf; }
+    #state { position: absolute; left: 10px; bottom: 10px; width: 320px; background: rgba(0,0,0,0.45); padding: 8px 12px; border-radius: 6px; font-size: 11px; display: flex; gap: 12px; }
+    #state pre { margin: 0; white-space: pre-line; }
+    #rooms-panel, #inventory-panel { max-height: 32vh; overflow-y: auto; }
+    #rules-panel { margin-top: 4px; font-size: 11px; color: #9cf; }
   </style>
   <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
   <script src="https://unpkg.com/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
@@ -19,6 +22,7 @@
     let roomAnchors = {}; // room_id -> THREE.Vector3
     let agentTargets = {}; // agent_id -> target Vector3
     let agentColors = {};  // agent_id -> color
+    let roomMetadata = {}; // room_id -> metadata
 
     function addLog(text) {
       const el = document.createElement('div');
@@ -70,24 +74,38 @@
     }
 
     function placeRooms(rooms) {
-      // radial layout
       const keys = Object.keys(rooms);
-      const radius = 18;
       const geom = new THREE.CylinderGeometry(3.5, 3.5, 1, 18);
       const mat = new THREE.MeshStandardMaterial({ color: 0x284a7a, metalness: 0.1, roughness: 0.8 });
-      for (let i = 0; i < keys.length; i++) {
-        const angle = (i / keys.length) * Math.PI * 2;
-        const pos = new THREE.Vector3(Math.cos(angle) * radius, 0.5, Math.sin(angle) * radius);
-        roomAnchors[keys[i]] = pos;
+      roomMetadata = rooms;
+      for (const key of keys) {
+        const room = rooms[key];
+        const coords = room?.coords || { x: 0, y: 0 };
+        const pos = new THREE.Vector3(coords.x, 0.5, coords.y);
+        roomAnchors[key] = pos;
         const mesh = new THREE.Mesh(geom, mat);
         mesh.position.copy(pos);
         scene.add(mesh);
-        // label
-        const div = document.createElement('div');
-        div.className = 'room-label';
-        div.textContent = keys[i];
-        const label = new CSS2DObject(div);
-        label.position.set(0, 1.5, 0);
+      }
+      // Draw adjacency links
+      const lineMaterial = new THREE.LineBasicMaterial({ color: 0x555555 });
+      const seen = new Set();
+      for (const [roomId, room] of Object.entries(rooms)) {
+        const neighbors = room.neighbors || [];
+        for (const neighbor of neighbors) {
+          const key = [roomId, neighbor].sort().join(':');
+          if (seen.has(key)) continue;
+          const start = roomAnchors[roomId];
+          const end = roomAnchors[neighbor];
+          if (!start || !end) continue;
+          const geometry = new THREE.BufferGeometry().setFromPoints([
+            start.clone(),
+            end.clone()
+          ]);
+          const line = new THREE.Line(geometry, lineMaterial);
+          scene.add(line);
+          seen.add(key);
+        }
       }
     }
 
@@ -115,12 +133,63 @@
       }
       const room = agent.location_id;
       const anchor = roomAnchors[room] || new THREE.Vector3(0, 0, 0);
-      agentTargets[id] = new THREE.Vector3(anchor.x, 1, anchor.z).add(new THREE.Vector3(Math.random()-0.5, 0, Math.random()-0.5));
+      const jitter = new THREE.Vector3(Math.random()-0.5, 0, Math.random()-0.5);
+      agentTargets[id] = new THREE.Vector3(anchor.x, 1, anchor.z).add(jitter);
+    }
+
+    function updateRoomPanel(world) {
+      const panel = document.getElementById('rooms-panel');
+      if (!world || !world.locations) {
+        panel.textContent = 'No rooms yet';
+        return;
+      }
+      const lines = [];
+      for (const [id, room] of Object.entries(world.locations)) {
+        const resEntries = Object.entries(room.resources || {});
+        const resources = resEntries.length ? resEntries.map(([k, v]) => `${k}:${v}`).join(', ') : 'none';
+        const occupancy = `${(room.occupants || []).length}/${room.capacity}`;
+        lines.push(`${id} (${occupancy})\n  resources: ${resources}`);
+      }
+      panel.textContent = lines.join('\n');
+    }
+
+    function updateInventoryPanel(inventories) {
+      const panel = document.getElementById('inventory-panel');
+      if (!inventories) {
+        panel.textContent = 'No inventories tracked yet';
+        return;
+      }
+      const lines = [];
+      for (const [agent, items] of Object.entries(inventories)) {
+        const entries = Object.entries(items || {});
+        const summary = entries.length ? entries.map(([k,v]) => `${k}:${v}`).join(', ') : '—';
+        lines.push(`${agent}: ${summary}`);
+      }
+      panel.textContent = lines.join('\n');
+    }
+
+    function updateRulesPanel(rules) {
+      const panel = document.getElementById('rules-panel');
+      if (!rules || !rules.length) {
+        panel.textContent = 'Active rules: none';
+        return;
+      }
+      const snippets = rules.map(r => `• ${r.text || r}`);
+      panel.textContent = `Active rules:\n${snippets.join('\n')}`;
     }
 
     function handleEvent(evt) {
       if (evt.type === 'init') {
         placeRooms(evt.world.locations);
+        updateRoomPanel(evt.world);
+        const inv = {};
+        if (evt.world.agents) {
+          for (const [agentId, data] of Object.entries(evt.world.agents)) {
+            inv[agentId] = data.inventory || {};
+          }
+        }
+        updateInventoryPanel(inv);
+        updateRulesPanel(evt.world.rules || []);
         for (const a of evt.agents) upsertAgent(a);
         addLog(`Init: ${evt.agents.length} agents, ${Object.keys(evt.world.locations).length} rooms`);
       } else if (evt.type === 'tick') {
@@ -128,6 +197,11 @@
           upsertAgent({ agent_id: id, location_id: room, persona_coeffs: {} });
         }
         document.getElementById('hud').textContent = `Tick ${evt.tick} | collab ${(evt.stats?.collab_ratio ?? 0).toFixed(2)}`;
+        updateInventoryPanel(evt.inventories);
+        if (evt.world) {
+          updateRoomPanel(evt.world);
+          updateRulesPanel(evt.world.rules || []);
+        }
       } else if (evt.type === 'action') {
         addLog(`${evt.tick} ${evt.agent_id} ${evt.action_type} ${JSON.stringify(evt.params)}`);
       } else if (evt.type === 'chat') {
@@ -149,9 +223,6 @@
       };
     }
 
-    // Minimal CSS2D renderer substitute for labels: use DOM overlay for speed.
-    class CSS2DObject { constructor(el) { this.el = el; } }
-
     window.addEventListener('DOMContentLoaded', () => {
       init();
       connect();
@@ -161,6 +232,17 @@
 <body>
   <div id="hud">Initializing…</div>
   <div id="log"></div>
+  <div id="state">
+    <div>
+      <strong>Rooms</strong>
+      <pre id="rooms-panel">Loading…</pre>
+    </div>
+    <div>
+      <strong>Inventories</strong>
+      <pre id="inventory-panel">Loading…</pre>
+      <div id="rules-panel"></div>
+    </div>
+  </div>
 </body>
 </html>
 
