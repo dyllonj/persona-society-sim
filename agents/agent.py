@@ -94,6 +94,7 @@ class Agent:
         tick: int,
         current_location: Optional[str] = None,
         active_objective: Optional[Objective] = None,
+        rule_context: Optional[List[str]] = None,
     ) -> PlanSuggestion:
         # Skip reflection if not on reflection cycle and we have a cached plan
         should_reflect = (tick % self.reflect_every_n_ticks == 0)
@@ -113,6 +114,7 @@ class Agent:
             current_location=current_location,
             active_objective=active_objective,
             tick=tick,
+            rule_context=rule_context,
         )
         self.memory.add_plan(self.state.agent_id, tick, tick + 3, [suggestion.action_type])
         self._last_plan_suggestion = suggestion
@@ -164,12 +166,14 @@ class Agent:
         current_location: Optional[str] = None,
         active_objective: Optional[Objective] = None,
         recent_dialogue: Optional[Sequence[RoomUtterance]] = None,
+        rule_context: Optional[List[str]] = None,
     ) -> ActionDecision:
         self.perceive(observation, tick)
         suggestion = self.reflect_and_plan(
             tick,
             current_location=current_location,
             active_objective=active_objective,
+            rule_context=rule_context,
         )
         # Add a brief pre-talk sync at the very beginning to reduce immediate moves.
         if tick == 0 and suggestion.action_type == "move":

@@ -41,14 +41,42 @@ def talk(world: World, agent_id: str, utterance: str) -> ActionResult:
     return ActionResult("talk", True, {"utterance": truncated})
 
 
-def trade(world: World, agent_id: str, item: str, qty: str) -> ActionResult:
-    qty_int = int(qty)
-    note = f"{agent_id} offers {qty_int} {item} at tick {world.tick}"
+def trade(
+    world: World,
+    agent_id: str,
+    item: str,
+    qty: str,
+    price: str = "1",
+    side: str = "buy",
+) -> ActionResult:
+    try:
+        qty_int = max(1, int(qty))
+    except ValueError:
+        return ActionResult("trade", False, {"error": "invalid_qty"})
+    try:
+        unit_price = float(price)
+    except ValueError:
+        unit_price = 1.0
     location = world.agent_location(agent_id)
-    room_id = location if location != "unknown" else None
-    clipped = note[:MAX_BROADCAST_CHARS]
-    world.broadcast(clipped, room_id=room_id, speaker=agent_id, utterance=clipped)
-    return ActionResult("trade", True, {"item": item, "qty": str(qty_int)})
+    if location == "unknown":
+        return ActionResult("trade", False, {"error": "no_location"})
+    success, info = world.trade_with_location(
+        agent_id=agent_id,
+        location_id=location,
+        item=item,
+        qty=qty_int,
+        price=unit_price,
+        side=side,
+    )
+    room_id = location
+    action_note = (
+        f"{agent_id} {info.get('note', 'traded')} {qty_int} {item} ({side}) at {location}"
+        if success
+        else f"{agent_id} trade failed: {info.get('error', 'unknown')}"
+    )
+    world.broadcast(action_note[:MAX_BROADCAST_CHARS], room_id=room_id, speaker=agent_id, utterance=action_note)
+    info.update({"item": item, "qty": str(qty_int), "side": side})
+    return ActionResult("trade", success, info)
 
 
 # ---- Town economy + policy actions ----
@@ -138,6 +166,10 @@ def submit_plan(world: World, agent_id: str) -> ActionResult:
         "required": str(world.policy_required_fields),
         "status": status,
     }
+    if ready:
+        rule = world.enact_plan_rule(agent_id)
+        if rule:
+            info.update({"rule_id": rule.rule_id, "rule_text": rule.text})
     return ActionResult("submit_plan", ready, info)
 
 

@@ -4,9 +4,13 @@ from __future__ import annotations
 
 from collections import deque
 from dataclasses import dataclass, field
-from typing import Deque, Dict, List, Set, Optional
+from typing import Deque, Dict, Iterable, List, Optional, Set
 from pathlib import Path
 import json
+
+from env.economy import Economy
+from env.institutions import InstitutionManager
+from schemas.agent import Rule
 
 
 @dataclass
@@ -14,6 +18,22 @@ class Location:
     name: str
     description: str
     occupants: Set[str] = field(default_factory=set)
+    x: float = 0.0
+    y: float = 0.0
+    neighbors: Set[str] = field(default_factory=set)
+    capacity: int = 8
+    resources: Dict[str, int] = field(default_factory=dict)
+
+    def to_dict(self) -> Dict[str, object]:
+        return {
+            "name": self.name,
+            "description": self.description,
+            "coords": {"x": self.x, "y": self.y},
+            "neighbors": sorted(self.neighbors),
+            "capacity": self.capacity,
+            "resources": dict(self.resources),
+            "occupants": sorted(self.occupants),
+        }
 
 
 @dataclass
@@ -26,10 +46,42 @@ class RoomUtterance:
 class World:
     def __init__(self, room_history_limit: int = 8, data_dir: str = "data"):
         self.locations: Dict[str, Location] = {
-            "town_square": Location("town_square", "Central gathering spot"),
-            "community_center": Location("community_center", "Meetings, classes, and civic events"),
-            "market": Location("market", "Barter goods and post offers"),
-            "library": Location("library", "Quiet work and study"),
+            "town_square": Location(
+                "town_square",
+                "Central gathering spot",
+                x=0.0,
+                y=0.0,
+                neighbors={"market", "community_center", "library"},
+                capacity=20,
+                resources={"credits": 20, "tokens": 3},
+            ),
+            "community_center": Location(
+                "community_center",
+                "Meetings, classes, and civic events",
+                x=-6.0,
+                y=-8.0,
+                neighbors={"town_square", "market", "library"},
+                capacity=14,
+                resources={"supplies": 5, "credits": 15},
+            ),
+            "market": Location(
+                "market",
+                "Barter goods and post offers",
+                x=10.0,
+                y=-2.0,
+                neighbors={"town_square", "community_center"},
+                capacity=16,
+                resources={"produce": 12, "tools": 6, "credits": 50},
+            ),
+            "library": Location(
+                "library",
+                "Quiet work and study",
+                x=-9.0,
+                y=7.5,
+                neighbors={"town_square", "community_center"},
+                capacity=10,
+                resources={"scrolls": 4, "credits": 5},
+            ),
         }
         self.noticeboard: List[str] = []
         self.room_history: Dict[str, Deque[RoomUtterance]] = {}
@@ -38,7 +90,8 @@ class World:
         self.data_dir = Path(data_dir)
 
         # Lightweight economy + policy state
-        self.agent_resources: Dict[str, Dict[str, int]] = {}
+        self.economy = Economy()
+        self.institutions = InstitutionManager()
         self.agent_checklists: Dict[str, Dict[str, str]] = {}
         self.agent_policy_plans: Dict[str, Dict[str, str]] = {}
         self.agent_scan_tokens: Dict[str, Set[str]] = {}
@@ -54,6 +107,7 @@ class World:
         self.agent_research: Dict[str, Dict[str, object]] = {}
         self._load_corpus()
         self._seed_scan_tokens()
+        self._seed_rules()
 
     def configure_environment(self, env_name: str, difficulty: int) -> None:
         self.environment = env_name
@@ -76,18 +130,95 @@ class World:
 
     # ---- economy + inventory helpers ----
 
-    def _ensure_inventory(self, agent_id: str) -> Dict[str, int]:
-        return self.agent_resources.setdefault(agent_id, {})
-
     def adjust_resource(self, agent_id: str, item: str, delta: int) -> int:
-        inventory = self._ensure_inventory(agent_id)
-        new_balance = max(0, inventory.get(item, 0) + delta)
-        inventory[item] = new_balance
-        return new_balance
+        return self.economy.adjust(agent_id, item, delta)
 
     def resource_balance(self, agent_id: str, item: str) -> int:
-        inventory = self.agent_resources.get(agent_id, {})
-        return inventory.get(item, 0)
+        return self.economy.balance(agent_id, item)
+
+    def agent_inventory(self, agent_id: str) -> Dict[str, int]:
+        return self.economy.snapshot().get(agent_id, {})
+
+    def trade_with_location(
+        self,
+        agent_id: str,
+        location_id: str,
+        item: str,
+        qty: int,
+        price: float,
+        side: str,
+    ) -> tuple[bool, Dict[str, str]]:
+        location = self.locations.get(location_id)
+        if not location:
+            return False, {"error": "invalid_location"}
+        if qty <= 0:
+            return False, {"error": "invalid_qty"}
+        normalized_side = side.lower()
+        if normalized_side not in {"buy", "sell"}:
+            normalized_side = "buy"
+        total_price = int(max(0, round(price * qty)))
+        if normalized_side == "buy":
+            stock = location.resources.get(item, 0)
+            if stock < qty:
+                return False, {"error": "insufficient_stock"}
+            if self.resource_balance(agent_id, "credits") < total_price:
+                return False, {"error": "insufficient_credits"}
+            location.resources[item] = stock - qty
+            self.adjust_resource(agent_id, item, qty)
+            if total_price:
+                location.resources["credits"] = location.resources.get("credits", 0) + total_price
+                self.adjust_resource(agent_id, "credits", -total_price)
+            return True, {
+                "note": "purchased",
+                "price_paid": str(total_price),
+                "balance": str(self.resource_balance(agent_id, item)),
+            }
+        # selling path
+        if self.resource_balance(agent_id, item) < qty:
+            return False, {"error": "insufficient_inventory"}
+        if location.resources.get("credits", 0) < total_price:
+            return False, {"error": "location_insufficient_credits"}
+        location.resources[item] = location.resources.get(item, 0) + qty
+        self.adjust_resource(agent_id, item, -qty)
+        if total_price:
+            location.resources["credits"] = max(0, location.resources.get("credits", 0) - total_price)
+            self.adjust_resource(agent_id, "credits", total_price)
+        return True, {
+            "note": "sold",
+            "price_paid": str(total_price),
+            "balance": str(self.resource_balance(agent_id, item)),
+        }
+
+    def serialize(self, include_agents: bool = False, agent_ids: Optional[Iterable[str]] = None) -> Dict[str, object]:
+        state: Dict[str, object] = {
+            "tick": self.tick,
+            "locations": {loc_id: loc.to_dict() for loc_id, loc in self.locations.items()},
+            "rules": [rule.model_dump() for rule in self.institutions.active_rules()],
+        }
+        if include_agents:
+            ids = list(agent_ids) if agent_ids else sorted(
+                {agent for loc in self.locations.values() for agent in loc.occupants}
+            )
+            holdings_snapshot = self.economy.snapshot()
+            state["agents"] = {
+                agent_id: {
+                    "location_id": self.agent_location(agent_id),
+                    "inventory": holdings_snapshot.get(agent_id, {}),
+                }
+                for agent_id in ids
+            }
+        return state
+
+    def enact_plan_rule(self, agent_id: str) -> Optional[Rule]:
+        plan = self.agent_policy_plans.get(agent_id)
+        if not plan:
+            return None
+        summary = plan.get("summary") or f"Plan submitted by {agent_id}"
+        rule = self.institutions.propose_rule(agent_id, summary, self.tick)
+        return self.institutions.enact_rule(rule.rule_id, self.tick)
+
+    def institutional_guidance(self) -> List[str]:
+        return [rule.text for rule in self.institutions.active_rules()]
 
     # ---- checklist helpers ----
 
@@ -240,17 +371,19 @@ class World:
         return f"Recent activity here:\n{formatted}"
 
     def sample_context(self, agent_id: str) -> str:
-        """Provide a neutral scene description without second-person voice.
+        """Provide a neutral scene description including physical metadata."""
 
-        This avoids POV drift like leading with "You:" and reduces
-        contradictions when move actions immediately follow planning.
-        """
         for location in self.locations.values():
             if agent_id in location.occupants:
                 peers = location.occupants - {agent_id}
                 peer_list = ", ".join(sorted(peers)) or "no other agents"
+                resources = ", ".join(f"{k}:{v}" for k, v in location.resources.items()) or "no supplies"
+                neighbors = ", ".join(sorted(location.neighbors)) or "isolated"
+                occupancy = f"{len(location.occupants)}/{location.capacity}"
                 return (
-                    f"Location: {location.name}. Nearby agents: {peer_list}."
+                    f"Location: {location.name} ({location.description}). "
+                    f"Capacity {occupancy}. Nearby agents: {peer_list}. "
+                    f"Neighbors: {neighbors}. Resources: {resources}."
                 )
         return "Location: outskirts. Nearby agents: none."
 
@@ -262,3 +395,13 @@ class World:
 
     def step(self) -> None:
         self.tick += 1
+
+    def _seed_rules(self) -> None:
+        """Provide a baseline civic rule so planners have initial guidance."""
+
+        if self.institutions.active_rules():
+            return
+        baseline = self.institutions.propose_rule(
+            "council", "Keep commerce flowing through the market square.", self.tick
+        )
+        self.institutions.enact_rule(baseline.rule_id, self.tick)

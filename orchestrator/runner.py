@@ -78,10 +78,7 @@ class SimulationRunner:
                     }
                     for a in self.agents.values()
                 ]
-                world_payload = {
-                    "locations": {lid: {"name": loc.name, "description": loc.description} for lid, loc in self.world.locations.items()},
-                    "tick": self.world.tick,
-                }
+                world_payload = self.world.serialize(include_agents=True, agent_ids=self.agents.keys())
                 self.event_bridge.broadcast({"type": "init", "world": world_payload, "agents": init_agents})
             except Exception:
                 pass
@@ -115,6 +112,7 @@ class SimulationRunner:
                         current_location=current_location,
                         active_objective=active_objective,
                         recent_dialogue=tuple(encounter_transcript),
+                        rule_context=self.world.institutional_guidance(),
                     )
                     src_location = current_location
                     env_result = actions.execute(
@@ -263,13 +261,18 @@ class SimulationRunner:
             # Broadcast tick summary with positions
             if self.event_bridge and hasattr(self.event_bridge, "broadcast"):
                 try:
-                    positions = {agent_id: self.world.agent_location(agent_id) for agent_id in self.agents}
+                    world_state = self.world.serialize(include_agents=True, agent_ids=self.agents.keys())
+                    agent_slice = world_state.get("agents", {})
+                    positions = {agent_id: data.get("location_id", "unknown") for agent_id, data in agent_slice.items()}
+                    inventories = {agent_id: data.get("inventory", {}) for agent_id, data in agent_slice.items()}
                     self.event_bridge.broadcast(
                         {
                             "type": "tick",
                             "tick": self.world.tick,
                             "positions": positions,
                             "stats": {"collab_ratio": ratio, "duration_ms": tick_duration_ms},
+                            "inventories": inventories,
+                            "world": world_state,
                         }
                     )
                 except Exception:

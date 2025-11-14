@@ -92,8 +92,14 @@ class Planner:
         current_location: Optional[str] = None,
         active_objective: Optional[Objective] = None,
         tick: int = 0,
+        rule_context: Optional[List[str]] = None,
     ) -> PlanSuggestion:
         location = current_location or self.default_location
+
+        if rule_context:
+            rule_plan = self._plan_from_rules(rule_context, location)
+            if rule_plan:
+                return rule_plan
 
         if active_objective:
             objective_plan = self._plan_for_objective(active_objective, location, tick)
@@ -157,26 +163,11 @@ class Planner:
             if step == 2:
                 return PlanSuggestion("cite", {}, "I'll add a supporting citation.")
             return PlanSuggestion("submit_report", {}, "Submitting a brief report of findings.")
-
-        if action_type == "talk":
-            params = {"utterance": utterance}
-        elif action_type == "trade":
-            params = {
-                "item": heuristic.get("item", "goods"),
-                "qty": heuristic.get("qty", "1"),
-            }
-        elif action_type == "work":
-            params = {"task": heuristic.get("task", "project")}
-        elif action_type == "move":
-            # For explore objectives, pick a destination different from current location
-            destinations = ["town_square", "community_center", "market", "library"]
-            available = [d for d in destinations if d != current_location]
-            params = {"destination": available[0] if available else "town_square"}
-        else:
-            # Fallback for unknown action types
-            params = {}
-
-        return PlanSuggestion(action_type=action_type, params=params, utterance=utterance)
+        return self._build_plan_from_heuristic(
+            heuristic,
+            current_location,
+            utterance_override=utterance,
+        )
 
     def _plan_policy_objective(
         self, objective: Objective, current_location: str
@@ -234,3 +225,70 @@ class Planner:
         next_location = self._nav_cycle[(target_index + 1) % len(self._nav_cycle)]
         utterance = "Coverage complete; relocating to coordinate with others."
         return PlanSuggestion("move", {"destination": next_location}, utterance)
+
+    def _plan_from_rules(
+        self, rule_context: List[str], current_location: str
+    ) -> Optional[PlanSuggestion]:
+        keyword_map = [
+            ("market", "trade"),
+            ("trade", "trade"),
+            ("work", "work"),
+            ("community", "community"),
+            ("talk", "community"),
+            ("research", "research"),
+            ("library", "research"),
+            ("scan", "navigation"),
+        ]
+        for rule_text in reversed(rule_context):
+            lowered = rule_text.lower()
+            for keyword, heuristic_key in keyword_map:
+                if keyword in lowered:
+                    heuristic = self._objective_heuristics.get(heuristic_key)
+                    if not heuristic:
+                        continue
+                    guidance = f"Complying with rule: {rule_text}"
+                    suggestion = self._build_plan_from_heuristic(
+                        heuristic,
+                        current_location,
+                        utterance_override=guidance,
+                    )
+                    if suggestion:
+                        return suggestion
+        return None
+
+    def _build_plan_from_heuristic(
+        self,
+        heuristic: Dict[str, str],
+        current_location: str,
+        utterance_override: Optional[str] = None,
+    ) -> Optional[PlanSuggestion]:
+        target_location = heuristic.get("location", self.default_location)
+        action_type = heuristic.get("action", "talk")
+        if current_location != target_location:
+            move_utterance = utterance_override or (
+                f"Heading to {target_location.replace('_', ' ')} to continue the plan."
+            )
+            return PlanSuggestion("move", {"destination": target_location}, move_utterance)
+        params = self._params_for_action(action_type, heuristic)
+        utterance = utterance_override or heuristic.get(
+            "utterance", f"Following through on {action_type}."
+        )
+        return PlanSuggestion(action_type, params, utterance)
+
+    def _params_for_action(self, action_type: str, heuristic: Dict[str, str]) -> Dict[str, str]:
+        if action_type == "talk":
+            return {"utterance": heuristic.get("utterance", "Let's sync up.")}
+        if action_type == "trade":
+            return {
+                "item": heuristic.get("item", "goods"),
+                "qty": heuristic.get("qty", "1"),
+                "side": heuristic.get("side", "buy"),
+                "price": heuristic.get("price", "1"),
+            }
+        if action_type == "work":
+            return {"task": heuristic.get("task", "project")}
+        if action_type == "move":
+            destinations = ["town_square", "community_center", "market", "library"]
+            available = [d for d in destinations if d != heuristic.get("location")]
+            return {"destination": available[0] if available else self.default_location}
+        return {}
