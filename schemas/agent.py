@@ -22,11 +22,11 @@ class SteeringVectorRef(BaseModel):
 
 
 class PersonaCoeffs(BaseModel):
-    E: float = Field(0.0, ge=-3.0, le=3.0)
-    A: float = Field(0.0, ge=-3.0, le=3.0)
-    C: float = Field(0.0, ge=-3.0, le=3.0)
-    O: float = Field(0.0, ge=-3.0, le=3.0)
-    N: float = Field(0.0, ge=-3.0, le=3.0)
+    E: float = Field(0.0, ge=-1.0, le=1.0)
+    A: float = Field(0.0, ge=-1.0, le=1.0)
+    C: float = Field(0.0, ge=-1.0, le=1.0)
+    O: float = Field(0.0, ge=-1.0, le=1.0)
+    N: float = Field(0.0, ge=-1.0, le=1.0)
 
 
 class AgentState(BaseModel):

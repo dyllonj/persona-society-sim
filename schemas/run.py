@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
-from utils.pydantic_compat import BaseModel
+from utils.pydantic_compat import BaseModel, Field
 
 
 class SteeringVectorEntry(BaseModel):
@@ -19,16 +19,28 @@ class SteeringVectorEntry(BaseModel):
     created_at: datetime
 
 
+class SteeringMetadataFiles(BaseModel):
+    personas: Optional[str] = None
+    vectors: Optional[str] = None
+    traits: Dict[str, str] = Field(default_factory=dict)
+
+
+class SteeringConfig(BaseModel):
+    strength: float = 1.0
+    coefficients: Dict[str, float] = Field(default_factory=dict)
+    vector_norm: Dict[str, float] = Field(default_factory=dict)
+    metadata_files: SteeringMetadataFiles = Field(default_factory=SteeringMetadataFiles)
+
+
 class RunConfig(BaseModel):
     run_id: str
     git_commit: str
     model_name: str
-    layers: List[int]
     population: int
     steps: int
     scenario: str
     seed: int
-    steering: Dict[str, float]
+    steering: SteeringConfig
     notes: Optional[str] = None
 
 

@@ -16,7 +16,13 @@ LayerVectors = Dict[str, Dict[int, TorchTensor]]
 class SteeringController:
     """Registers forward hooks that add alpha * vector to residual streams."""
 
-    def __init__(self, model, trait_vectors: LayerVectors):
+    def __init__(
+        self,
+        model,
+        trait_vectors: LayerVectors,
+        *,
+        vector_norms: Optional[Dict[str, Dict[int, float]]] = None,
+    ):
         if torch is None:
             raise ModuleNotFoundError("torch is required for SteeringController")
         self.model = model
@@ -24,6 +30,7 @@ class SteeringController:
             trait: {layer: torch.tensor(vec) if not isinstance(vec, torch.Tensor) else vec for layer, vec in by_layer.items()}
             for trait, by_layer in trait_vectors.items()
         }
+        self.vector_norms = vector_norms or {}
         self.alphas = {trait: 0.0 for trait in self.trait_vectors}
         self._handles = []
         self.enabled = True

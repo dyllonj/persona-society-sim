@@ -3,17 +3,29 @@ model_name: "meta-llama/Llama-3.1-8B-Instruct"
 population: 32
 steps: 200
 seed: 7
-layers: [16]  # Use only 1 layer instead of 3 for faster steering
 steering:
-  E: 0.8
-  A: 0.5
-  C: 0.6
+  strength: 1.0
+  coefficients:
+    E: 0.8
+    A: 0.5
+    C: 0.6
+    O: 0.0
+    N: 0.0
+  vector_norm:
+    E: 1.0
+    A: 1.0
+    C: 1.0
+    O: 1.0
+    N: 1.0
+  metadata_files:
+    personas: configs/personas.bigfive.yaml
+    vectors: configs/steering.layers.yaml
 scenario: "market_voting_baseline"
 logging:
   db_url: "sqlite:///./storage/sim_fast_test.db"
   parquet_dir: "./storage/dumps/fast_test"
 safety:
-  alpha_clip: 1.5
+  alpha_clip: 1.0
   toxicity_threshold: 0.4
   governor_backoff: 0.2
 inference:
