@@ -13,7 +13,8 @@ Social town simulator where 30–300 activation-steered LLM agents live, convers
 2. **Agents & memory** — `agents/agent.py` wires the perceive→reflect→plan loop; `agents/memory.py` implements observation/reflection/planning stores inspired by Generative Agents; `agents/planner.py` converts goals + world state into next actions or utterances.
 3. **World & scheduler** — `env/world.py`, `env/actions.py`, and `env/economy.py` encode the text town, actions, and markets; `orchestrator/scheduler.py` samples encounters; `orchestrator/runner.py` executes multi-agent ticks and logs outputs.
 4. **Storage & metrics** — `schemas/*.py` define Pydantic models mirrored in SQL; `storage/db.py` wraps SQLite/Postgres; `storage/log_sink.py` streams logs to DB + Parquet; `metrics/*.py` compute graph, cooperation, and polarization metrics for notebooks in `metrics/` and reports in `docs/`.
-5. **Data & configs** — `data/prompts/*.jsonl` host IPIP-derived contrast pairs; `configs/run.*.yaml` store reproducible run configs (population, steps, steering, safety bounds).
+5. **Instrumentation & probes** — every `ActionLog` now carries cognitive traces (reflection summaries, plan suggestions, prompt hashes) so persona steering can be audited; `metrics/graphs.py` + `metrics/social_dynamics.py` emit graph snapshots and macro metrics each tick; `metrics/tracker.py` joins persona coefficients and per-message steering alphas; the ProbeManager injects self-report + behavioral probes; research telemetry (facts, citations, report grades) is stored in first-class tables for downstream analysis.
+6. **Data & configs** — `data/prompts/*.jsonl` host IPIP-derived contrast pairs; `configs/run.*.yaml` store reproducible run configs (population, steps, steering, safety bounds).
 
 ## Getting started
 ```bash
@@ -59,6 +60,16 @@ Key scripts:
 - `scripts/compute_vectors.sh` — run CAA extraction for all traits.
 - `scripts/run_small.sh` — launch a 32-agent, 200-step smoke test.
 - `scripts/analyze_run.sh` — aggregate logs into metric snapshots.
+- `scripts/verify_steering.py` & `scripts/analyze_simulation.py` — validate persona application and visualize steering, cognitive traces, and the new graph/macro metrics dumps.
+
+### Instrumentation & probes
+- **Cognitive traces**: `agents/agent.py` caches reflection summaries, planner suggestions, prompt text, and prompt hashes per action, and `orchestrator/runner.py` writes them into `ActionLog` + Parquet for replay/debugging without re-running the LLM.
+- **Graph & macro metrics**: every tick `SimulationRunner` feeds per-action edges into `metrics/graphs.py` and aggregates economy/conflict data via `metrics/social_dynamics.py`, producing `graph_snapshot` + `metrics_snapshot` tables plus Parquet dumps (`storage/log_sink.py`).
+- **Persona-aware tracker**: `metrics/tracker.py` now registers each agent’s baseline `PersonaCoeffs` and ingests `MsgLog.steering_snapshot` values so efficiency/collab stats can be sliced by trait bands or alpha magnitudes.
+- **Probe scheduling**: the ProbeManager injects periodic self-report questionnaires and scripted behavioral probes that log both the raw prompts and Likert/rubric scores, giving direct coverage of RQ1 behavioral adherence.
+- **Structured research telemetry**: research actions emit `ResearchFactLog`, `CitationLog`, and `ReportGradeLog` records instead of opaque JSON strings so fact coverage, citation diversity, and grading drift can be analyzed per persona trait.
+
+See `AGENTS.md` for a deeper dive into the agent loop, probe lifecycle, and how the new telemetry hooks tie into persona steering.
 
 ## Milestones
 1. **M1 — Persona vector library**: implement CAA pipeline, validate dose-response & capability checks.
