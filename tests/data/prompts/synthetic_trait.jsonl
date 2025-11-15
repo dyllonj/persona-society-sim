@@ -1,0 +1,2 @@
+{"id": "ex1", "question_text": "A neighbor invites you to a community brainstorming session.", "option_a": "Lead the discussion with energetic ideas.", "option_b": "Listen quietly and take sparse notes.", "option_a_is_high": true, "option_b_is_high": false}
+{"id": "ex2", "question_text": "A club meeting needs someone to greet newcomers.", "option_a": "Set up chairs in the back.", "option_b": "Welcome everyone at the door with enthusiasm.", "option_a_is_high": false, "option_b_is_high": true}
