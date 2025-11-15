@@ -15,6 +15,8 @@ from orchestrator.objectives import ObjectiveManager
 from orchestrator.scheduler import Scheduler
 from schemas.logs import ActionLog, MsgLog
 from storage.log_sink import LogSink
+from metrics import graphs, social_dynamics
+from metrics.tick_instrumentation import TickInstrumentation
 from metrics.tracker import MetricTracker
 
 
@@ -50,6 +52,7 @@ class SimulationRunner:
         self.agent_satisfaction: Dict[str, float] = {agent_id: 0.0 for agent_id in self.agents}
         self.metric_tracker = MetricTracker(run_id)
         self.event_bridge = event_bridge
+        self.tick_instrumentation = TickInstrumentation()
 
         if self.objective_manager:
             self.objective_manager.register_reward_callback(self._handle_objective_reward)
@@ -90,6 +93,8 @@ class SimulationRunner:
             # Simple collaboration metric: share of actions happening with peers present
             collab_actions = 0
             total_actions = 0
+
+            self.tick_instrumentation.on_tick_start(self.world.tick)
 
             # Log tick start
             self.console_logger.log_tick_start(self.world.tick, len(encounters))
@@ -142,6 +147,21 @@ class SimulationRunner:
                     )
                     tick_logs.append(action_log)
                     self.log_sink.log_action(action_log)
+                    try:
+                        self.tick_instrumentation.record_action(
+                            agent_id=agent.state.agent_id,
+                            action_type=env_result.action_type,
+                            success=env_result.success,
+                            params=decision.params,
+                            info=env_result.info,
+                            steering_snapshot=decision.steering_snapshot,
+                            persona_coeffs=agent.state.persona_coeffs.model_dump(),
+                            encounter_room=encounter.room_id,
+                            encounter_participants=encounter.participants,
+                            satisfaction=self.agent_satisfaction.get(agent.state.agent_id, 0.0),
+                        )
+                    except Exception:
+                        pass
 
                     # Broadcast action to viewer
                     if self.event_bridge and hasattr(self.event_bridge, "broadcast"):
@@ -252,6 +272,7 @@ class SimulationRunner:
                         )
 
             self.world.step()
+            self._log_tick_snapshots()
             self.log_sink.flush(self.world.tick)
 
             # Log tick end with duration
@@ -294,3 +315,33 @@ class SimulationRunner:
         except Exception:
             pass
         return history
+
+    def _log_tick_snapshots(self) -> None:
+        try:
+            tick_idx = max(0, self.world.tick - 1)
+            for graph_input in self.tick_instrumentation.graph_inputs():
+                snapshot = graphs.snapshot_from_edges(
+                    self.run_id,
+                    tick_idx,
+                    graph_input.edges,
+                    trait_key=graph_input.trait_key,
+                    band_metadata=graph_input.band_metadata,
+                )
+                self.log_sink.log_graph_snapshot(snapshot)
+            wealth_snapshot = self.world.economy.snapshot()
+            macro_inputs = self.tick_instrumentation.macro_inputs(wealth_snapshot, self.agent_satisfaction)
+            for macro in macro_inputs:
+                metrics_snapshot = social_dynamics.build_metrics_snapshot(
+                    self.run_id,
+                    tick_idx,
+                    macro.cooperation_events,
+                    macro.wealth,
+                    macro.opinions,
+                    macro.conflicts,
+                    macro.enforcement_cost,
+                    trait_key=macro.trait_key,
+                    band_metadata=macro.band_metadata,
+                )
+                self.log_sink.log_metrics_snapshot(metrics_snapshot)
+        except Exception:
+            pass

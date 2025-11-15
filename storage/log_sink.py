@@ -13,7 +13,7 @@ except ModuleNotFoundError:  # pragma: no cover
     pa = None
     pq = None
 
-from schemas.logs import ActionLog, MsgLog, SafetyEvent
+from schemas.logs import ActionLog, GraphSnapshot, MetricsSnapshot, MsgLog, SafetyEvent
 from storage.db import Database
 
 
@@ -25,11 +25,13 @@ class LogSink:
             self.db.init()
         self.parquet_dir = Path(parquet_dir) if parquet_dir else None
         if self.parquet_dir:
-            for sub in ("actions", "messages", "safety"):
+            for sub in ("actions", "messages", "safety", "graph_snapshots", "metrics_snapshots"):
                 (self.parquet_dir / sub).mkdir(parents=True, exist_ok=True)
         self.action_buffer: List[ActionLog] = []
         self.msg_buffer: List[MsgLog] = []
         self.safety_buffer: List[SafetyEvent] = []
+        self.graph_buffer: List[GraphSnapshot] = []
+        self.metrics_buffer: List[MetricsSnapshot] = []
 
     def log_action(self, log: ActionLog) -> None:
         self.action_buffer.append(log)
@@ -40,17 +42,29 @@ class LogSink:
     def log_safety(self, event: SafetyEvent) -> None:
         self.safety_buffer.append(event)
 
+    def log_graph_snapshot(self, snapshot: GraphSnapshot) -> None:
+        self.graph_buffer.append(snapshot)
+
+    def log_metrics_snapshot(self, snapshot: MetricsSnapshot) -> None:
+        self.metrics_buffer.append(snapshot)
+
     def flush(self, tick: int) -> None:
         self._flush_buffer("action_log", self.action_buffer)
         self._flush_buffer("msg_log", self.msg_buffer)
         self._flush_buffer("safety_event", self.safety_buffer)
+        self._flush_buffer("graph_snapshot", self.graph_buffer)
+        self._flush_buffer("metrics_snapshot", self.metrics_buffer)
         if self.parquet_dir:
             self._write_parquet(self.action_buffer, "actions", tick)
             self._write_parquet(self.msg_buffer, "messages", tick)
             self._write_parquet(self.safety_buffer, "safety", tick)
+            self._write_parquet(self.graph_buffer, "graph_snapshots", tick)
+            self._write_parquet(self.metrics_buffer, "metrics_snapshots", tick)
         self.action_buffer.clear()
         self.msg_buffer.clear()
         self.safety_buffer.clear()
+        self.graph_buffer.clear()
+        self.metrics_buffer.clear()
 
     # ---- internals ----
 
@@ -72,6 +86,9 @@ class LogSink:
     def _normalize(record: Dict) -> Dict:
         normalized = {}
         for key, value in record.items():
+            if key == "trait_key" and value is None:
+                normalized[key] = "global"
+                continue
             if isinstance(value, (dict, list)):
                 normalized[key] = json.dumps(value)
             else:

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import numpy as np
 
@@ -40,6 +40,9 @@ def build_metrics_snapshot(
     opinions: Dict[str, float],
     conflicts: int,
     enforcement_cost: float,
+    *,
+    trait_key: Optional[str] = None,
+    band_metadata: Optional[Dict[str, object]] = None,
 ) -> MetricsSnapshot:
     return MetricsSnapshot(
         run_id=run_id,
@@ -49,4 +52,6 @@ def build_metrics_snapshot(
         polarization_modularity=polarization(opinions),
         conflicts=conflicts,
         rule_enforcement_cost=enforcement_cost,
+        trait_key=trait_key,
+        band_metadata=band_metadata or {},
     )

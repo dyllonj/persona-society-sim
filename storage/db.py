@@ -113,9 +113,23 @@ CREATE TABLE IF NOT EXISTS safety_event (
 CREATE TABLE IF NOT EXISTS graph_snapshot (
   run_id TEXT,
   tick INT,
+  trait_key TEXT NOT NULL,
   edges JSONB,
   centrality JSONB,
-  PRIMARY KEY (run_id, tick)
+  band_metadata JSONB,
+  PRIMARY KEY (run_id, tick, trait_key)
+);
+CREATE TABLE IF NOT EXISTS metrics_snapshot (
+  run_id TEXT,
+  tick INT,
+  trait_key TEXT NOT NULL,
+  band_metadata JSONB,
+  cooperation_rate FLOAT,
+  gini_wealth FLOAT,
+  polarization_modularity FLOAT,
+  conflicts INT,
+  rule_enforcement_cost FLOAT,
+  PRIMARY KEY (run_id, tick, trait_key)
 );
 CREATE TABLE IF NOT EXISTS steering_vector_store (
   vector_store_id TEXT,

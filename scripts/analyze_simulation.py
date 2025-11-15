@@ -12,30 +12,30 @@ import pyarrow.parquet as pq
 import seaborn as sns
 
 
+def _read_parquet_dir(directory: Path):
+    records = []
+    if not directory.exists():
+        return records
+    for file_path in sorted(directory.glob("*.parquet")):
+        table = pq.read_table(file_path)
+        data = {col: table.column(col).to_pylist() for col in table.column_names}
+        for i in range(table.num_rows):
+            records.append({col: data[col][i] for col in table.column_names})
+    return records
+
+
 def load_simulation_data(dump_dir: Path):
     """Load all parquet data from a simulation run."""
-    actions_dir = dump_dir / "actions"
-    messages_dir = dump_dir / "messages"
-
-    actions = []
-    messages = []
-
     print(f"Loading data from {dump_dir}...")
-
-    for action_file in sorted(actions_dir.glob("*.parquet")):
-        table = pq.read_table(action_file)
-        data = {col: table.column(col).to_pylist() for col in table.column_names}
-        for i in range(table.num_rows):
-            actions.append({col: data[col][i] for col in table.column_names})
-
-    for msg_file in sorted(messages_dir.glob("*.parquet")):
-        table = pq.read_table(msg_file)
-        data = {col: table.column(col).to_pylist() for col in table.column_names}
-        for i in range(table.num_rows):
-            messages.append({col: data[col][i] for col in table.column_names})
-
-    print(f"  Loaded {len(actions)} actions and {len(messages)} messages")
-    return actions, messages
+    actions = _read_parquet_dir(dump_dir / "actions")
+    messages = _read_parquet_dir(dump_dir / "messages")
+    graph_snapshots = _read_parquet_dir(dump_dir / "graph_snapshots")
+    metrics_snapshots = _read_parquet_dir(dump_dir / "metrics_snapshots")
+    print(
+        "  Loaded %d actions, %d messages, %d graph snapshots, %d metrics snapshots"
+        % (len(actions), len(messages), len(graph_snapshots), len(metrics_snapshots))
+    )
+    return actions, messages, graph_snapshots, metrics_snapshots
 
 
 def analyze_action_distribution(actions):
@@ -262,7 +262,7 @@ def main():
         return
 
     # Load data
-    actions, messages = load_simulation_data(args.dump_dir)
+    actions, messages, graph_snapshots, metrics_snapshots = load_simulation_data(args.dump_dir)
 
     # Run analyses
     action_types, outcomes = analyze_action_distribution(actions)
@@ -272,6 +272,10 @@ def main():
     actions_by_tick, messages_by_tick, tokens_by_tick = analyze_temporal_dynamics(
         actions, messages
     )
+    if graph_snapshots or metrics_snapshots:
+        print("\nAdditional datasets available:")
+        print(f"  Graph snapshots:  {len(graph_snapshots)} records")
+        print(f"  Metrics snapshots: {len(metrics_snapshots)} records")
 
     # Generate visualizations
     if not args.no_plots:

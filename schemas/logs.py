@@ -122,6 +122,8 @@ class GraphSnapshot(BaseModel):
     tick: int
     edges: List[Edge]
     centrality: Dict[str, float] = Field(default_factory=dict)
+    trait_key: Optional[str] = None
+    band_metadata: Dict[str, object] = Field(default_factory=dict)
 
 
 class MetricsSnapshot(BaseModel):
@@ -132,3 +134,5 @@ class MetricsSnapshot(BaseModel):
     polarization_modularity: float
     conflicts: int
     rule_enforcement_cost: float
+    trait_key: Optional[str] = None
+    band_metadata: Dict[str, object] = Field(default_factory=dict)
