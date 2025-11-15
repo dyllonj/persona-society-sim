@@ -1,0 +1,18 @@
+likert:
+  cadence: 1
+  questions:
+    - id: focus
+      trait: C
+      question: "Rate your current focus from 1 (very low) to 5 (very high)."
+      instructions: "Respond with a number 1-5 then a short justification."
+behavior:
+  cadence: 1
+  scenarios:
+    - id: supply_dilemma
+      scenario: "A neighbor asks for spare wood. Do you give it to them?"
+      instructions: "Answer SHARE if you help or REFUSE if you keep it."
+      outcomes:
+        share:
+          keywords: ["share", "give", "offer"]
+        refuse:
+          keywords: ["refuse", "keep", "decline"]

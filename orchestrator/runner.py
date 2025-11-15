@@ -13,6 +13,7 @@ from env import actions
 from env.world import World, RoomUtterance
 from orchestrator.console_logger import ConsoleLogger
 from orchestrator.objectives import ObjectiveManager
+from orchestrator.probes import ProbeAssignment, ProbeManager
 from orchestrator.scheduler import Scheduler
 from schemas.logs import (
     ActionLog,
@@ -20,6 +21,8 @@ from schemas.logs import (
     CitationLog,
     ReportGradeLog,
     ResearchFactLog,
+    ProbeLog,
+    BehaviorProbeLog,
 )
 from storage.log_sink import LogSink
 from metrics import graphs, social_dynamics
@@ -56,6 +59,7 @@ class SimulationRunner:
         console_logger: Optional[ConsoleLogger] = None,
         objective_manager: Optional[ObjectiveManager] = None,
         event_bridge: Optional[object] = None,
+        probe_manager: Optional[ProbeManager] = None,
     ):
         self.run_id = run_id
         self.world = world
@@ -71,6 +75,7 @@ class SimulationRunner:
         self.metric_tracker = MetricTracker(run_id, agent_personas=persona_map)
         self.event_bridge = event_bridge
         self.tick_instrumentation = TickInstrumentation()
+        self.probe_manager = probe_manager
 
         if self.objective_manager:
             self.objective_manager.register_reward_callback(self._handle_objective_reward)
@@ -129,6 +134,17 @@ class SimulationRunner:
                     )
 
                     base_context = self.world.sample_context(agent.state.agent_id)
+                    probe_assignment: Optional[ProbeAssignment] = None
+                    if self.probe_manager:
+                        probe_assignment = self.probe_manager.pending_probe(
+                            agent.state.agent_id, self.world.tick
+                        )
+                        if not probe_assignment:
+                            probe_assignment = self.probe_manager.assign_probe(
+                                agent.state.agent_id, self.world.tick
+                            )
+                        if probe_assignment:
+                            base_context = probe_assignment.inject(base_context)
                     decision = agent.act(
                         base_context,
                         self.world.tick,
@@ -137,6 +153,9 @@ class SimulationRunner:
                         recent_dialogue=tuple(encounter_transcript),
                         rule_context=self.world.institutional_guidance(),
                     )
+                    if probe_assignment:
+                        decision.probe_id = probe_assignment.probe_id
+                        decision.probe_kind = probe_assignment.kind
                     src_location = current_location
                     env_result = actions.execute(
                         self.world,
@@ -167,6 +186,11 @@ class SimulationRunner:
                     )
                     tick_logs.append(action_log)
                     self.log_sink.log_action(action_log)
+                    if probe_assignment:
+                        self._log_probe_response(agent, decision, probe_assignment)
+                        self.probe_manager.complete_probe(
+                            agent.state.agent_id, probe_assignment, self.world.tick
+                        )
                     try:
                         self.tick_instrumentation.record_action(
                             agent_id=agent.state.agent_id,
@@ -504,3 +528,43 @@ class SimulationRunner:
                 self.log_sink.log_metrics_snapshot(metrics_snapshot)
         except Exception:
             pass
+
+    def _log_probe_response(
+        self,
+        agent: Agent,
+        decision: ActionDecision,
+        assignment: ProbeAssignment,
+    ) -> None:
+        if not decision.utterance:
+            return
+        if assignment.kind == "likert":
+            score, hint = ProbeManager.score_likert_response(decision.utterance)
+            probe_log = ProbeLog(
+                log_id=str(uuid4()),
+                run_id=self.run_id,
+                tick=self.world.tick,
+                agent_id=agent.state.agent_id,
+                probe_id=assignment.probe_id,
+                trait=assignment.trait,
+                question=assignment.question or "",
+                prompt_text=assignment.prompt,
+                response_text=decision.utterance,
+                score=score,
+                parser_hint=hint,
+            )
+            self.log_sink.log_probe(probe_log)
+        else:
+            outcome, hint = ProbeManager.score_behavior_response(assignment, decision.utterance)
+            behavior_log = BehaviorProbeLog(
+                log_id=str(uuid4()),
+                run_id=self.run_id,
+                tick=self.world.tick,
+                agent_id=agent.state.agent_id,
+                probe_id=assignment.probe_id,
+                scenario=assignment.scenario or "",
+                prompt_text=assignment.prompt,
+                response_text=decision.utterance,
+                outcome=outcome,
+                parser_hint=hint,
+            )
+            self.log_sink.log_behavior_probe(behavior_log)

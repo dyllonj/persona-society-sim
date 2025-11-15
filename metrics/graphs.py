@@ -2,16 +2,19 @@
 
 from __future__ import annotations
 
-from typing import Iterable, Tuple
+from typing import Dict, Iterable, Optional, Tuple
 
-import networkx as nx
-
-from typing import Dict, Iterable, Optional
+try:  # pragma: no cover - optional dependency for analytics
+    import networkx as nx
+except ModuleNotFoundError:  # pragma: no cover
+    nx = None  # type: ignore
 
 from schemas.logs import Edge, GraphSnapshot
 
 
 def build_graph(edges: Iterable[Edge]) -> nx.Graph:
+    if nx is None:
+        raise ModuleNotFoundError("networkx is required for graph snapshots")
     g = nx.Graph()
     for edge in edges:
         g.add_edge(edge.src, edge.dst, weight=edge.weight, kind=edge.kind)

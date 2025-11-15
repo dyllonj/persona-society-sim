@@ -1,8 +1,8 @@
 # Evaluation Plan
 
 ## Personality controllability (RQ1)
-- **Self-report probes**: Periodic IPIP-inspired questionnaires inside the sim; score responses via Likert mapping and compare to target coefficients.
-- **Behavioral probes**: Situational mini-scenarios injected into the loop (e.g., conflict, planning). Code rubric-based scoring rules in `metrics/social_dynamics.py`.
+- **Self-report probes**: `orchestrator/probes.ProbeManager` loads `configs/probes.yaml`, injects IPIP-style Likert prompts into the observation stream, and writes the parsed score + prompt text to `probe_log` rows so adherence can be compared against target coefficients.
+- **Behavioral probes**: Situational mini-scenarios injected into the loop (e.g., conflict, planning) with rubric keywords stored in `BehaviorProbeDefinition.outcomes`; responses are classified into categories and logged via `behavior_probe_log` for downstream rubric scoring.
 - **Drift metrics**: Track cosine similarity between early vs late persona embeddings derived from generated text; log α adjustments required to maintain scores.
 
 ## Social structure (RQ2)

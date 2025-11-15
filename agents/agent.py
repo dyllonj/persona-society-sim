@@ -42,6 +42,8 @@ class ActionDecision:
     plan_metadata: Dict[str, object]
     reflection_summary: Optional[str]
     reflection_implications: List[str]
+    probe_id: Optional[str] = None
+    probe_kind: Optional[str] = None
 
 
 class Agent:

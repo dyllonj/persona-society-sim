@@ -22,6 +22,8 @@ from schemas.logs import (
     CitationLog,
     ResearchFactLog,
     ReportGradeLog,
+    ProbeLog,
+    BehaviorProbeLog,
 )
 from storage.db import Database
 
@@ -43,6 +45,8 @@ class LogSink:
                 "research_facts",
                 "citations",
                 "report_grades",
+                "probe_logs",
+                "behavior_probes",
             ):
                 (self.parquet_dir / sub).mkdir(parents=True, exist_ok=True)
         self.action_buffer: List[ActionLog] = []
@@ -53,6 +57,8 @@ class LogSink:
         self.research_buffer: List[ResearchFactLog] = []
         self.citation_buffer: List[CitationLog] = []
         self.report_grade_buffer: List[ReportGradeLog] = []
+        self.probe_buffer: List[ProbeLog] = []
+        self.behavior_probe_buffer: List[BehaviorProbeLog] = []
 
     def log_action(self, log: ActionLog) -> None:
         self.action_buffer.append(log)
@@ -78,6 +84,12 @@ class LogSink:
     def log_report_grade(self, log: ReportGradeLog) -> None:
         self.report_grade_buffer.append(log)
 
+    def log_probe(self, log: ProbeLog) -> None:
+        self.probe_buffer.append(log)
+
+    def log_behavior_probe(self, log: BehaviorProbeLog) -> None:
+        self.behavior_probe_buffer.append(log)
+
     def flush(self, tick: int) -> None:
         self._flush_buffer("action_log", self.action_buffer)
         self._flush_buffer("msg_log", self.msg_buffer)
@@ -87,6 +99,8 @@ class LogSink:
         self._flush_buffer("research_fact_log", self.research_buffer)
         self._flush_buffer("citation_log", self.citation_buffer)
         self._flush_buffer("report_grade_log", self.report_grade_buffer)
+        self._flush_buffer("probe_log", self.probe_buffer)
+        self._flush_buffer("behavior_probe_log", self.behavior_probe_buffer)
         if self.parquet_dir:
             self._write_parquet(self.action_buffer, "actions", tick)
             self._write_parquet(self.msg_buffer, "messages", tick)
@@ -96,6 +110,8 @@ class LogSink:
             self._write_parquet(self.research_buffer, "research_facts", tick)
             self._write_parquet(self.citation_buffer, "citations", tick)
             self._write_parquet(self.report_grade_buffer, "report_grades", tick)
+            self._write_parquet(self.probe_buffer, "probe_logs", tick)
+            self._write_parquet(self.behavior_probe_buffer, "behavior_probes", tick)
         self.action_buffer.clear()
         self.msg_buffer.clear()
         self.safety_buffer.clear()
@@ -104,6 +120,8 @@ class LogSink:
         self.research_buffer.clear()
         self.citation_buffer.clear()
         self.report_grade_buffer.clear()
+        self.probe_buffer.clear()
+        self.behavior_probe_buffer.clear()
 
     # ---- internals ----
 

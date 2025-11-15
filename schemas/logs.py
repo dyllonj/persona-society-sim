@@ -179,3 +179,30 @@ class ReportGradeLog(BaseModel):
     trait_band: Optional[str] = None
     alpha_value: Optional[float] = None
     alpha_bucket: Optional[str] = None
+
+
+class ProbeLog(BaseModel):
+    log_id: str
+    run_id: str
+    tick: int
+    agent_id: str
+    probe_id: str
+    question: str
+    prompt_text: str
+    response_text: str
+    trait: Optional[str] = None
+    score: Optional[int] = None
+    parser_hint: Optional[str] = None
+
+
+class BehaviorProbeLog(BaseModel):
+    log_id: str
+    run_id: str
+    tick: int
+    agent_id: str
+    probe_id: str
+    scenario: str
+    prompt_text: str
+    response_text: str
+    outcome: Optional[str] = None
+    parser_hint: Optional[str] = None

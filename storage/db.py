@@ -171,6 +171,31 @@ CREATE TABLE IF NOT EXISTS report_grade_log (
   alpha_value FLOAT,
   alpha_bucket TEXT
 );
+CREATE TABLE IF NOT EXISTS probe_log (
+  log_id TEXT PRIMARY KEY,
+  run_id TEXT,
+  tick INT,
+  agent_id TEXT,
+  probe_id TEXT,
+  question TEXT,
+  prompt_text TEXT,
+  response_text TEXT,
+  trait TEXT,
+  score INT,
+  parser_hint TEXT
+);
+CREATE TABLE IF NOT EXISTS behavior_probe_log (
+  log_id TEXT PRIMARY KEY,
+  run_id TEXT,
+  tick INT,
+  agent_id TEXT,
+  probe_id TEXT,
+  scenario TEXT,
+  prompt_text TEXT,
+  response_text TEXT,
+  outcome TEXT,
+  parser_hint TEXT
+);
 CREATE TABLE IF NOT EXISTS steering_vector_store (
   vector_store_id TEXT,
   trait TEXT,
