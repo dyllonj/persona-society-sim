@@ -20,7 +20,7 @@ DEFAULT_BANNED_PHRASES = [
 
 @dataclass
 class SafetyConfig:
-    alpha_clip: float = 1.5
+    alpha_clip: float = 1.0
     toxicity_threshold: float = 0.4  # placeholder for future classifier
     governor_backoff: float = 0.2
     banned_phrases: Iterable[str] = tuple(DEFAULT_BANNED_PHRASES)

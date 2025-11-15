@@ -7,7 +7,7 @@ import json
 import random
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from uuid import uuid4
 
 import numpy as np
@@ -47,13 +47,30 @@ def load_config(path: Path) -> Dict:
 
 def sample_persona(base: Dict[str, float], rng: random.Random) -> PersonaCoeffs:
     def jitter(value: float) -> float:
-        return max(-1.5, min(1.5, value + rng.uniform(-0.4, 0.4)))
+        return max(-1.0, min(1.0, value + rng.uniform(-0.2, 0.2)))
 
     return PersonaCoeffs(**{trait: jitter(base.get(trait, 0.0)) for trait in TRAIT_KEYS})
 
 
-def load_trait_vectors(traits: List[str], vector_dir: Path) -> Dict[str, Dict[int, np.ndarray]]:
+def _steering_coefficients(steering_cfg: Dict[str, Any]) -> Dict[str, float]:
+    if not steering_cfg:
+        return {}
+    coeffs = steering_cfg.get("coefficients")
+    if isinstance(coeffs, dict):
+        return {trait: float(value) for trait, value in coeffs.items()}
+    legacy: Dict[str, float] = {}
+    for trait in TRAIT_KEYS:
+        value = steering_cfg.get(trait)
+        if isinstance(value, (int, float)):
+            legacy[trait] = float(value)
+    return legacy
+
+
+def load_trait_vectors(
+    traits: List[str], vector_dir: Path
+) -> Tuple[Dict[str, Dict[int, np.ndarray]], Dict[str, Dict[int, float]]]:
     store: Dict[str, Dict[int, np.ndarray]] = {}
+    norms: Dict[str, Dict[int, float]] = {}
     for trait in traits:
         meta_path = vector_dir / f"{trait}.meta.json"
         if not meta_path.exists():
@@ -86,17 +103,19 @@ def load_trait_vectors(traits: List[str], vector_dir: Path) -> Dict[str, Dict[in
                 continue
             vector = np.load(vec_path, allow_pickle=False)
             norm = np.linalg.norm(vector)
+            norms.setdefault(trait, {})[layer_id] = float(norm)
             if norm > 0:
                 vector = vector / norm
             per_layer[layer_id] = vector.astype(np.float32)
         if per_layer:
             store[trait] = per_layer
-    return store
+    return store, norms
 
 
 def build_language_backend(
     config: Dict,
     trait_vectors: Dict[str, Dict[int, np.ndarray]],
+    vector_norms: Dict[str, Dict[int, float]],
     mock: bool,
 ) -> LanguageBackend:
     inference = config.get("inference", {})
@@ -104,9 +123,16 @@ def build_language_backend(
     temperature = inference.get("temperature", 0.7)
     top_p = inference.get("top_p", 0.9)
     use_quantization = optimization.get("use_quantization", False)
+    steering_cfg = config.get("steering", {})
+    alpha_strength = steering_cfg.get("strength", 1.0)
 
     if mock:
-        return MockBackend(seed=config.get("seed", 0), temperature=temperature, top_p=top_p)
+        return MockBackend(
+            seed=config.get("seed", 0),
+            temperature=temperature,
+            top_p=top_p,
+            alpha_strength=alpha_strength,
+        )
     torch_vectors = {
         trait: {layer: torch.tensor(vector) for layer, vector in per_layer.items()}
         for trait, per_layer in trait_vectors.items()
@@ -114,9 +140,11 @@ def build_language_backend(
     return HFBackend(
         model_name=config["model_name"],
         trait_vectors=torch_vectors,
+        vector_norms=vector_norms,
         temperature=temperature,
         top_p=top_p,
         use_quantization=use_quantization,
+        alpha_strength=alpha_strength,
     )
 
 
@@ -129,7 +157,8 @@ def build_agents(
 ) -> List[Agent]:
     population = config["population"]
     rng = random.Random(config.get("seed", 7))
-    base_persona = config.get("steering", {})
+    steering_cfg = config.get("steering", {})
+    base_persona = _steering_coefficients(steering_cfg)
     inference = config.get("inference", {})
     optimization = config.get("optimization", {})
     max_tokens = inference.get("max_new_tokens", 120)
@@ -267,17 +296,22 @@ def main() -> None:
 
     config = load_config(args.config)
     run_id = config.get("run_id") or f"run-{uuid4().hex[:6]}"
-    steering_base = config.get("steering", {})
-    trait_vectors = load_trait_vectors(list(steering_base.keys() or TRAIT_KEYS), args.vector_dir)
+    steering_cfg = config.get("steering", {})
+    steering_base = _steering_coefficients(steering_cfg)
+    trait_vectors, vector_norms = load_trait_vectors(
+        list(steering_base.keys() or TRAIT_KEYS), args.vector_dir
+    )
     safety_cfg = config.get("safety", {})
     safety = SafetyGovernor(
         SafetyConfig(
-            alpha_clip=safety_cfg.get("alpha_clip", 1.5),
+            alpha_clip=safety_cfg.get("alpha_clip", 1.0),
             toxicity_threshold=safety_cfg.get("toxicity_threshold", 0.4),
             governor_backoff=safety_cfg.get("governor_backoff", 0.2),
         )
     )
-    backend = build_language_backend(config, trait_vectors, mock=args.mock_model)
+    backend = build_language_backend(
+        config, trait_vectors, vector_norms, mock=args.mock_model
+    )
     world = World()
     world.configure_environment(args.env, args.difficulty)
     scheduler = Scheduler(world, seed=config.get("seed", 7))

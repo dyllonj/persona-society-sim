@@ -36,7 +36,15 @@ def _build_test_config():
         "population": 2,
         "steps": 3,
         "seed": 3,
-        "steering": {"E": 0.1, "A": 0.2, "C": 0.3, "O": 0.0, "N": -0.2},
+        "steering": {
+            "strength": 1.0,
+            "coefficients": {"E": 0.1, "A": 0.2, "C": 0.3, "O": 0.0, "N": -0.2},
+            "vector_norm": {"E": 1.0, "A": 1.0, "C": 1.0, "O": 1.0, "N": 1.0},
+            "metadata_files": {
+                "personas": "configs/personas.bigfive.yaml",
+                "vectors": "configs/steering.layers.yaml",
+            },
+        },
         "inference": {"temperature": 0.1, "top_p": 0.95, "max_new_tokens": 16},
         "optimization": {"reflect_every_n_ticks": 1},
         "objectives": {
@@ -84,8 +92,10 @@ def test_mock_simulation_reaches_objective(tmp_path):
     world = World(data_dir="tests/data")
     world.configure_environment("research", difficulty=1)
     scheduler = Scheduler(world, seed=config["seed"])
-    backend = build_language_backend(config, {}, mock=True)
-    safety = SafetyGovernor(SafetyConfig(alpha_clip=1.5, toxicity_threshold=1.0, governor_backoff=0.1))
+    backend = build_language_backend(config, {}, {}, mock=True)
+    safety = SafetyGovernor(
+        SafetyConfig(alpha_clip=1.0, toxicity_threshold=1.0, governor_backoff=0.1)
+    )
     agents = build_agents(config["run_id"], config, world, backend, safety)
     for agent in agents:
         world.move_agent(agent.state.agent_id, "library")

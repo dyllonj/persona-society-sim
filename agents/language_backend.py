@@ -36,9 +36,17 @@ class BatchGenerationRequest:
 
 
 class LanguageBackend:
-    def __init__(self, temperature: float = 0.7, top_p: float = 0.9):
+    def __init__(
+        self, temperature: float = 0.7, top_p: float = 0.9, alpha_strength: float = 1.0
+    ):
         self.temperature = temperature
         self.top_p = top_p
+        self.alpha_strength = alpha_strength
+
+    def _scale_alphas(self, alphas: Dict[str, float]) -> Dict[str, float]:
+        if abs(self.alpha_strength - 1.0) < 1e-6:
+            return alphas
+        return {trait: coeff * self.alpha_strength for trait, coeff in alphas.items()}
 
     def generate(self, prompt: str, max_new_tokens: int, alphas: Dict[str, float]) -> GenerationResult:  # pragma: no cover - interface
         raise NotImplementedError
@@ -56,13 +64,15 @@ class HFBackend(LanguageBackend):
         self,
         model_name: str,
         trait_vectors: Dict[str, Dict[int, torch.Tensor]],
+        vector_norms: Optional[Dict[str, Dict[int, float]]] = None,
         temperature: float = 0.7,
         top_p: float = 0.9,
         use_quantization: bool = False,
+        alpha_strength: float = 1.0,
     ):
         if torch is None or AutoModelForCausalLM is None or AutoTokenizer is None:
             raise ModuleNotFoundError("torch and transformers are required for HFBackend")
-        super().__init__(temperature=temperature, top_p=top_p)
+        super().__init__(temperature=temperature, top_p=top_p, alpha_strength=alpha_strength)
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         # Reduce Transformers log verbosity (e.g., pad_token warnings)
         if hf_logging is not None:
@@ -91,13 +101,15 @@ class HFBackend(LanguageBackend):
                 model_name, torch_dtype=torch.float16, device_map="auto"
             )
 
-        self.controller = SteeringController(self.model, trait_vectors)
+        self.vector_norms = vector_norms or {}
+        self.controller = SteeringController(self.model, trait_vectors, vector_norms=self.vector_norms)
         self.controller.register()
 
     def generate(self, prompt: str, max_new_tokens: int, alphas: Dict[str, float]) -> GenerationResult:
         tokens = self.tokenizer(prompt, return_tensors="pt").to(self.model.device)
         prompt_length = tokens["input_ids"].shape[-1]
-        self.controller.set_alphas(alphas, prompt_length=prompt_length)
+        scaled_alphas = self._scale_alphas(alphas)
+        self.controller.set_alphas(scaled_alphas, prompt_length=prompt_length)
         with torch.no_grad():
             try:
                 output = self.model.generate(
@@ -136,7 +148,7 @@ class HFBackend(LanguageBackend):
             ).to(self.model.device)
 
             input_lengths = (tokens["attention_mask"].sum(dim=1)).tolist()
-            batched_alphas = [req.alphas for _, req in bucket]
+            batched_alphas = [self._scale_alphas(req.alphas) for _, req in bucket]
             self.controller.set_batched_alphas(batched_alphas, prompt_lengths=input_lengths)
 
             with torch.no_grad():
@@ -172,12 +184,19 @@ class HFBackend(LanguageBackend):
 
 
 class MockBackend(LanguageBackend):
-    def __init__(self, seed: int = 0, temperature: float = 0.0, top_p: float = 1.0):
-        super().__init__(temperature=temperature, top_p=top_p)
+    def __init__(
+        self,
+        seed: int = 0,
+        temperature: float = 0.0,
+        top_p: float = 1.0,
+        alpha_strength: float = 1.0,
+    ):
+        super().__init__(temperature=temperature, top_p=top_p, alpha_strength=alpha_strength)
         self.seed = seed
 
     def generate(self, prompt: str, max_new_tokens: int, alphas: Dict[str, float]) -> GenerationResult:
-        coeffs = ", ".join(f"{trait}:{alpha:+.2f}" for trait, alpha in sorted(alphas.items()))
+        scaled = self._scale_alphas(alphas)
+        coeffs = ", ".join(f"{trait}:{alpha:+.2f}" for trait, alpha in sorted(scaled.items()))
         text = (
             f"[mock tokens={max_new_tokens}] Persona[{coeffs}] responds to: "
             f"{prompt.splitlines()[-1]}"
