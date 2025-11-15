@@ -20,6 +20,7 @@ except ModuleNotFoundError as exc:  # pragma: no cover
             self.agent_id = "agent"
             self.outcome = "success"
             self.params = {}
+            self.prompt_hash = None
 
     class _MsgLog:
         def __init__(self):

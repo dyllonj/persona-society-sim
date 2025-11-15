@@ -134,6 +134,11 @@ class SimulationRunner:
                         params=decision.params,
                         outcome="success" if env_result.success else "fail",
                         info={**env_result.info, "utterance": decision.utterance},
+                        prompt_text=decision.prompt_text,
+                        prompt_hash=decision.prompt_hash,
+                        plan_metadata=decision.plan_metadata,
+                        reflection_summary=decision.reflection_summary,
+                        reflection_implications=decision.reflection_implications,
                     )
                     tick_logs.append(action_log)
                     self.log_sink.log_action(action_log)

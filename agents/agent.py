@@ -7,8 +7,9 @@ prompts.
 
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass
-from typing import Dict, List, Optional, TYPE_CHECKING, Sequence
+from typing import Dict, List, Optional, TYPE_CHECKING, Sequence, Tuple
 
 from agents.language_backend import GenerationResult, LanguageBackend
 from utils.sanitize import sanitize_agent_output
@@ -31,12 +32,16 @@ class ActionDecision:
     action_type: str
     params: Dict[str, str]
     utterance: str
-    prompt: str
+    prompt_text: str
+    prompt_hash: str
     tokens_in: int
     tokens_out: int
     steering_snapshot: Dict[str, float]
     layers_used: List[int]
     safety_event: Optional[SafetyEvent]
+    plan_metadata: Dict[str, object]
+    reflection_summary: Optional[str]
+    reflection_implications: List[str]
 
 
 class Agent:
@@ -62,6 +67,7 @@ class Agent:
         self.max_new_tokens = max_new_tokens
         self.reflect_every_n_ticks = reflect_every_n_ticks
         self._last_plan_suggestion: Optional[PlanSuggestion] = None
+        self._last_reflection: Optional[Tuple[str, List[str]]] = None
 
     # ---- persona helpers ----
 
@@ -108,6 +114,7 @@ class Agent:
         reflection_text = f"Focus: {', '.join(self.state.goals) or 'open exploration'}"
         implications = [f"Reference memory {ev.memory_id}" for ev in events]
         self.memory.add_reflection(self.state.agent_id, tick, reflection_text, implications=implications)
+        self._last_reflection = (summary, implications)
         suggestion = self.planner.plan(
             self.state.goals,
             summary,
@@ -189,6 +196,7 @@ class Agent:
             current_location=current_location,
             recent_dialogue=recent_dialogue,
         )
+        prompt_hash = hashlib.sha256(prompt.encode("utf-8")).hexdigest()
         alphas = self.persona_alphas()
         generation = self.generate(prompt, alphas)
         cleaned_text = sanitize_agent_output(generation.text)
@@ -207,14 +215,20 @@ class Agent:
         params = dict(suggestion.params)
         if suggestion.action_type == "talk":
             params["utterance"] = cleaned_text
+        plan_metadata = suggestion.to_metadata()
+        cached_reflection = self._last_reflection or ("", [])
         return ActionDecision(
             action_type=suggestion.action_type,
             params=params,
             utterance=cleaned_text,
-            prompt=prompt,
+            prompt_text=prompt,
+            prompt_hash=prompt_hash,
             tokens_in=generation.tokens_in,
             tokens_out=generation.tokens_out,
             steering_snapshot=alphas,
             layers_used=self.language_backend.layers_used(),
             safety_event=safety_event,
+            plan_metadata=plan_metadata,
+            reflection_summary=cached_reflection[0],
+            reflection_implications=list(cached_reflection[1]),
         )

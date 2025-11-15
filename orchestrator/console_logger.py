@@ -119,6 +119,9 @@ class ConsoleLogger:
             details.append(f"item: {action_log.params['item']}")
         if "qty" in action_log.params:
             details.append(f"qty: {action_log.params['qty']}")
+        prompt_hash = getattr(action_log, "prompt_hash", None)
+        if prompt_hash:
+            details.append(f"prompt#{prompt_hash[:8]}")
 
         details_str = " ".join(details) if details else ""
 

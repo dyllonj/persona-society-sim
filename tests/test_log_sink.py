@@ -17,6 +17,11 @@ def test_log_sink_flush(tmp_path: Path):
         params={"topic": "test"},
         outcome="success",
         info={"utterance": "hi"},
+        prompt_text="prompt",
+        prompt_hash="abc123",
+        plan_metadata={"action_type": "talk"},
+        reflection_summary="summary",
+        reflection_implications=["imp"],
     )
     sink.log_action(action)
     assert sink.action_buffer

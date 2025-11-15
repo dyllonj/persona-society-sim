@@ -6,8 +6,12 @@ import json
 from pathlib import Path
 from typing import Dict, List, Sequence
 
-import pyarrow as pa
-import pyarrow.parquet as pq
+try:  # pragma: no cover - optional dependency for structured dumps
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+except ModuleNotFoundError:  # pragma: no cover
+    pa = None
+    pq = None
 
 from schemas.logs import ActionLog, MsgLog, SafetyEvent
 from storage.db import Database
@@ -57,7 +61,7 @@ class LogSink:
         self.db.insert_many(table, rows)
 
     def _write_parquet(self, buffer: Sequence, kind: str, tick: int) -> None:
-        if not buffer:
+        if not buffer or pa is None or pq is None:
             return
         rows = [self._normalize(record.model_dump()) for record in buffer]
         table = pa.Table.from_pylist(rows)

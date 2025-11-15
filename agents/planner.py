@@ -17,6 +17,14 @@ class PlanSuggestion:
     params: Dict[str, str]
     utterance: str
 
+    def to_metadata(self) -> Dict[str, Any]:
+        """Return a serializable snapshot of the plan suggestion."""
+        return {
+            "action_type": self.action_type,
+            "params": dict(self.params),
+            "utterance": self.utterance,
+        }
+
 
 class Planner:
     def __init__(self, default_location: str = "town_square"):
