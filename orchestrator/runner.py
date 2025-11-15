@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import time
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Dict, Iterable, List, Optional
 from uuid import uuid4
 
@@ -72,7 +73,8 @@ class SimulationRunner:
         self.objective_manager = objective_manager
         self.agent_satisfaction: Dict[str, float] = {agent_id: 0.0 for agent_id in self.agents}
         persona_map = {agent_id: agent.state.persona_coeffs for agent_id, agent in self.agents.items()}
-        self.metric_tracker = MetricTracker(run_id, agent_personas=persona_map)
+        metrics_dir = log_sink.parquet_dir if log_sink.parquet_dir else Path("metrics")
+        self.metric_tracker = MetricTracker(run_id, agent_personas=persona_map, out_dir=metrics_dir)
         self.event_bridge = event_bridge
         self.tick_instrumentation = TickInstrumentation()
         self.probe_manager = probe_manager
