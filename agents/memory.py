@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+import hashlib
 from datetime import datetime
-from typing import Iterable, List
+from typing import Iterable, List, Optional, Sequence
 from uuid import uuid4
 
 from schemas.memory import MemoryEvent, Plan, Reflection
@@ -53,18 +54,35 @@ class MemoryStore:
     def recent_events(self, limit: int = 30) -> List[MemoryEvent]:
         return sorted(self.events, key=lambda ev: (ev.tick, ev.timestamp), reverse=True)[:limit]
 
-    def relevant_events(self, query: str, current_tick: int | None = None, limit: int = 10) -> List[MemoryEvent]:
-        """Score events by naive keyword overlap × recency × importance."""
+    def relevant_events(
+        self,
+        query: str,
+        current_tick: int | None = None,
+        limit: int = 10,
+        focus_terms: Optional[Sequence[str]] = None,
+    ) -> List[MemoryEvent]:
+        """Score events by keyword overlap × recency × importance (with optional focus boosts)."""
 
         keywords = set(query.lower().split())
+        focus_tokens: set[str] = set()
+        if focus_terms:
+            for term in focus_terms:
+                focus_tokens.update(term.lower().split())
         scored = []
         for event in self.events:
-            overlap = len(keywords.intersection(event.text.lower().split()))
+            tokens = set(event.text.lower().split())
+            overlap = len(keywords.intersection(tokens))
+            focus_overlap = len(focus_tokens.intersection(tokens))
+            focus_bonus = 0.25 * focus_overlap
             recency = 1.0
             if current_tick is not None:
                 gap = max(0, current_tick - event.tick)
                 recency = max(0.1, 1.0 - 0.01 * gap)
-            score = overlap + (event.importance or 0.0) + recency
+            score = overlap + focus_bonus + (event.importance or 0.0) + recency
+            # Deterministic jitter breaks ties so neighboring agents don't grab identical bundles.
+            jitter_seed = hashlib.sha256(event.memory_id.encode("utf-8")).digest()
+            jitter = int.from_bytes(jitter_seed[:2], "big") / 65535.0  # 0-1 range
+            score += jitter * 0.05
             scored.append((score, event))
         scored.sort(key=lambda pair: pair[0], reverse=True)
         return [ev for _, ev in scored[:limit]]

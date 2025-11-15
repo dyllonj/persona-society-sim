@@ -169,6 +169,17 @@ class SimulationRunner:
                     if decision.action_type == "move" and "destination" in decision.params:
                         decision.params = {**decision.params, "from": src_location}
 
+                    base_info = dict(env_result.info or {})
+                    action_info = {
+                        **base_info,
+                        "utterance": decision.utterance,
+                        "steering_snapshot": decision.steering_snapshot,
+                        "persona_coeffs": agent.state.persona_coeffs.model_dump(),
+                        "trait_key": trait_meta.trait_key,
+                        "trait_band": trait_meta.trait_band,
+                        "alpha_value": trait_meta.alpha_value,
+                        "alpha_bucket": trait_meta.alpha_bucket,
+                    }
                     action_log = ActionLog(
                         action_id=str(uuid4()),
                         run_id=self.run_id,
@@ -177,7 +188,7 @@ class SimulationRunner:
                         action_type=env_result.action_type,
                         params=decision.params,
                         outcome="success" if env_result.success else "fail",
-                        info={**env_result.info, "utterance": decision.utterance},
+                        info=action_info,
                         prompt_text=decision.prompt_text,
                         prompt_hash=decision.prompt_hash,
                         plan_metadata=decision.plan_metadata,
@@ -203,6 +214,8 @@ class SimulationRunner:
                             encounter_room=encounter.room_id,
                             encounter_participants=encounter.participants,
                             satisfaction=self.agent_satisfaction.get(agent.state.agent_id, 0.0),
+                            prompt_hash=decision.prompt_hash,
+                            plan_metadata=decision.plan_metadata,
                         )
                     except Exception:
                         pass
@@ -524,6 +537,9 @@ class SimulationRunner:
                     macro.enforcement_cost,
                     trait_key=macro.trait_key,
                     band_metadata=macro.band_metadata,
+                    trade_failures=macro.trade_failures,
+                    prompt_duplication_rate=macro.prompt_duplication_rate,
+                    plan_reuse_rate=macro.plan_reuse_rate,
                 )
                 self.log_sink.log_metrics_snapshot(metrics_snapshot)
         except Exception:

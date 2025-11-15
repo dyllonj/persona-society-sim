@@ -115,7 +115,8 @@ class Planner:
                 return objective_plan
 
         if goals:
-            goal = goals[0]
+            idx = tick % len(goals) if tick is not None else 0
+            goal = goals[idx]
             utterance = f"I am focusing on {goal.lower()} right now."
         else:
             goal = "socialize"

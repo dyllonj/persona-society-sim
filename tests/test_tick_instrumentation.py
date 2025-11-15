@@ -17,6 +17,8 @@ def test_tick_instrumentation_records_edges_and_macros():
         encounter_room="library",
         encounter_participants=("agent-1", "agent-2"),
         satisfaction=0.25,
+        prompt_hash="hash-1",
+        plan_metadata={"action_type": "talk", "params": {}, "utterance": "say hi"},
     )
 
     graph_inputs = instrumentation.graph_inputs()

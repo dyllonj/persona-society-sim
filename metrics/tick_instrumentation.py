@@ -26,6 +26,9 @@ class MacroInput:
     band_metadata: Dict[str, object]
     wealth: Dict[str, float]
     opinions: Dict[str, float]
+    trade_failures: int
+    prompt_duplication_rate: float
+    plan_reuse_rate: float
 
 
 class TickInstrumentation:
@@ -39,6 +42,11 @@ class TickInstrumentation:
         self._enforcement_cost: Dict[Optional[str], float] = defaultdict(float)
         self._band_members: Dict[Optional[str], Set[str]] = defaultdict(set)
         self._agent_opinions: Dict[str, float] = {}
+        self._prompt_counts: Dict[str, int] = defaultdict(int)
+        self._plan_counts: Dict[str, int] = defaultdict(int)
+        self._total_prompts = 0
+        self._total_plans = 0
+        self._trade_failures: Dict[Optional[str], int] = defaultdict(int)
 
     def on_tick_start(self, tick: int) -> None:
         self._edges.clear()
@@ -47,6 +55,11 @@ class TickInstrumentation:
         self._enforcement_cost.clear()
         self._band_members.clear()
         self._agent_opinions.clear()
+        self._prompt_counts.clear()
+        self._plan_counts.clear()
+        self._total_prompts = 0
+        self._total_plans = 0
+        self._trade_failures.clear()
 
     def record_action(
         self,
@@ -61,6 +74,8 @@ class TickInstrumentation:
         encounter_room: str,
         encounter_participants: Iterable[str],
         satisfaction: float,
+        prompt_hash: Optional[str] = None,
+        plan_metadata: Optional[Dict[str, Any]] = None,
     ) -> None:
         trait_key = trait_band_key(persona_coeffs, steering_snapshot)
         self._band_members[None].add(agent_id)
@@ -81,6 +96,15 @@ class TickInstrumentation:
             self._increment_conflict(trait_key)
         if action_type == "enforce":
             self._increment_enforcement_cost(info, trait_key)
+        if action_type == "trade" and not success:
+            self._register_trade_failure(trait_key)
+        if prompt_hash:
+            self._total_prompts += 1
+            self._prompt_counts[prompt_hash] += 1
+        if plan_metadata:
+            signature = self._plan_signature(plan_metadata)
+            self._total_plans += 1
+            self._plan_counts[signature] += 1
 
     # ---- aggregation ----
 
@@ -105,6 +129,8 @@ class TickInstrumentation:
             combined_members[None] = set(wealth_scalar.keys()) or set(self._agent_opinions.keys())
 
         inputs: List[MacroInput] = []
+        prompt_dup_rate = self._duplication_rate(self._prompt_counts, self._total_prompts)
+        plan_dup_rate = self._duplication_rate(self._plan_counts, self._total_plans)
         for trait_key, members in combined_members.items():
             if not members:
                 continue
@@ -121,6 +147,9 @@ class TickInstrumentation:
                     band_metadata=band_metadata(trait_key),
                     wealth=wealth_slice,
                     opinions=opinion_slice,
+                    trade_failures=self._trade_failures.get(trait_key, 0),
+                    prompt_duplication_rate=prompt_dup_rate,
+                    plan_reuse_rate=plan_dup_rate,
                 )
             )
         if not inputs:
@@ -133,6 +162,9 @@ class TickInstrumentation:
                     band_metadata={},
                     wealth={agent: float(sum(holdings.values())) for agent, holdings in wealth_snapshot.items()},
                     opinions=dict(opinions),
+                    trade_failures=self._trade_failures.get(None, 0),
+                    prompt_duplication_rate=prompt_dup_rate,
+                    plan_reuse_rate=plan_dup_rate,
                 )
             )
         return inputs
@@ -188,3 +220,24 @@ class TickInstrumentation:
         self._edges[None].append(edge)
         if trait_key:
             self._edges[trait_key].append(edge)
+
+    def _register_trade_failure(self, trait_key: Optional[str]) -> None:
+        self._trade_failures[None] += 1
+        if trait_key:
+            self._trade_failures[trait_key] += 1
+
+    def _duplication_rate(self, counts: Dict[str, int], total: int) -> float:
+        if total <= 1:
+            return 0.0
+        duplicates = sum(count - 1 for count in counts.values() if count > 1)
+        return duplicates / total
+
+    def _plan_signature(self, metadata: Dict[str, Any]) -> str:
+        action = str(metadata.get("action_type") or "")
+        params = metadata.get("params") or {}
+        if isinstance(params, dict):
+            param_items = ",".join(f"{key}={params[key]}" for key in sorted(params))
+        else:
+            param_items = str(params)
+        utterance = str(metadata.get("utterance") or "")
+        return f"{action}|{param_items}|{utterance}"

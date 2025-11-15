@@ -70,6 +70,7 @@ class Agent:
         self.reflect_every_n_ticks = reflect_every_n_ticks
         self._last_plan_suggestion: Optional[PlanSuggestion] = None
         self._last_reflection: Optional[Tuple[str, List[str]]] = None
+        self._last_plan_location: Optional[str] = None
 
     # ---- persona helpers ----
 
@@ -107,12 +108,20 @@ class Agent:
         # Skip reflection if not on reflection cycle and we have a cached plan
         should_reflect = (tick % self.reflect_every_n_ticks == 0)
 
-        if not should_reflect and self._last_plan_suggestion is not None:
+        if (
+            not should_reflect
+            and self._last_plan_suggestion is not None
+            and self._last_plan_location == (current_location or "")
+        ):
             # Reuse last plan suggestion (fast path)
             return self._last_plan_suggestion
 
         # Full reflection path
-        summary, events = self.retriever.summarize(self.state.goals, current_tick=tick)
+        summary, events = self.retriever.summarize(
+            self.state.goals,
+            current_tick=tick,
+            focus_terms=[current_location] if current_location else None,
+        )
         reflection_text = f"Focus: {', '.join(self.state.goals) or 'open exploration'}"
         implications = [f"Reference memory {ev.memory_id}" for ev in events]
         self.memory.add_reflection(self.state.agent_id, tick, reflection_text, implications=implications)
@@ -127,6 +136,7 @@ class Agent:
         )
         self.memory.add_plan(self.state.agent_id, tick, tick + 3, [suggestion.action_type])
         self._last_plan_suggestion = suggestion
+        self._last_plan_location = current_location or ""
         return suggestion
 
     def _build_prompt(
@@ -147,22 +157,33 @@ class Agent:
                 for entry in recent_dialogue
             )
             dialogue_section = f"Recent dialogue:\n{formatted_dialogue}\n"
+        param_text = ", ".join(f"{k}={v}" for k, v in suggestion.params.items()) or "none"
+        action_directives = [
+            "NEXT ACTION DIRECTIVE:",
+            f"- Action type: {suggestion.action_type}",
+            f"- Parameters: {param_text}",
+            f"- Utterance guidance: {suggestion.utterance}",
+        ]
+        if suggestion.action_type == "trade":
+            action_directives.append("- Craft a <=100 character trade offer that states item, qty, and price.")
+            action_directives.append("- No narration or extra dialogue—just the trade text you would post.")
+        elif suggestion.action_type != "talk":
+            action_directives.append("- Keep it to one concise sentence describing what you do next.")
+        action_section = "\n".join(action_directives)
         return (
-            f"System: You are {agent_name}. Write ONLY your own single response as {agent_name}.\n"
+            f"System: You are {agent_name}. Reply with ONLY your own single response as {agent_name}.\n"
             "IMPORTANT RULES:\n"
-            f"- Write ONLY what {agent_name} would say - do NOT write dialogue for other agents\n"
-            "- Do NOT include agent names, prefixes like 'You:', or stage directions\n"
-            "- Do NOT write a multi-turn conversation or imagine what others would say\n"
-            "- The observation below shows what OTHERS said - you respond as yourself only\n"
-            "- Write in natural first-person ('I...', not 'You...')\n"
-            "- Keep your response concise and in-character\n"
-            "- Do not contradict your current location\n"
+            f"- Write ONLY what {agent_name} would say; never script other agents\n"
+            "- No prefixes like 'You:' or stage directions\n"
+            "- Never write multi-turn conversations or imagine replies\n"
+            "- Always speak in first-person ('I...') and stay in character\n"
+            "- Keep responses concise and consistent with your location\n"
+            f"\n{action_section}\n"
             f"\nCurrent location: {location_text}\n"
             f"Current goals: {goals_text}\n"
             f"Observation: {observation}\n"
             f"{dialogue_section}"
-            f"Intended utterance guidance: {suggestion.utterance}\n"
-            f"\n{agent_name}'s response:"
+            f"{agent_name}'s response:"
         )
 
     def generate(self, prompt: str, alphas: Dict[str, float]) -> GenerationResult:

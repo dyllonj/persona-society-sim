@@ -136,6 +136,9 @@ class MetricsSnapshot(BaseModel):
     rule_enforcement_cost: float
     trait_key: Optional[str] = None
     band_metadata: Dict[str, object] = Field(default_factory=dict)
+    trade_failures: int = 0
+    prompt_duplication_rate: float = 0.0
+    plan_reuse_rate: float = 0.0
 
 
 class ResearchFactLog(BaseModel):
