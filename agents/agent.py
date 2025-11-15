@@ -342,8 +342,8 @@ class Agent:
             "- Always speak in first-person ('I...') and stay in character\n"
             "- Keep responses concise and consistent with your location\n"
             "Penalty: Do NOT repeat 'Quick sync…' unless another agent explicitly asked this tick\n"
-            f"{'\n' + highlight_section if highlight_section else '\n'}"
-            f"{action_section}\n"
+            + ("\n" + highlight_section if highlight_section else "\n")
+            + f"{action_section}\n"
             f"\nCurrent location: {location_text}\n"
             f"Current goals: {goals_text}\n"
             f"Observation: {observation}\n"

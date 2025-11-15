@@ -36,6 +36,21 @@ python3 -m orchestrator.cli configs/run.small.yaml --live --full-messages --env 
 pytest  # optional
 ```
 
+### Simulation parameters
+
+**Events per tick:**
+Control the maximum number of agent encounters/interactions per simulation tick with `--max-events` (default: 16):
+```bash
+python3 -m orchestrator.cli configs/run.small.yaml --max-events 32
+```
+
+**Total steps:**
+The total number of simulation ticks is configured in your YAML config file (default: 200):
+```yaml
+# configs/run.small.yaml
+steps: 200
+```
+
 ### Persona prompt schema & CLI
 
 `data/prompts/*.jsonl` now use a forced-choice format so each record contains a shared stem plus two contrasting options. The high/low answers are flagged explicitly so downstream tooling knows which continuation represents a stronger trait expression:
