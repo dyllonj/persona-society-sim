@@ -8,6 +8,7 @@ prompts.
 from __future__ import annotations
 
 import hashlib
+import re
 from dataclasses import dataclass
 from typing import Dict, List, Optional, TYPE_CHECKING, Sequence, Tuple
 
@@ -181,6 +182,121 @@ class Agent:
                 break
         return keywords
 
+    def _extract_observation_highlights(
+        self,
+        observation: Optional[str],
+        recent_dialogue: Optional[Sequence[RoomUtterance]],
+        *,
+        min_items: int = 2,
+        max_items: int = 3,
+    ) -> List[str]:
+        """Return short phrases that anchor the prompt to fresh context."""
+
+        texts: List[str] = []
+        if observation:
+            texts.append(observation)
+        if recent_dialogue:
+            texts.extend(entry.content for entry in recent_dialogue[-2:])
+        if not texts:
+            return []
+
+        stopwords = {
+            "the",
+            "a",
+            "an",
+            "and",
+            "or",
+            "with",
+            "for",
+            "of",
+            "in",
+            "on",
+            "at",
+            "to",
+            "from",
+            "this",
+            "that",
+            "these",
+            "those",
+            "nearby",
+            "agents",
+            "agent",
+            "location",
+            "capacity",
+            "resources",
+            "neighbors",
+            "current",
+            "recent",
+            "activity",
+            "room",
+            "there",
+            "here",
+            "its",
+            "it's",
+            "be",
+            "is",
+            "are",
+            "was",
+            "were",
+            "have",
+            "has",
+            "had",
+            "tick",
+            "agent's",
+            "your",
+        }
+
+        tokens: List[str] = []
+        for text in texts:
+            tokens.extend(re.findall(r"[A-Za-z][A-Za-z'-]*", text))
+
+        highlights: List[str] = []
+        seen: set[str] = set()
+        idx = 0
+        while idx < len(tokens) and len(highlights) < max_items:
+            token = tokens[idx].lower()
+            idx += 1
+            if token in stopwords or len(token) < 3:
+                continue
+            phrase_words = [token]
+            lookahead = 0
+            while idx < len(tokens) and lookahead < 2:
+                next_token = tokens[idx].lower()
+                if next_token in stopwords or len(next_token) < 3:
+                    idx += 1
+                    continue
+                phrase_words.append(next_token)
+                idx += 1
+                lookahead += 1
+            phrase = " ".join(phrase_words)
+            normalized = phrase.lower()
+            if normalized in seen:
+                continue
+            seen.add(normalized)
+            highlights.append(phrase.capitalize())
+
+        if len(highlights) < min_items:
+            for text in texts:
+                clauses = re.split(r"[.!?]", text)
+                for clause in clauses:
+                    snippet_words = [word for word in clause.split() if word.strip()]
+                    if not snippet_words:
+                        continue
+                    snippet = " ".join(snippet_words[:10]).strip(" .,;:")
+                    if len(snippet) < 4:
+                        continue
+                    normalized = snippet.lower()
+                    if normalized in seen:
+                        continue
+                    highlights.append(snippet)
+                    seen.add(normalized)
+                    if len(highlights) >= min_items:
+                        break
+                if len(highlights) >= min_items:
+                    break
+
+        return highlights[:max_items]
+
     def _build_prompt(
         self,
         observation: str,
@@ -199,6 +315,11 @@ class Agent:
                 for entry in recent_dialogue
             )
             dialogue_section = f"Recent dialogue:\n{formatted_dialogue}\n"
+        highlights = self._extract_observation_highlights(observation, recent_dialogue)
+        highlight_section = ""
+        if highlights:
+            highlight_lines = ["Key observation highlights:"] + [f"- {item}" for item in highlights]
+            highlight_section = "\n".join(highlight_lines) + "\n\n"
         param_text = ", ".join(f"{k}={v}" for k, v in suggestion.params.items()) or "none"
         action_directives = [
             "NEXT ACTION DIRECTIVE:",
@@ -220,7 +341,9 @@ class Agent:
             "- Never write multi-turn conversations or imagine replies\n"
             "- Always speak in first-person ('I...') and stay in character\n"
             "- Keep responses concise and consistent with your location\n"
-            f"\n{action_section}\n"
+            "Penalty: Do NOT repeat 'Quick sync…' unless another agent explicitly asked this tick\n"
+            f"{'\n' + highlight_section if highlight_section else '\n'}"
+            f"{action_section}\n"
             f"\nCurrent location: {location_text}\n"
             f"Current goals: {goals_text}\n"
             f"Observation: {observation}\n"
