@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import time
 from dataclasses import dataclass
 from typing import Dict, Iterable, List, Optional
@@ -13,17 +14,33 @@ from env.world import World, RoomUtterance
 from orchestrator.console_logger import ConsoleLogger
 from orchestrator.objectives import ObjectiveManager
 from orchestrator.scheduler import Scheduler
-from schemas.logs import ActionLog, MsgLog
+from schemas.logs import (
+    ActionLog,
+    MsgLog,
+    CitationLog,
+    ReportGradeLog,
+    ResearchFactLog,
+)
 from storage.log_sink import LogSink
 from metrics import graphs, social_dynamics
 from metrics.tick_instrumentation import TickInstrumentation
 from metrics.tracker import MetricTracker
+from metrics.persona_bands import trait_band_key
 
 
 @dataclass
 class TickResult:
     tick: int
     action_logs: List[ActionLog]
+
+
+@dataclass
+class TraitMetadata:
+    trait_key: Optional[str]
+    trait_name: Optional[str]
+    trait_band: Optional[str]
+    alpha_value: Optional[float]
+    alpha_bucket: Optional[str]
 
 
 class SimulationRunner:
@@ -127,6 +144,8 @@ class SimulationRunner:
                         decision.action_type,
                         decision.params,
                     )
+                    trait_meta = self._trait_metadata(agent, decision.steering_snapshot)
+                    self._emit_structured_logs(agent, env_result, trait_meta)
                     # Attach source location for moves to improve logging clarity
                     if decision.action_type == "move" and "destination" in decision.params:
                         decision.params = {**decision.params, "from": src_location}
@@ -207,7 +226,7 @@ class SimulationRunner:
                                 if room_now in self.world.locations
                                 else 0
                             )
-                            self.metric_tracker.on_action(action_log, occ_now)
+                        self.metric_tracker.on_action(action_log, occ_now)
                     except Exception:
                         # Metric collection should never interfere with the run
                         pass
@@ -320,6 +339,141 @@ class SimulationRunner:
         except Exception:
             pass
         return history
+
+    def _trait_metadata(self, agent: Agent, steering_snapshot: Dict[str, float]) -> TraitMetadata:
+        persona = agent.state.persona_coeffs.model_dump()
+        snapshot = steering_snapshot or {}
+        trait_key = trait_band_key(persona, snapshot)
+        trait_name: Optional[str] = None
+        trait_band: Optional[str] = None
+        if trait_key and ":" in trait_key:
+            trait_name, trait_band = trait_key.split(":", 1)
+        elif trait_key:
+            trait_name = trait_key
+        alpha_value: Optional[float] = None
+        if trait_name:
+            try:
+                alpha_value = float(snapshot.get(trait_name, 0.0))
+            except (TypeError, ValueError):
+                alpha_value = None
+        alpha_bucket = self._alpha_bucket(alpha_value)
+        return TraitMetadata(
+            trait_key=trait_key,
+            trait_name=trait_name,
+            trait_band=trait_band,
+            alpha_value=alpha_value,
+            alpha_bucket=alpha_bucket,
+        )
+
+    def _alpha_bucket(self, alpha_value: Optional[float]) -> Optional[str]:
+        if alpha_value is None:
+            return None
+        magnitude = abs(alpha_value)
+        for label, lower, upper in MetricTracker.ALPHA_BUCKETS:
+            lower_ok = lower is None or magnitude >= lower
+            upper_ok = upper is None or magnitude < upper
+            if lower_ok and upper_ok:
+                return label
+        return None
+
+    def _emit_structured_logs(
+        self,
+        agent: Agent,
+        env_result: actions.ActionResult,
+        trait_meta: TraitMetadata,
+    ) -> None:
+        info = env_result.info or {}
+        if env_result.action_type == "research":
+            facts = self._coerce_fact_payload(info.get("facts_found"))
+            doc_id = str(info.get("doc_id") or "")
+            for fact in facts:
+                fact_id = str(fact.get("fact_id") or "")
+                if not fact_id:
+                    continue
+                fact_log = ResearchFactLog(
+                    log_id=str(uuid4()),
+                    run_id=self.run_id,
+                    tick=self.world.tick,
+                    agent_id=agent.state.agent_id,
+                    doc_id=doc_id,
+                    fact_id=fact_id,
+                    fact_answer=str(fact.get("answer") or ""),
+                    target_answer=fact.get("target_answer"),
+                    correct=bool(fact.get("correct", False)),
+                    trait_key=trait_meta.trait_key,
+                    trait_band=trait_meta.trait_band,
+                    alpha_value=trait_meta.alpha_value,
+                    alpha_bucket=trait_meta.alpha_bucket,
+                )
+                self.log_sink.log_research_fact(fact_log)
+                try:
+                    self.metric_tracker.on_research_fact(fact_log)
+                except Exception:
+                    pass
+        elif env_result.action_type == "cite":
+            doc_id = str(info.get("doc_id") or "")
+            if doc_id:
+                citation_log = CitationLog(
+                    log_id=str(uuid4()),
+                    run_id=self.run_id,
+                    tick=self.world.tick,
+                    agent_id=agent.state.agent_id,
+                    doc_id=doc_id,
+                    trait_key=trait_meta.trait_key,
+                    trait_band=trait_meta.trait_band,
+                    alpha_value=trait_meta.alpha_value,
+                    alpha_bucket=trait_meta.alpha_bucket,
+                )
+                self.log_sink.log_citation(citation_log)
+                try:
+                    self.metric_tracker.on_citation(citation_log)
+                except Exception:
+                    pass
+        elif env_result.action_type == "submit_report":
+            payload = info
+            if isinstance(info, dict) and "grading" in info:
+                payload = info["grading"]
+            grade_payload = self._coerce_grade_payload(payload)
+            if grade_payload:
+                report_log = ReportGradeLog(
+                    log_id=str(uuid4()),
+                    run_id=self.run_id,
+                    tick=self.world.tick,
+                    agent_id=agent.state.agent_id,
+                    targets_total=int(grade_payload.get("targets_total", 0)),
+                    facts_correct=int(grade_payload.get("facts_correct", 0)),
+                    citations_valid=int(grade_payload.get("citations_valid", 0)),
+                    reward_points=float(grade_payload.get("reward_points", 0.0)),
+                    trait_key=trait_meta.trait_key,
+                    trait_band=trait_meta.trait_band,
+                    alpha_value=trait_meta.alpha_value,
+                    alpha_bucket=trait_meta.alpha_bucket,
+                )
+                self.log_sink.log_report_grade(report_log)
+                try:
+                    self.metric_tracker.on_report_grade(report_log)
+                except Exception:
+                    pass
+
+    def _coerce_fact_payload(self, payload) -> List[Dict[str, object]]:
+        if isinstance(payload, str):
+            try:
+                payload = json.loads(payload)
+            except json.JSONDecodeError:
+                return []
+        if isinstance(payload, list):
+            return payload
+        return []
+
+    def _coerce_grade_payload(self, payload) -> Optional[Dict[str, object]]:
+        if isinstance(payload, str):
+            try:
+                payload = json.loads(payload)
+            except json.JSONDecodeError:
+                return None
+        if isinstance(payload, dict):
+            return payload
+        return None
 
     def _log_tick_snapshots(self) -> None:
         try:

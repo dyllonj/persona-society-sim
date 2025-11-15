@@ -109,12 +109,18 @@ class ConsoleLogger:
             if doc:
                 details.append(f"doc:{doc}")
             ff = action_log.info.get("facts_found")
-            if ff:
+            fact_count = 0
+            if isinstance(ff, str):
                 try:
-                    facts = json.loads(ff)
-                    details.append(f"facts:{len(facts)}")
+                    ff = json.loads(ff)
                 except Exception:
-                    pass
+                    ff = []
+            if isinstance(ff, list):
+                fact_count = len(ff)
+            elif isinstance(ff, dict):
+                fact_count = 1
+            if fact_count:
+                details.append(f"facts:{fact_count}")
         if "item" in action_log.params:
             details.append(f"item: {action_log.params['item']}")
         if "qty" in action_log.params:

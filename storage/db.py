@@ -131,6 +131,46 @@ CREATE TABLE IF NOT EXISTS metrics_snapshot (
   rule_enforcement_cost FLOAT,
   PRIMARY KEY (run_id, tick, trait_key)
 );
+CREATE TABLE IF NOT EXISTS research_fact_log (
+  log_id TEXT PRIMARY KEY,
+  run_id TEXT,
+  tick INT,
+  agent_id TEXT,
+  doc_id TEXT,
+  fact_id TEXT,
+  fact_answer TEXT,
+  target_answer TEXT,
+  correct BOOLEAN,
+  trait_key TEXT,
+  trait_band TEXT,
+  alpha_value FLOAT,
+  alpha_bucket TEXT
+);
+CREATE TABLE IF NOT EXISTS citation_log (
+  log_id TEXT PRIMARY KEY,
+  run_id TEXT,
+  tick INT,
+  agent_id TEXT,
+  doc_id TEXT,
+  trait_key TEXT,
+  trait_band TEXT,
+  alpha_value FLOAT,
+  alpha_bucket TEXT
+);
+CREATE TABLE IF NOT EXISTS report_grade_log (
+  log_id TEXT PRIMARY KEY,
+  run_id TEXT,
+  tick INT,
+  agent_id TEXT,
+  targets_total INT,
+  facts_correct INT,
+  citations_valid INT,
+  reward_points FLOAT,
+  trait_key TEXT,
+  trait_band TEXT,
+  alpha_value FLOAT,
+  alpha_bucket TEXT
+);
 CREATE TABLE IF NOT EXISTS steering_vector_store (
   vector_store_id TEXT,
   trait TEXT,

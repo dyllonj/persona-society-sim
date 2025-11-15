@@ -3,7 +3,13 @@ from pathlib import Path
 
 from metrics.tracker import MetricTracker
 from schemas.agent import PersonaCoeffs
-from schemas.logs import ActionLog, MsgLog
+from schemas.logs import (
+    ActionLog,
+    CitationLog,
+    MsgLog,
+    ReportGradeLog,
+    ResearchFactLog,
+)
 
 
 def _action(agent_id: str, tick: int, action_type: str) -> ActionLog:
@@ -46,6 +52,43 @@ def test_metric_tracker_handles_personas_and_messages(tmp_path: Path) -> None:
     tracker.on_action(_action("agent-1", 1, "research"), occupants=2)
     tracker.on_tick_end(1, 0.5)
     tracker.on_message(_message("agent-1", 1, {"E": 0.8, "A": -2.1}))
+    tracker.on_research_fact(
+        ResearchFactLog(
+            log_id="rf-1",
+            run_id="unit",
+            tick=1,
+            agent_id="agent-1",
+            doc_id="doc-1",
+            fact_id="fact-1",
+            fact_answer="alpha",
+            target_answer="alpha",
+            correct=True,
+            trait_key="A:low",
+        )
+    )
+    tracker.on_citation(
+        CitationLog(
+            log_id="c-1",
+            run_id="unit",
+            tick=1,
+            agent_id="agent-1",
+            doc_id="doc-1",
+            trait_key="A:low",
+        )
+    )
+    tracker.on_report_grade(
+        ReportGradeLog(
+            log_id="g-1",
+            run_id="unit",
+            tick=1,
+            agent_id="agent-1",
+            targets_total=3,
+            facts_correct=2,
+            citations_valid=1,
+            reward_points=3.0,
+            trait_key="A:low",
+        )
+    )
     tracker.flush()
 
     log_path = tmp_path / "run_unit.jsonl"
@@ -64,3 +107,7 @@ def test_metric_tracker_handles_personas_and_messages(tmp_path: Path) -> None:
     alpha_buckets = summary["alpha_buckets"]
     assert alpha_buckets["E"]["bucket_counts"]["0.5-1.5"] == 1
     assert alpha_buckets["A"]["bucket_counts"][">1.5"] == 1
+    research = summary["research"]
+    assert research["fact_coverage"]["A:low"]["facts_correct"] == 1.0
+    assert research["citation_diversity"]["A:low"]["total"] == 1.0
+    assert research["grade_drift"]["A:low"]["avg_reward"] == 3.0

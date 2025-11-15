@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Optional, Set
 
 from metrics.persona_bands import band_metadata, trait_band_key
 from schemas.logs import Edge
@@ -55,7 +55,7 @@ class TickInstrumentation:
         action_type: str,
         success: bool,
         params: Dict[str, str],
-        info: Dict[str, str],
+        info: Dict[str, Any],
         steering_snapshot: Dict[str, float],
         persona_coeffs: Dict[str, float],
         encounter_room: str,
@@ -155,7 +155,7 @@ class TickInstrumentation:
         self._append_edge(edge, trait_key)
 
     def _record_enforcement(
-        self, agent_id: str, params: Dict[str, str], info: Dict[str, str], trait_key: Optional[str]
+        self, agent_id: str, params: Dict[str, str], info: Dict[str, Any], trait_key: Optional[str]
     ) -> None:
         target = params.get("target_id") or info.get("target_id") or params.get("recipient")
         if not target:
@@ -174,7 +174,7 @@ class TickInstrumentation:
         if trait_key:
             self._conflicts[trait_key] += 1
 
-    def _increment_enforcement_cost(self, info: Dict[str, str], trait_key: Optional[str]) -> None:
+    def _increment_enforcement_cost(self, info: Dict[str, Any], trait_key: Optional[str]) -> None:
         cost_raw = info.get("cost") or info.get("amount") or "1"
         try:
             cost = float(cost_raw)

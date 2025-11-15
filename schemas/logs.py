@@ -61,7 +61,7 @@ class ActionLog(BaseModel):
     action_type: ActionLiteral
     params: Dict[str, str] = Field(default_factory=dict)
     outcome: OutcomeLiteral
-    info: Dict[str, str] = Field(default_factory=dict)
+    info: Dict[str, Any] = Field(default_factory=dict)
     prompt_text: Optional[str] = None
     prompt_hash: Optional[str] = None
     plan_metadata: Dict[str, Any] = Field(default_factory=dict)
@@ -136,3 +136,46 @@ class MetricsSnapshot(BaseModel):
     rule_enforcement_cost: float
     trait_key: Optional[str] = None
     band_metadata: Dict[str, object] = Field(default_factory=dict)
+
+
+class ResearchFactLog(BaseModel):
+    log_id: str
+    run_id: str
+    tick: int
+    agent_id: str
+    doc_id: str
+    fact_id: str
+    fact_answer: str
+    target_answer: Optional[str] = None
+    correct: bool
+    trait_key: Optional[str] = None
+    trait_band: Optional[str] = None
+    alpha_value: Optional[float] = None
+    alpha_bucket: Optional[str] = None
+
+
+class CitationLog(BaseModel):
+    log_id: str
+    run_id: str
+    tick: int
+    agent_id: str
+    doc_id: str
+    trait_key: Optional[str] = None
+    trait_band: Optional[str] = None
+    alpha_value: Optional[float] = None
+    alpha_bucket: Optional[str] = None
+
+
+class ReportGradeLog(BaseModel):
+    log_id: str
+    run_id: str
+    tick: int
+    agent_id: str
+    targets_total: int
+    facts_correct: int
+    citations_valid: int
+    reward_points: float
+    trait_key: Optional[str] = None
+    trait_band: Optional[str] = None
+    alpha_value: Optional[float] = None
+    alpha_bucket: Optional[str] = None
