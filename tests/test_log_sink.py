@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from schemas.logs import ActionLog, Edge, GraphSnapshot, MetricsSnapshot
+from schemas.logs import ActionLog, Edge, GraphSnapshot, MetricsSnapshot, ProbeLog
 from storage import log_sink as log_sink_module
 from storage.log_sink import LogSink
 
@@ -42,15 +42,34 @@ def test_log_sink_flush(tmp_path: Path):
     )
     sink.log_graph_snapshot(graph)
     sink.log_metrics_snapshot(metrics)
-    assert sink.action_buffer and sink.graph_buffer and sink.metrics_buffer
+    probe = ProbeLog(
+        probe_id="p1",
+        run_id="r1",
+        tick=0,
+        agent_id="agent-1",
+        probe_type="self_report",
+        prompt="Rate yourself",
+        parsed_scores={"E": 0.5},
+        raw_response="1 2 3",
+    )
+    sink.log_probe(probe)
+    assert (
+        sink.action_buffer
+        and sink.graph_buffer
+        and sink.metrics_buffer
+        and sink.probe_buffer
+    )
     sink.flush(tick=0)
     assert not sink.action_buffer
     assert not sink.graph_buffer
     assert not sink.metrics_buffer
+    assert not sink.probe_buffer
     graph_dir = tmp_path / "graph_snapshots"
     metrics_dir = tmp_path / "metrics_snapshots"
-    assert graph_dir.exists() and metrics_dir.exists()
+    probe_dir = tmp_path / "probes"
+    assert graph_dir.exists() and metrics_dir.exists() and probe_dir.exists()
     if log_sink_module.pq is not None:
         graph_files = list(graph_dir.glob("*.parquet"))
         metrics_files = list(metrics_dir.glob("*.parquet"))
-        assert graph_files and metrics_files
+        probe_files = list(probe_dir.glob("*.parquet"))
+        assert graph_files and metrics_files and probe_files

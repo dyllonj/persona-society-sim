@@ -5,6 +5,34 @@
 - **Behavioral probes**: Situational mini-scenarios injected into the loop (e.g., conflict, planning). Code rubric-based scoring rules in `metrics/social_dynamics.py`.
 - **Drift metrics**: Track cosine similarity between early vs late persona embeddings derived from generated text; log α adjustments required to maintain scores.
 
+### Probe scheduling knobs
+Probe cadences are configured in `evaluation.probes` inside each run config:
+
+```yaml
+evaluation:
+  probes:
+    enabled: true
+    questionnaires:
+      - probe_id: "ipip_weekly"
+        cadence: 5          # Trigger every 5 ticks
+        start_tick: 0       # First activation
+        injection_mode: "observation_tag"  # prepend to world context
+        targets: ["agent-000", "agent-001"]
+        questions:
+          - item_id: "E1"
+            trait: "E"
+            text: "I feel energetic."
+    scenarios:
+      - probe_id: "civic_help"
+        cadence: 7
+        start_tick: 3
+        injection_mode: "encounter"   # creates a synthetic encounter transcript
+        rubric: "cooperation"          # evaluated via `metrics.social_dynamics.evaluate_behavior_rubric`
+        prompt: "A neighbor asks for help organizing a cleanup."
+```
+
+Self-report probes parse Likert answers from the agent's utterance, mapping 1–5 onto [-1,1] per trait. Behavioral probes tag the agent's next `ActionLog` and evaluate it via the selected rubric (`cooperation`, `rule_following`, or `civility`). Results are persisted as `ProbeLog` entries in the DB/Parquet sinks for downstream analysis.
+
 ## Social structure (RQ2)
 - **Graph metrics**: Degree/centrality/clustering/assortativity computed each tick; compare across trait bands.
 - **Dyadic sentiment**: Sentiment polarity of messages per tie to quantify tie positivity vs trait intensity.

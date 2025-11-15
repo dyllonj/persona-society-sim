@@ -283,6 +283,7 @@ def main() -> None:
             if args.live:
                 console_logger.log_warning(f"Failed to start viewer: {e}")
 
+    evaluation_cfg = config.get("evaluation", {}) or {}
     runner = SimulationRunner(
         run_id=run_id,
         world=world,
@@ -294,6 +295,7 @@ def main() -> None:
         console_logger=console_logger,
         objective_manager=objective_manager,
         event_bridge=event_bridge,
+        probe_config=evaluation_cfg.get("probes"),
     )
     runner.run(config.get("steps", 200), max_events_per_tick=args.max_events)
 

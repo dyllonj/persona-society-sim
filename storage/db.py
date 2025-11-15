@@ -131,6 +131,17 @@ CREATE TABLE IF NOT EXISTS metrics_snapshot (
   rule_enforcement_cost FLOAT,
   PRIMARY KEY (run_id, tick, trait_key)
 );
+CREATE TABLE IF NOT EXISTS probe_log (
+  probe_id TEXT,
+  run_id TEXT,
+  tick INT,
+  agent_id TEXT,
+  probe_type TEXT,
+  prompt TEXT,
+  parsed_scores JSONB,
+  raw_response TEXT,
+  PRIMARY KEY (probe_id, run_id, tick, agent_id)
+);
 CREATE TABLE IF NOT EXISTS steering_vector_store (
   vector_store_id TEXT,
   trait TEXT,
