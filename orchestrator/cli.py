@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import random
 from datetime import datetime
 from pathlib import Path
@@ -51,14 +52,43 @@ def sample_persona(base: Dict[str, float], rng: random.Random) -> PersonaCoeffs:
     return PersonaCoeffs(**{trait: jitter(base.get(trait, 0.0)) for trait in TRAIT_KEYS})
 
 
-def load_trait_vectors(traits: List[str], layers: List[int], vector_dir: Path) -> Dict[str, Dict[int, np.ndarray]]:
+def load_trait_vectors(traits: List[str], vector_dir: Path) -> Dict[str, Dict[int, np.ndarray]]:
     store: Dict[str, Dict[int, np.ndarray]] = {}
     for trait in traits:
+        meta_path = vector_dir / f"{trait}.meta.json"
+        if not meta_path.exists():
+            continue
+        metadata = json.loads(meta_path.read_text())
+        layer_entries = {entry["layer_id"]: entry for entry in metadata.get("layers", [])}
+        preferred = metadata.get("preferred_layers") or []
+        ordered_layers: List[int] = []
+        seen = set()
+        for layer_id in preferred:
+            if layer_id in layer_entries and layer_id not in seen:
+                ordered_layers.append(layer_id)
+                seen.add(layer_id)
+        if not ordered_layers:
+            ordered_layers = sorted(layer_entries.keys())
         per_layer: Dict[int, np.ndarray] = {}
-        for layer in layers:
-            path = vector_dir / f"{trait}.layer{layer}.npy"
-            if path.exists():
-                per_layer[layer] = np.load(path)
+        for layer_id in ordered_layers:
+            entry = layer_entries.get(layer_id)
+            if not entry:
+                continue
+            vector_path_value = entry.get("vector_path")
+            if not vector_path_value:
+                continue
+            vec_path = Path(vector_path_value)
+            if not vec_path.exists():
+                candidate = (meta_path.parent / vec_path).resolve()
+                if candidate.exists():
+                    vec_path = candidate
+            if not vec_path.exists():
+                continue
+            vector = np.load(vec_path, allow_pickle=False)
+            norm = np.linalg.norm(vector)
+            if norm > 0:
+                vector = vector / norm
+            per_layer[layer_id] = vector.astype(np.float32)
         if per_layer:
             store[trait] = per_layer
     return store
@@ -66,7 +96,6 @@ def load_trait_vectors(traits: List[str], layers: List[int], vector_dir: Path) -
 
 def build_language_backend(
     config: Dict,
-    layers: List[int],
     trait_vectors: Dict[str, Dict[int, np.ndarray]],
     mock: bool,
 ) -> LanguageBackend:
@@ -84,7 +113,6 @@ def build_language_backend(
     }
     return HFBackend(
         model_name=config["model_name"],
-        layers=layers,
         trait_vectors=torch_vectors,
         temperature=temperature,
         top_p=top_p,
@@ -239,9 +267,8 @@ def main() -> None:
 
     config = load_config(args.config)
     run_id = config.get("run_id") or f"run-{uuid4().hex[:6]}"
-    layers = config.get("layers", [])
     steering_base = config.get("steering", {})
-    trait_vectors = load_trait_vectors(list(steering_base.keys() or TRAIT_KEYS), layers, args.vector_dir)
+    trait_vectors = load_trait_vectors(list(steering_base.keys() or TRAIT_KEYS), args.vector_dir)
     safety_cfg = config.get("safety", {})
     safety = SafetyGovernor(
         SafetyConfig(
@@ -250,7 +277,7 @@ def main() -> None:
             governor_backoff=safety_cfg.get("governor_backoff", 0.2),
         )
     )
-    backend = build_language_backend(config, layers, trait_vectors, mock=args.mock_model)
+    backend = build_language_backend(config, trait_vectors, mock=args.mock_model)
     world = World()
     world.configure_environment(args.env, args.difficulty)
     scheduler = Scheduler(world, seed=config.get("seed", 7))

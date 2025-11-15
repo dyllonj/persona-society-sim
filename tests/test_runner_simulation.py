@@ -84,7 +84,7 @@ def test_mock_simulation_reaches_objective(tmp_path):
     world = World(data_dir="tests/data")
     world.configure_environment("research", difficulty=1)
     scheduler = Scheduler(world, seed=config["seed"])
-    backend = build_language_backend(config, [], {}, mock=True)
+    backend = build_language_backend(config, {}, mock=True)
     safety = SafetyGovernor(SafetyConfig(alpha_clip=1.5, toxicity_threshold=1.0, governor_backoff=0.1))
     agents = build_agents(config["run_id"], config, world, backend, safety)
     for agent in agents:

@@ -55,7 +55,6 @@ class HFBackend(LanguageBackend):
     def __init__(
         self,
         model_name: str,
-        layers: List[int],
         trait_vectors: Dict[str, Dict[int, torch.Tensor]],
         temperature: float = 0.7,
         top_p: float = 0.9,
@@ -94,19 +93,22 @@ class HFBackend(LanguageBackend):
 
         self.controller = SteeringController(self.model, trait_vectors)
         self.controller.register()
-        self._layers = layers
 
     def generate(self, prompt: str, max_new_tokens: int, alphas: Dict[str, float]) -> GenerationResult:
-        self.controller.set_alphas(alphas)
         tokens = self.tokenizer(prompt, return_tensors="pt").to(self.model.device)
+        prompt_length = tokens["input_ids"].shape[-1]
+        self.controller.set_alphas(alphas, prompt_length=prompt_length)
         with torch.no_grad():
-            output = self.model.generate(
-                **tokens,
-                max_new_tokens=max_new_tokens,
-                temperature=self.temperature,
-                top_p=self.top_p,
-                pad_token_id=self.tokenizer.pad_token_id or self.tokenizer.eos_token_id,
-            )
+            try:
+                output = self.model.generate(
+                    **tokens,
+                    max_new_tokens=max_new_tokens,
+                    temperature=self.temperature,
+                    top_p=self.top_p,
+                    pad_token_id=self.tokenizer.pad_token_id or self.tokenizer.eos_token_id,
+                )
+            finally:
+                self.controller.clear_prompt_metadata()
         tokens_in = tokens["input_ids"].shape[-1]
         generated = output[0][tokens_in:]
         decoded = self.tokenizer.decode(generated, skip_special_tokens=True)
@@ -135,18 +137,20 @@ class HFBackend(LanguageBackend):
 
             input_lengths = (tokens["attention_mask"].sum(dim=1)).tolist()
             batched_alphas = [req.alphas for _, req in bucket]
-            self.controller.set_batched_alphas(batched_alphas)
+            self.controller.set_batched_alphas(batched_alphas, prompt_lengths=input_lengths)
 
             with torch.no_grad():
-                outputs = self.model.generate(
-                    **tokens,
-                    max_new_tokens=max_tokens,
-                    temperature=self.temperature,
-                    top_p=self.top_p,
-                    pad_token_id=self.tokenizer.pad_token_id or self.tokenizer.eos_token_id,
-                )
-
-            self.controller.clear_batched_alphas()
+                try:
+                    outputs = self.model.generate(
+                        **tokens,
+                        max_new_tokens=max_tokens,
+                        temperature=self.temperature,
+                        top_p=self.top_p,
+                        pad_token_id=self.tokenizer.pad_token_id or self.tokenizer.eos_token_id,
+                    )
+                finally:
+                    self.controller.clear_prompt_metadata()
+                    self.controller.clear_batched_alphas()
 
             for (original_idx, req), output, input_len in zip(bucket, outputs, input_lengths):
                 generated = output[input_len : input_len + req.max_new_tokens]
@@ -164,7 +168,7 @@ class HFBackend(LanguageBackend):
         return [cast(GenerationResult, res) for res in results]
 
     def layers_used(self) -> List[int]:
-        return list(self.controller.needed_layers)
+        return self.controller.needed_layers
 
 
 class MockBackend(LanguageBackend):
