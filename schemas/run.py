@@ -14,8 +14,8 @@ class SteeringVectorEntry(BaseModel):
     method: str
     layer_id: int
     vector_path: str
-    pos_set_hash: str
-    neg_set_hash: str
+    train_set_hash: str
+    eval_set_hash: Optional[str] = None
     created_at: datetime
 
 
