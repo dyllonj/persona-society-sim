@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Any, Dict, Iterable, List, Optional, Set
+from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
 from metrics.persona_bands import band_metadata, trait_band_key
 from schemas.logs import Edge
@@ -44,6 +44,7 @@ class TickInstrumentation:
         self._agent_opinions: Dict[str, float] = {}
         self._prompt_counts: Dict[str, int] = defaultdict(int)
         self._plan_counts: Dict[str, int] = defaultdict(int)
+        self._prompt_samples: Dict[str, str] = {}
         self._total_prompts = 0
         self._total_plans = 0
         self._trade_failures: Dict[Optional[str], int] = defaultdict(int)
@@ -57,6 +58,7 @@ class TickInstrumentation:
         self._agent_opinions.clear()
         self._prompt_counts.clear()
         self._plan_counts.clear()
+        self._prompt_samples.clear()
         self._total_prompts = 0
         self._total_plans = 0
         self._trade_failures.clear()
@@ -75,6 +77,7 @@ class TickInstrumentation:
         encounter_participants: Iterable[str],
         satisfaction: float,
         prompt_hash: Optional[str] = None,
+        prompt_text: Optional[str] = None,
         plan_metadata: Optional[Dict[str, Any]] = None,
     ) -> None:
         trait_key = trait_band_key(persona_coeffs, steering_snapshot)
@@ -101,6 +104,8 @@ class TickInstrumentation:
         if prompt_hash:
             self._total_prompts += 1
             self._prompt_counts[prompt_hash] += 1
+            if prompt_text and prompt_hash not in self._prompt_samples:
+                self._prompt_samples[prompt_hash] = prompt_text
         if plan_metadata:
             signature = self._plan_signature(plan_metadata)
             self._total_plans += 1
@@ -231,6 +236,14 @@ class TickInstrumentation:
             return 0.0
         duplicates = sum(count - 1 for count in counts.values() if count > 1)
         return duplicates / total
+
+    def top_prompt_duplication(self) -> Tuple[float, Optional[str]]:
+        if self._total_prompts == 0 or not self._prompt_counts:
+            return 0.0, None
+        prompt_hash, count = max(self._prompt_counts.items(), key=lambda item: item[1])
+        share = count / self._total_prompts
+        sample = self._prompt_samples.get(prompt_hash)
+        return share, sample
 
     def _plan_signature(self, metadata: Dict[str, Any]) -> str:
         action = str(metadata.get("action_type") or "")

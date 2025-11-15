@@ -1,6 +1,29 @@
 from __future__ import annotations
 
 from metrics.tick_instrumentation import TickInstrumentation
+from orchestrator.runner import SimulationRunner
+
+
+class _DummyWorld:
+    def __init__(self) -> None:
+        self.tick = 0
+
+
+class _DummyScheduler:
+    pass
+
+
+class _DummyLogSink:
+    pass
+
+
+class _LoggerStub:
+    def __init__(self) -> None:
+        self.enabled = True
+        self.warnings: list[str] = []
+
+    def log_warning(self, message: str) -> None:
+        self.warnings.append(message)
 
 
 def test_tick_instrumentation_records_edges_and_macros():
@@ -32,3 +55,48 @@ def test_tick_instrumentation_records_edges_and_macros():
     macro = macros[0]
     assert macro.wealth["agent-1"] == 2.0
     assert macro.opinions["agent-1"] == 0.25
+
+
+def test_prompt_duplication_warning_emitted_for_tick_zero():
+    logger = _LoggerStub()
+    runner = SimulationRunner(
+        run_id="run-1",
+        world=_DummyWorld(),
+        scheduler=_DummyScheduler(),
+        agents=[],
+        log_sink=_DummyLogSink(),
+        temperature=0.7,
+        top_p=1.0,
+        console_logger=logger,
+    )
+    instrumentation = runner.tick_instrumentation
+    instrumentation.on_tick_start(0)
+
+    def _record(prompt_hash: str, prompt_text: str) -> None:
+        instrumentation.record_action(
+            agent_id="agent-1",
+            action_type="talk",
+            success=True,
+            params={},
+            info={},
+            steering_snapshot={},
+            persona_coeffs={"E": 0.0, "A": 0.0, "C": 0.0, "O": 0.0, "N": 0.0},
+            encounter_room="library",
+            encounter_participants=("agent-1", "agent-2"),
+            satisfaction=0.0,
+            prompt_hash=prompt_hash,
+            prompt_text=prompt_text,
+            plan_metadata=None,
+        )
+
+    for _ in range(3):
+        _record("dup-hash", "Duplicate prompt text for warning test.")
+    _record("unique-1", "Unique prompt one.")
+    _record("unique-2", "Unique prompt two.")
+
+    runner._warn_prompt_duplication(0)
+
+    assert len(logger.warnings) == 1
+    warning = logger.warnings[0]
+    assert "Tick 0 prompt duplication rate" in warning
+    assert "Sample prompt" in warning
