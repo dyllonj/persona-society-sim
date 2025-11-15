@@ -6,9 +6,16 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import Dict, List, Optional, cast
 
-import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer
-from transformers.utils import logging as hf_logging
+try:  # pragma: no cover - optional dependency for inference
+    import torch
+except ModuleNotFoundError:  # pragma: no cover
+    torch = None  # type: ignore
+try:  # pragma: no cover - optional dependency for inference
+    from transformers import AutoModelForCausalLM, AutoTokenizer
+    from transformers.utils import logging as hf_logging
+except ModuleNotFoundError:  # pragma: no cover
+    AutoModelForCausalLM = AutoTokenizer = None  # type: ignore
+    hf_logging = None  # type: ignore
 
 from steering.hooks import SteeringController
 
@@ -54,13 +61,16 @@ class HFBackend(LanguageBackend):
         top_p: float = 0.9,
         use_quantization: bool = False,
     ):
+        if torch is None or AutoModelForCausalLM is None or AutoTokenizer is None:
+            raise ModuleNotFoundError("torch and transformers are required for HFBackend")
         super().__init__(temperature=temperature, top_p=top_p)
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         # Reduce Transformers log verbosity (e.g., pad_token warnings)
-        try:
-            hf_logging.set_verbosity_error()
-        except Exception:
-            pass
+        if hf_logging is not None:
+            try:
+                hf_logging.set_verbosity_error()
+            except Exception:
+                pass
 
         # Load model with optional quantization
         if use_quantization:

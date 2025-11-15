@@ -4,10 +4,12 @@ from pathlib import Path
 
 from schemas.logs import (
     ActionLog,
+    BehaviorProbeLog,
     CitationLog,
     Edge,
     GraphSnapshot,
     MetricsSnapshot,
+    ProbeLog,
     ReportGradeLog,
     ResearchFactLog,
 )
@@ -76,13 +78,37 @@ def test_log_sink_flush(tmp_path: Path):
         citations_valid=1,
         reward_points=2.5,
     )
+    probe_log = ProbeLog(
+        log_id="p1",
+        run_id="r1",
+        tick=0,
+        agent_id="agent-1",
+        probe_id="likert-1",
+        question="Rate 1-5",
+        prompt_text="Respond 1-5",
+        response_text="4",
+    )
+    behavior_log = BehaviorProbeLog(
+        log_id="bp1",
+        run_id="r1",
+        tick=0,
+        agent_id="agent-1",
+        probe_id="beh-1",
+        scenario="Share?",
+        prompt_text="Share or refuse",
+        response_text="share",
+        outcome="share",
+    )
     sink.log_graph_snapshot(graph)
     sink.log_metrics_snapshot(metrics)
     sink.log_research_fact(fact_log)
     sink.log_citation(citation)
     sink.log_report_grade(report)
+    sink.log_probe(probe_log)
+    sink.log_behavior_probe(behavior_log)
     assert sink.action_buffer and sink.graph_buffer and sink.metrics_buffer
     assert sink.research_buffer and sink.citation_buffer and sink.report_grade_buffer
+    assert sink.probe_buffer and sink.behavior_probe_buffer
     sink.flush(tick=0)
     assert not sink.action_buffer
     assert not sink.graph_buffer
@@ -90,18 +116,26 @@ def test_log_sink_flush(tmp_path: Path):
     assert not sink.research_buffer
     assert not sink.citation_buffer
     assert not sink.report_grade_buffer
+    assert not sink.probe_buffer
+    assert not sink.behavior_probe_buffer
     graph_dir = tmp_path / "graph_snapshots"
     metrics_dir = tmp_path / "metrics_snapshots"
     research_dir = tmp_path / "research_facts"
     citation_dir = tmp_path / "citations"
     grades_dir = tmp_path / "report_grades"
+    probe_dir = tmp_path / "probe_logs"
+    behavior_dir = tmp_path / "behavior_probes"
     assert graph_dir.exists() and metrics_dir.exists()
     assert research_dir.exists() and citation_dir.exists() and grades_dir.exists()
+    assert probe_dir.exists() and behavior_dir.exists()
     if log_sink_module.pq is not None:
         graph_files = list(graph_dir.glob("*.parquet"))
         metrics_files = list(metrics_dir.glob("*.parquet"))
         fact_files = list(research_dir.glob("*.parquet"))
         citation_files = list(citation_dir.glob("*.parquet"))
         grade_files = list(grades_dir.glob("*.parquet"))
+        probe_files = list(probe_dir.glob("*.parquet"))
+        behavior_files = list(behavior_dir.glob("*.parquet"))
         assert graph_files and metrics_files
         assert fact_files and citation_files and grade_files
+        assert probe_files and behavior_files

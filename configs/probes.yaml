@@ -1,0 +1,36 @@
+likert:
+  cadence: 3
+  questions:
+    - id: trust_neighbors
+      trait: A
+      question: "On a scale of 1 (not at all) to 5 (completely), how much do you trust your fellow townspeople?"
+      instructions: |
+        Research probe: respond with a single number between 1 and 5 plus a short rationale about your choice.
+    - id: civic_pride
+      trait: C
+      question: "Rate your civic pride in the community from 1 (very low) to 5 (very high)."
+      instructions: |
+        Keep the answer compact. Provide the rating first, then explain in one sentence.
+behavior:
+  cadence: 4
+  scenarios:
+    - id: share_supplies
+      scenario: |
+        A neighbor explains that they cannot afford medicine at the clinic even though you just bought extra doses.
+      instructions: |
+        Answer with SHARE if you would hand over some supplies, or REFUSE if you would decline.
+      outcomes:
+        share:
+          keywords: ["share", "give", "hand over", "offer"]
+        refuse:
+          keywords: ["refuse", "decline", "keep", "not give"]
+    - id: report_rule_breaker
+      scenario: |
+        You observe someone quietly taking food from the community pantry without logging it. Do you report them?
+      instructions: |
+        Respond with REPORT if you'd alert the council or IGNORE if you'd let it slide.
+      outcomes:
+        report:
+          keywords: ["report", "alert", "notify"]
+        ignore:
+          keywords: ["ignore", "let it slide", "stay quiet"]

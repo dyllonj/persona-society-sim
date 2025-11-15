@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from typing import Dict, List, Optional
 
-import numpy as np
-
 from schemas.logs import MetricsSnapshot
 
 
@@ -19,17 +17,26 @@ def cooperation_rate(task_outcomes: List[str]) -> float:
 def gini(values: List[float]) -> float:
     if not values:
         return 0.0
-    sorted_vals = np.sort(np.array(values))
+    sorted_vals = sorted(values)
     n = len(sorted_vals)
-    cumulative = np.cumsum(sorted_vals)
-    return (n + 1 - 2 * (cumulative / cumulative[-1]).sum()) / n
+    total = sum(sorted_vals)
+    if total == 0:
+        return 0.0
+    cumulative = 0.0
+    weighted_sum = 0.0
+    for idx, value in enumerate(sorted_vals, start=1):
+        cumulative += value
+        weighted_sum += idx * value
+    return (2 * weighted_sum) / (n * total) - (n + 1) / n
 
 
 def polarization(opinions: Dict[str, float]) -> float:
     if not opinions:
         return 0.0
-    values = np.array(list(opinions.values()))
-    return float(values.var())
+    values = list(opinions.values())
+    mean = sum(values) / len(values)
+    variance = sum((val - mean) ** 2 for val in values) / len(values)
+    return variance
 
 
 def build_metrics_snapshot(

@@ -2,17 +2,23 @@
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
-import torch
+try:  # pragma: no cover - optional dependency for inference
+    import torch
+except ModuleNotFoundError:  # pragma: no cover
+    torch = None  # type: ignore
 
-LayerVectors = Dict[str, Dict[int, torch.Tensor]]
+TorchTensor = torch.Tensor if torch is not None else Any  # type: ignore
+LayerVectors = Dict[str, Dict[int, TorchTensor]]
 
 
 class SteeringController:
     """Registers forward hooks that add alpha * vector to residual streams."""
 
     def __init__(self, model, trait_vectors: LayerVectors):
+        if torch is None:
+            raise ModuleNotFoundError("torch is required for SteeringController")
         self.model = model
         self.trait_vectors = {
             trait: {layer: torch.tensor(vec) if not isinstance(vec, torch.Tensor) else vec for layer, vec in by_layer.items()}

@@ -21,6 +21,7 @@ from agents.retrieval import MemoryRetriever
 from env.world import World
 from orchestrator.console_logger import ConsoleLogger
 from orchestrator.objectives import ObjectiveManager
+from orchestrator.probes import ProbeManager
 from orchestrator.runner import SimulationRunner
 from orchestrator.scheduler import Scheduler
 from safety.governor import SafetyConfig, SafetyGovernor
@@ -205,6 +206,11 @@ def build_objective_manager(config: Dict, env_choice: str, difficulty: int) -> O
     )
 
 
+def build_probe_manager(config: Dict) -> Optional[ProbeManager]:
+    probes_cfg = config.get("probes")
+    return ProbeManager.from_config(probes_cfg)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Persona Society Sim runner")
     parser.add_argument("config", type=Path, help="Path to YAML config")
@@ -253,6 +259,7 @@ def main() -> None:
     log_sink = LogSink(run_id, logging_cfg.get("db_url"), logging_cfg.get("parquet_dir"))
     inference = config.get("inference", {})
     objective_manager = build_objective_manager(config, args.env, args.difficulty)
+    probe_manager = build_probe_manager(config)
 
     # Create console logger if live mode is enabled
     console_logger = ConsoleLogger(
@@ -293,6 +300,7 @@ def main() -> None:
         top_p=inference.get("top_p", 0.9),
         console_logger=console_logger,
         objective_manager=objective_manager,
+        probe_manager=probe_manager,
         event_bridge=event_bridge,
     )
     runner.run(config.get("steps", 200), max_events_per_tick=args.max_events)

@@ -66,7 +66,7 @@ Key scripts:
 - **Cognitive traces**: `agents/agent.py` caches reflection summaries, planner suggestions, prompt text, and prompt hashes per action, and `orchestrator/runner.py` writes them into `ActionLog` + Parquet for replay/debugging without re-running the LLM.
 - **Graph & macro metrics**: every tick `SimulationRunner` feeds per-action edges into `metrics/graphs.py` and aggregates economy/conflict data via `metrics/social_dynamics.py`, producing `graph_snapshot` + `metrics_snapshot` tables plus Parquet dumps (`storage/log_sink.py`).
 - **Persona-aware tracker**: `metrics/tracker.py` now registers each agent’s baseline `PersonaCoeffs` and ingests `MsgLog.steering_snapshot` values so efficiency/collab stats can be sliced by trait bands or alpha magnitudes.
-- **Probe scheduling**: the ProbeManager injects periodic self-report questionnaires and scripted behavioral probes that log both the raw prompts and Likert/rubric scores, giving direct coverage of RQ1 behavioral adherence.
+- **Probe scheduling**: the ProbeManager (see `configs/probes.yaml`) injects periodic self-report questionnaires and scripted behavioral probes that log the injected prompt bundle plus Likert/rubric scores to the new `probe_log`/`behavior_probe_log` tables, giving direct coverage of RQ1 behavioral adherence.
 - **Structured research telemetry**: research actions emit `ResearchFactLog`, `CitationLog`, and `ReportGradeLog` records instead of opaque JSON strings so fact coverage, citation diversity, and grading drift can be analyzed per persona trait.
 
 See `AGENTS.md` for a deeper dive into the agent loop, probe lifecycle, and how the new telemetry hooks tie into persona steering.
