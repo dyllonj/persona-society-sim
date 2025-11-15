@@ -16,6 +16,7 @@ class PlanSuggestion:
     action_type: str
     params: Dict[str, str]
     utterance: str
+    alignment: bool = False
 
     def to_metadata(self) -> Dict[str, Any]:
         """Return a serializable snapshot of the plan suggestion."""
@@ -23,6 +24,7 @@ class PlanSuggestion:
             "action_type": self.action_type,
             "params": dict(self.params),
             "utterance": self.utterance,
+            "alignment": self.alignment,
         }
 
 
@@ -101,7 +103,9 @@ class Planner:
         active_objective: Optional[Objective] = None,
         tick: int = 0,
         rule_context: Optional[List[str]] = None,
-        observation_hint: Optional[List[str]] = None,
+        last_reflection_tick: Optional[int] = None,
+        last_alignment_tick: Optional[int] = None,
+        observation_keywords: Optional[List[str]] = None,
     ) -> PlanSuggestion:
         location = current_location or self.default_location
 
@@ -116,7 +120,18 @@ class Planner:
                 return objective_plan
 
         lowered_summary = memory_summary.lower()
-        observation_terms = [hint.lower() for hint in (observation_hint or [])]
+        observation_terms = [hint.lower() for hint in (observation_keywords or [])]
+
+        alignment_blocked = (
+            last_reflection_tick is not None
+            and last_alignment_tick == last_reflection_tick
+        )
+        if last_reflection_tick is not None and not alignment_blocked:
+            return self._alignment_plan(location)
+
+        keyword_plan = self._plan_from_keywords(observation_terms, location)
+        if keyword_plan:
+            return keyword_plan
 
         def keyword_score(term: str) -> int:
             normalized = term.lower()
@@ -193,6 +208,53 @@ class Planner:
             current_location,
             utterance_override=utterance,
         )
+
+    def _alignment_plan(self, location: str) -> PlanSuggestion:
+        friendly_location = location.replace("_", " ")
+        utterance = f"Let's align on our plan while we're at the {friendly_location}."
+        params = {
+            "utterance": "Quick sync: confirm goals, then proceed.",
+            "topic": "alignment",
+        }
+        return PlanSuggestion("talk", params, utterance, alignment=True)
+
+    def _plan_from_keywords(
+        self, observation_terms: List[str], location: str
+    ) -> Optional[PlanSuggestion]:
+        if not observation_terms:
+            return None
+
+        def has_term(term: str) -> bool:
+            return any(term in keyword for keyword in observation_terms)
+
+        if has_term("market"):
+            return PlanSuggestion(
+                "trade",
+                {"item": "produce", "qty": "1"},
+                "I'll take care of the market trades being mentioned.",
+            )
+
+        if has_term("wellbeing"):
+            return PlanSuggestion(
+                "work",
+                {"task": "wellbeing support"},
+                "I'll cover the wellbeing tasks people just surfaced.",
+            )
+
+        if has_term("community"):
+            if location != "community_center":
+                return PlanSuggestion(
+                    "move",
+                    {"destination": "community_center"},
+                    "Heading to the community center to follow up.",
+                )
+            return PlanSuggestion(
+                "work",
+                {"task": "community center tasks"},
+                "I'll help with the community center tasks people flagged.",
+            )
+
+        return None
 
     def _plan_policy_objective(
         self, objective: Objective, current_location: str
