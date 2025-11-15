@@ -76,7 +76,51 @@ def test_planner_uses_observation_hint_keywords():
         ["Assist"],
         "No location clues",  # memory summary without market keyword
         current_location="town_square",
-        observation_hint=["market is busy", "stalls"],
+        observation_keywords=["market is busy", "stalls"],
+    )
+
+    assert plan.action_type == "trade"
+
+
+def test_planner_aligns_once_per_reflection():
+    planner = Planner()
+
+    first = planner.plan(
+        ["Collaborate"],
+        "",
+        current_location="market",
+        tick=4,
+        last_reflection_tick=4,
+        last_alignment_tick=None,
+    )
+
+    assert first.alignment is True
+    assert first.action_type == "talk"
+
+    second = planner.plan(
+        ["Collaborate"],
+        "",
+        current_location="market",
+        tick=5,
+        last_reflection_tick=4,
+        last_alignment_tick=4,
+    )
+
+    assert second.alignment is False
+    assert second.action_type != "talk" or "alignment" not in second.params.get("topic", "")
+
+
+def test_planner_keyword_fallback_after_alignment_block():
+    planner = Planner()
+
+    plan = planner.plan(
+        ["Assist"],
+        "",
+        current_location="market",
+        tick=6,
+        last_reflection_tick=6,
+        last_alignment_tick=6,
+        observation_keywords=["market crowd"],
     )
 
     assert plan.action_type == "trade"

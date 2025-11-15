@@ -25,7 +25,9 @@ class StubPlanner:
         active_objective=None,
         tick=0,
         rule_context=None,
-        observation_hint=None,
+        last_reflection_tick=None,
+        last_alignment_tick=None,
+        observation_keywords=None,
     ):
         self.calls += 1
         return PlanSuggestion("talk", {"utterance": "sync"}, "sync")

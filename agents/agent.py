@@ -73,6 +73,8 @@ class Agent:
         self._last_plan_location: Optional[str] = None
         self._last_plan_tick: Optional[int] = None
         self._last_observation: Optional[str] = None
+        self._last_reflection_tick: Optional[int] = None
+        self._last_alignment_tick: Optional[int] = None
 
     # ---- persona helpers ----
 
@@ -132,7 +134,8 @@ class Agent:
         implications = [f"Reference memory {ev.memory_id}" for ev in events]
         self.memory.add_reflection(self.state.agent_id, tick, reflection_text, implications=implications)
         self._last_reflection = (summary, implications)
-        observation_hint = self._extract_observation_keywords(observation, recent_dialogue)
+        self._last_reflection_tick = tick
+        observation_keywords = self._extract_observation_keywords(observation, recent_dialogue)
         suggestion = self.planner.plan(
             self.state.goals,
             summary,
@@ -140,12 +143,16 @@ class Agent:
             active_objective=active_objective,
             tick=tick,
             rule_context=rule_context,
-            observation_hint=observation_hint if observation_hint else None,
+            last_reflection_tick=self._last_reflection_tick,
+            last_alignment_tick=self._last_alignment_tick,
+            observation_keywords=observation_keywords if observation_keywords else None,
         )
         self.memory.add_plan(self.state.agent_id, tick, tick + 3, [suggestion.action_type])
         self._last_plan_suggestion = suggestion
         self._last_plan_location = current_location or ""
         self._last_plan_tick = tick
+        if suggestion.alignment:
+            self._last_alignment_tick = tick
         if observation is not None:
             self._last_observation = observation
         return suggestion
