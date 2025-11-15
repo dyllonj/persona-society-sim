@@ -67,3 +67,16 @@ def test_planner_scans_when_navigation_objective_active():
     plan = planner.plan([], "", current_location="town_square", active_objective=objective, tick=3)
 
     assert plan.action_type == "scan"
+
+
+def test_planner_uses_observation_hint_keywords():
+    planner = Planner()
+
+    plan = planner.plan(
+        ["Assist"],
+        "No location clues",  # memory summary without market keyword
+        current_location="town_square",
+        observation_hint=["market is busy", "stalls"],
+    )
+
+    assert plan.action_type == "trade"

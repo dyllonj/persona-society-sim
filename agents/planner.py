@@ -101,6 +101,7 @@ class Planner:
         active_objective: Optional[Objective] = None,
         tick: int = 0,
         rule_context: Optional[List[str]] = None,
+        observation_hint: Optional[List[str]] = None,
     ) -> PlanSuggestion:
         location = current_location or self.default_location
 
@@ -113,6 +114,15 @@ class Planner:
             objective_plan = self._plan_for_objective(active_objective, location, tick)
             if objective_plan:
                 return objective_plan
+
+        lowered_summary = memory_summary.lower()
+        observation_terms = [hint.lower() for hint in (observation_hint or [])]
+
+        def keyword_score(term: str) -> int:
+            normalized = term.lower()
+            summary_hits = lowered_summary.count(normalized)
+            hint_hits = sum(1 for hint in observation_terms if normalized in hint)
+            return summary_hits + hint_hits
 
         if goals:
             idx = tick % len(goals) if tick is not None else 0
@@ -128,9 +138,15 @@ class Planner:
         elif "project" in goal.lower() or "task" in goal.lower():
             action = "work"
             params = {"task": goal}
-        elif "market" in memory_summary.lower():
+        elif keyword_score("market") > 0 or keyword_score("trade") > 0:
             action = "trade"
             params = {"item": "produce", "qty": "1"}
+        elif keyword_score("work") > 0 or keyword_score("project") > 0:
+            action = "work"
+            params = {"task": goal or "community project"}
+        elif keyword_score("research") > 0 or keyword_score("library") > 0:
+            action = "research"
+            params = {"query": (goal.split()[0] if goal else "topic")}
         else:
             action = "talk"
             params = {"utterance": goal}
