@@ -70,6 +70,7 @@ def _action_snapshot(logs):
             "params": log.params,
             "outcome": log.outcome,
             "info": log.info,
+            "prompt_text": log.prompt_text,
         }
         for log in sorted(logs, key=lambda entry: (entry.tick, entry.agent_id))
     ]
