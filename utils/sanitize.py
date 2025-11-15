@@ -6,8 +6,12 @@ and accidental prompt leakage while preserving intent.
 
 from __future__ import annotations
 
+import logging
 import re
 from typing import Iterable
+
+
+logger = logging.getLogger(__name__)
 
 
 _META_PATTERNS: Iterable[re.Pattern[str]] = [
@@ -63,6 +67,30 @@ def _dedupe_consecutive(lines: list[str]) -> list[str]:
     return out
 
 
+_REPEATED_SENTENCE_PATTERN = re.compile(
+    r"(?P<sentence>[^.!?]+[.!?])(?P<tail>(?:\s+(?P=sentence)){2,})",
+    re.MULTILINE,
+)
+
+
+def _collapse_repeated_phrases(text: str) -> tuple[str, bool]:
+    """Collapse identical sentences repeated more than twice into two occurrences."""
+
+    triggered = False
+
+    def _repl(match: re.Match[str]) -> str:
+        nonlocal triggered
+        triggered = True
+        sentence = match.group("sentence")
+        tail = match.group("tail")
+        sep_match = re.match(r"\s+", tail)
+        sep = sep_match.group(0) if sep_match else " "
+        return f"{sentence}{sep}{sentence}"
+
+    collapsed = _REPEATED_SENTENCE_PATTERN.sub(_repl, text)
+    return collapsed, triggered
+
+
 def sanitize_agent_output(text: str) -> str:
     """Clean up LLM output for in-sim use and display.
 
@@ -94,6 +122,10 @@ def sanitize_agent_output(text: str) -> str:
     # Rejoin and collapse excessive internal spaces
     cleaned = "\n".join(keep)
     cleaned = re.sub(r"\s{3,}", "  ", cleaned).strip()
+
+    cleaned, collapsed = _collapse_repeated_phrases(cleaned)
+    if collapsed:
+        logger.info("Collapsed repeated sentences in agent output for persona review")
 
     return cleaned
 
