@@ -20,6 +20,7 @@ class SpyLogSink(LogSink):
         super().__init__(run_id, db_url=None, parquet_dir=None)
         self.recorded_actions = []
         self.recorded_messages = []
+        self.recorded_probes = []
 
     def log_action(self, log):  # type: ignore[override]
         self.recorded_actions.append(log)
@@ -28,6 +29,10 @@ class SpyLogSink(LogSink):
     def log_message(self, log):  # type: ignore[override]
         self.recorded_messages.append(log)
         super().log_message(log)
+
+    def log_probe(self, log):  # type: ignore[override]
+        self.recorded_probes.append(log)
+        super().log_probe(log)
 
 
 def _build_test_config():
@@ -128,3 +133,56 @@ def test_mock_simulation_reaches_objective(tmp_path):
     }
 
     assert observed == expected
+
+
+def test_probe_smoke_run(tmp_path):
+    config = _build_test_config()
+    config["steps"] = 1
+    config["evaluation"] = {
+        "probes": {
+            "enabled": True,
+            "questionnaires": {
+                "probe_id": "self_report_tick0",
+                "cadence": 1,
+                "start_tick": 0,
+                "targets": ["agent-000"],
+                "prompt": "Rate statements 1-5",
+            },
+            "scenarios": {
+                "probe_id": "behavior_tick0",
+                "cadence": 1,
+                "start_tick": 0,
+                "targets": ["agent-000"],
+                "prompt": "A neighbor asks for help.",
+                "injection_mode": "encounter",
+                "rubric": "cooperation",
+            },
+        }
+    }
+    world = World(data_dir="tests/data")
+    world.configure_environment("research", difficulty=1)
+    scheduler = Scheduler(world, seed=config["seed"])
+    backend = build_language_backend(config, [], {}, mock=True)
+    safety = SafetyGovernor(SafetyConfig(alpha_clip=1.5, toxicity_threshold=1.0, governor_backoff=0.1))
+    agents = build_agents(config["run_id"], config, world, backend, safety)
+    for agent in agents:
+        world.move_agent(agent.state.agent_id, "library")
+        agent.state.location_id = "library"
+    spy_sink = SpyLogSink(config["run_id"])
+    runner = SimulationRunner(
+        run_id=config["run_id"],
+        world=world,
+        scheduler=scheduler,
+        agents=agents,
+        log_sink=spy_sink,
+        temperature=config["inference"]["temperature"],
+        top_p=config["inference"]["top_p"],
+        console_logger=ConsoleLogger(enabled=False),
+        objective_manager=None,
+        probe_config=config["evaluation"]["probes"],
+    )
+    runner.metric_tracker.out_dir = tmp_path
+    runner.run(config["steps"], max_events_per_tick=2)
+    assert spy_sink.recorded_probes, "Expected probe logs to be recorded"
+    kinds = {log.probe_type for log in spy_sink.recorded_probes}
+    assert "self_report" in kinds

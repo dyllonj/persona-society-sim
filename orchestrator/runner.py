@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import time
 from dataclasses import dataclass
 from typing import Dict, Iterable, List, Optional
@@ -10,10 +11,11 @@ from uuid import uuid4
 from agents.agent import ActionDecision, Agent
 from env import actions
 from env.world import World, RoomUtterance
+from eval.probes import ActiveProbe, ProbeManager
 from orchestrator.console_logger import ConsoleLogger
 from orchestrator.objectives import ObjectiveManager
-from orchestrator.scheduler import Scheduler
-from schemas.logs import ActionLog, MsgLog
+from orchestrator.scheduler import Encounter, Scheduler
+from schemas.logs import ActionLog, MsgLog, ProbeLog
 from storage.log_sink import LogSink
 from metrics import graphs, social_dynamics
 from metrics.tick_instrumentation import TickInstrumentation
@@ -39,6 +41,7 @@ class SimulationRunner:
         console_logger: Optional[ConsoleLogger] = None,
         objective_manager: Optional[ObjectiveManager] = None,
         event_bridge: Optional[object] = None,
+        probe_config: Optional[Dict[str, object]] = None,
     ):
         self.run_id = run_id
         self.world = world
@@ -54,6 +57,8 @@ class SimulationRunner:
         self.metric_tracker = MetricTracker(run_id, agent_personas=persona_map)
         self.event_bridge = event_bridge
         self.tick_instrumentation = TickInstrumentation()
+        self.probe_manager = ProbeManager(self.agents.keys(), probe_config)
+        self.pending_probes: Dict[str, List[ActiveProbe]] = {}
 
         if self.objective_manager:
             self.objective_manager.register_reward_callback(self._handle_objective_reward)
@@ -90,7 +95,13 @@ class SimulationRunner:
         for step_idx in range(steps):
             tick_start_time = time.time()
             tick_logs: List[ActionLog] = []
-            encounters = self.scheduler.sample(list(self.agents.keys()), max_events_per_tick)
+            probe_observation_tags: Dict[str, List[str]] = {}
+            probe_encounters: List[Encounter] = []
+            if self.probe_manager.enabled:
+                probe_encounters, probe_observation_tags = self._prepare_probe_injections()
+            encounters = probe_encounters + self.scheduler.sample(
+                list(self.agents.keys()), max_events_per_tick
+            )
             # Simple collaboration metric: share of actions happening with peers present
             collab_actions = 0
             total_actions = 0
@@ -112,6 +123,10 @@ class SimulationRunner:
                     )
 
                     base_context = self.world.sample_context(agent.state.agent_id)
+                    probe_prompts = probe_observation_tags.pop(agent.state.agent_id, None)
+                    if probe_prompts:
+                        prompt_text = "\n\n".join(probe_prompts)
+                        base_context = f"{prompt_text}\n\n{base_context}"
                     decision = agent.act(
                         base_context,
                         self.world.tick,
@@ -147,6 +162,7 @@ class SimulationRunner:
                         reflection_implications=decision.reflection_implications,
                     )
                     tick_logs.append(action_log)
+                    self._process_probe_responses(agent.state.agent_id, decision, action_log)
                     self.log_sink.log_action(action_log)
                     try:
                         self.tick_instrumentation.record_action(
@@ -320,6 +336,69 @@ class SimulationRunner:
         except Exception:
             pass
         return history
+
+    def _prepare_probe_injections(self) -> tuple[List[Encounter], Dict[str, List[str]]]:
+        encounters: List[Encounter] = []
+        observation_tags: Dict[str, List[str]] = {}
+        scheduled = self.probe_manager.tick(self.world.tick)
+        for probe in scheduled:
+            self.pending_probes.setdefault(probe.agent_id, []).append(probe)
+            if probe.injection_mode == "encounter":
+                transcript = [
+                    RoomUtterance(
+                        speaker="probe",
+                        content=probe.prompt,
+                        tick=self.world.tick,
+                    )
+                ]
+                encounters.append(
+                    Encounter(
+                        room_id=f"probe:{probe.probe_id}",
+                        participants=[probe.agent_id],
+                        transcript=transcript,
+                    )
+                )
+            else:
+                observation_tags.setdefault(probe.agent_id, []).append(probe.prompt)
+        return encounters, observation_tags
+
+    def _process_probe_responses(
+        self, agent_id: str, decision: ActionDecision, action_log: ActionLog
+    ) -> None:
+        pending = self.pending_probes.get(agent_id)
+        if not pending:
+            return
+        remaining: List[ActiveProbe] = []
+        for probe in pending:
+            if probe.response_mode == "utterance":
+                raw = decision.utterance or ""
+                scores = self.probe_manager.score_probe(probe, raw_text=raw)
+                self._emit_probe_log(probe, scores, raw, action_log.tick)
+            elif probe.response_mode == "action":
+                raw = json.dumps(action_log.model_dump())
+                scores = self.probe_manager.score_probe(probe, action_log=action_log)
+                self._emit_probe_log(probe, scores, raw, action_log.tick)
+            else:
+                remaining.append(probe)
+        if remaining:
+            self.pending_probes[agent_id] = remaining
+        else:
+            self.pending_probes.pop(agent_id, None)
+
+    def _emit_probe_log(
+        self, probe: ActiveProbe, scores: Dict[str, float], raw_response: str, tick: int
+    ) -> None:
+        probe_log = ProbeLog(
+            probe_id=probe.probe_id,
+            run_id=self.run_id,
+            tick=tick,
+            agent_id=probe.agent_id,
+            probe_type=probe.probe_type,
+            prompt=probe.prompt,
+            parsed_scores=scores,
+            raw_response=raw_response,
+        )
+        self.log_sink.log_probe(probe_log)
 
     def _log_tick_snapshots(self) -> None:
         try:

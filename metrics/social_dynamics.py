@@ -6,7 +6,7 @@ from typing import Dict, List, Optional
 
 import numpy as np
 
-from schemas.logs import MetricsSnapshot
+from schemas.logs import ActionLog, MetricsSnapshot
 
 
 def cooperation_rate(task_outcomes: List[str]) -> float:
@@ -55,3 +55,21 @@ def build_metrics_snapshot(
         trait_key=trait_key,
         band_metadata=band_metadata or {},
     )
+
+
+def evaluate_behavior_rubric(action_log: ActionLog, rubric: str) -> Dict[str, float]:
+    """Score an action log entry according to a simple rubric."""
+
+    rubric_key = rubric.lower()
+    scores: Dict[str, float] = {}
+    if rubric_key == "cooperation":
+        collaborative = {"talk", "trade", "work", "gift", "research", "submit_report"}
+        scores["cooperation"] = 1.0 if action_log.action_type in collaborative else 0.0
+    elif rubric_key == "rule_following":
+        scores["rule_following"] = 1.0 if action_log.outcome == "success" else 0.0
+    elif rubric_key == "civility":
+        civil_actions = {"talk", "gift", "trade"}
+        scores["civility"] = 1.0 if action_log.action_type in civil_actions else 0.0
+    else:
+        scores[rubric_key] = 1.0 if action_log.outcome == "success" else 0.0
+    return scores

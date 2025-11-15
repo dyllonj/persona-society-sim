@@ -69,6 +69,20 @@ class ActionLog(BaseModel):
     reflection_implications: List[str] = Field(default_factory=list)
 
 
+ProbeTypeLiteral = Literal["self_report", "behavioral", "capability"]
+
+
+class ProbeLog(BaseModel):
+    probe_id: str
+    run_id: str
+    tick: int
+    agent_id: str
+    probe_type: ProbeTypeLiteral
+    prompt: str
+    parsed_scores: Dict[str, float] = Field(default_factory=dict)
+    raw_response: str
+
+
 class EconTxn(BaseModel):
     txn_id: str
     run_id: str
