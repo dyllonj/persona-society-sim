@@ -202,8 +202,8 @@ CREATE TABLE IF NOT EXISTS steering_vector_store (
   method TEXT,
   layer_id INT,
   vector_path TEXT,
-  pos_set_hash TEXT,
-  neg_set_hash TEXT,
+  train_set_hash TEXT,
+  eval_set_hash TEXT,
   created_at TIMESTAMP,
   PRIMARY KEY (vector_store_id, layer_id)
 );

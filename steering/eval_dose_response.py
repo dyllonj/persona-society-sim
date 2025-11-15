@@ -16,14 +16,37 @@ PROMPT = "Share how you would behave at a lively town gathering."  # TODO: repla
 
 
 def run_curve(
-    model_name: str, trait: str, vector_store_id: str, alphas: List[float], layers: List[int]
+    model_name: str,
+    trait: str,
+    vector_store_id: str,
+    alphas: List[float],
+    layers: List[int] | None,
 ) -> Dict[float, str]:
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16, device_map="auto")
 
     store = VectorStore(Path("data/vectors"))
-    vectors = store.load(vector_store_id, layers)
-    controller = SteeringController(model, {trait: {layer: torch.tensor(vec) for layer, vec in vectors.items()}})
+    bundle = store.load(vector_store_id)
+    if layers:
+        selected_layers = layers
+    elif bundle.preferred_layers:
+        selected_layers = bundle.preferred_layers
+    else:
+        selected_layers = sorted(bundle.vectors.keys())
+    missing_layers = [layer for layer in selected_layers if layer not in bundle.vectors]
+    if missing_layers:
+        raise ValueError(
+            f"Vector store id {vector_store_id} missing requested layers {missing_layers}"
+        )
+    vectors = {layer: bundle.vectors[layer] for layer in selected_layers}
+    controller = SteeringController(
+        model,
+        {
+            trait: {
+                layer: torch.tensor(vec, dtype=torch.float32) for layer, vec in vectors.items()
+            }
+        },
+    )
     controller.register()
 
     outputs: Dict[float, str] = {}
@@ -42,7 +65,7 @@ def main() -> None:
     parser.add_argument("vector_store_id")
     parser.add_argument("--trait", required=True)
     parser.add_argument("--model", default="meta-llama/Llama-3.1-8B-Instruct")
-    parser.add_argument("--layers", nargs="*", type=int, default=[12, 16, 20])
+    parser.add_argument("--layers", nargs="*", type=int)
     parser.add_argument("--alphas", nargs="*", type=float, default=[-1.0, -0.5, 0.0, 0.5, 1.0])
     args = parser.parse_args()
 
