@@ -38,7 +38,7 @@ pytest  # optional
 
 ### Persona prompt schema & CLI
 
-`data/prompts/*.jsonl` now use a forced-choice format so each record contains a shared stem plus two contrasting options:
+`data/prompts/*.jsonl` now use a forced-choice format so each record contains a shared stem plus two contrasting options. The high/low answers are flagged explicitly so downstream tooling knows which continuation represents a stronger trait expression:
 
 ```json
 {
@@ -52,6 +52,26 @@ pytest  # optional
 ```
 
 Use `python -m data.prompts.schema validate data/prompts/*.jsonl` to ensure every file labels exactly one high-trait answer per stem. If you have legacy `situation`/`positive`/`negative` JSONL items you can convert them with `python -m data.prompts.schema convert old.jsonl new.jsonl`. When authoring new contrast items, keep the stem trait-agnostic, provide two concise behavioral options, and flag whichever option represents the higher expression of the trait with `*_is_high = true`.
+
+### Vector metadata, normalization, and masking
+
+- `steering/compute_caa.py` encodes both options for every prompt, subtracts `high - low` per decoder layer, and normalizes the resulting residual before saving it to `data/vectors/<trait>.npy`. The metadata file that sits beside every `.npy` artifact records the SHA256 of the prompt file, the model name, the layer list used during extraction, and the norm of every stored vector.
+- `configs/steering.layers.yaml` is the new single source of truth for vector metadata. It specifies the vector root on disk, per-trait `vector_store_id` values, training prompt files, and the decoder layers you want to activate. `scripts/compute_vectors.sh` reads this file so there is no longer a hidden `[12, 16, 20]` default; update the YAML whenever you add a trait or sweep different layer bands.
+- Runtime steering applies a `steering.strength` multiplier from your run config (`steering.strength: 0.8` globally scales all trait coefficients) and uses prompt-aware masking to ensure the added residuals only touch generated continuations. Prompt tokens remain untouched so system prompts, memories, and instructions are preserved regardless of how aggressively you steer the completion.
+
+### Steering evaluation harness
+
+Run `./scripts/eval_vectors.sh` to regenerate vectors, evaluate them with `steering.eval`, and capture a JSON + Markdown report under `artifacts/steering_eval/`. The harness:
+
+1. Regenerates vectors with the metadata-aware loader so the right layers and vector-store IDs are selected.
+2. Scores held-out prompt files (use the `_eval.jsonl` suffix) with and without steering to compute accuracy deltas and log-probability gaps.
+3. Surfaces directional-fidelity checks (`delta_threshold`, `sign_threshold`) and optional transcript samples to sanity-check qualitative behavior.
+
+Set `STEERING_ALPHA` before running the script to mirror the `steering.strength` used in your simulation configs so the evaluation curve matches in-sim usage.
+
+### Migration notes
+
+The v2 steering pipeline requires A/B prompt files, metadata-aware vector extraction, and re-running the evaluation harness before you launch new simulations. Follow [`docs/migration.md`](docs/migration.md) for a checklist that covers converting legacy prompt schema files, regenerating vectors, validating them, and updating your run configs.
 
 ### Optional: 3D web viewer (prototype)
 

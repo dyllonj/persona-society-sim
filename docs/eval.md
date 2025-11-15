@@ -20,6 +20,13 @@
 - **Homophily**: Compute assortativity coefficients by trait and opinion alignment.
 - **Well-being proxies**: Diary sentiment, reciprocity rates, conflict counts per agent.
 
+## Steering vector evaluation harness
+
+- `scripts/eval_vectors.sh` regenerates steering vectors via the metadata-aware loader, runs `steering.eval` on the held-out `_eval.jsonl` prompt sets, and writes both JSON + Markdown summaries to `artifacts/steering_eval/`.
+- The harness reports baseline vs steered accuracy, log-prob deltas, and sign consistency for every prompt so you can catch regressions before running a multi-agent sim.
+- Set `STEERING_ALPHA` to the same value as `steering.strength` in your run config to evaluate the correct dose. Use `DELTA_THRESHOLD` and `SIGN_THRESHOLD` to fail the script when the expected gains disappear.
+- `steering.eval` can also capture transcripts with steering toggled on/off to manually verify tone changes. These transcripts, along with `vector_store_id`, prompt metadata, and evaluation hashes, serve as the reproducibility record for persona experiments.
+
 ## Experimental matrix
 | Condition | Population | Steps | Notes |
 |-----------|------------|-------|-------|

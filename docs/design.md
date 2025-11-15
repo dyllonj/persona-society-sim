@@ -10,10 +10,11 @@ Agents live inside a lightweight world containing locations, resources, institut
 
 ## Core components
 1. **Steering pipeline**
-   - `data/prompts/*.jsonl` store forced-choice IPIP-inspired pairs per trait using the shared stem + A/B option schema (see `data/prompts/schema.py`).
-   - `steering/compute_caa.py` loads prompts, runs base model forward passes, and computes residual-difference vectors per selected layer.
+   - `data/prompts/*.jsonl` store forced-choice IPIP-inspired pairs per trait using the shared stem + A/B option schema (see `data/prompts/schema.py`). Each prompt marks the high-trait option explicitly so extraction and evaluation can check directional fidelity.
+   - `steering/compute_caa.py` loads prompts, runs base model forward passes, subtracts the low option from the high option per decoder layer, and normalizes the residual before persisting it.
+   - `configs/steering.layers.yaml` defines the vector root, layer choices, vector-store IDs, and prompt files for every trait. Both `scripts/compute_vectors.sh` and the runtime loader rely on this metadata so the legacy `[12, 16, 20]` default is gone.
    - `steering/vector_store.py` persists vectors as `.npy` with metadata for reproducibility.
-   - `steering/hooks.py` attaches PyTorch forward hooks to add \(\alpha_t v_{t,\ell}\) at runtime.
+   - `steering/hooks.py` attaches PyTorch forward hooks to add \(\alpha_t v_{t,\ell}\) at runtime while masking prompt tokens so only generated continuations receive the residual injection.
 
 2. **Agent architecture**
    - `agents/agent.py` implements the perceive → retrieve memories → reflect → plan → act pipeline.
@@ -40,10 +41,11 @@ Agents live inside a lightweight world containing locations, resources, institut
    - `python3 -m orchestrator.cli <config>` loads YAML configs, instantiates agents/world, and streams logs via `SimulationRunner`.
    - Optional: start a WebSocket bridge and web viewer with `--viewer` to visualize rooms and agent movement in 3D.
    - `--mock-model` flag runs without HF weights for fast development; defaults to HF backend once vectors exist.
+   - `steering.strength` in the run config globally scales persona coefficients (set `< 1.0` for subtle steering, `> 1.0` for aggressive personas).
 
 ## Data flow
 ```
-trait prompts -> steering/compute_caa.py -> data/vectors/*.npy -> steering hooks -> agent generation
+trait prompts + configs/steering.layers.yaml -> steering/compute_caa.py -> data/vectors/*.npy + .meta.json -> metadata-aware loader -> steering hooks -> agent generation
 agent observation -> memory store -> scheduler -> env -> logs -> metrics
 
 ## 3D viewer integration (prototype → engine)
