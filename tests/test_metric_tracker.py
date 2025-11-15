@@ -1,0 +1,66 @@
+import json
+from pathlib import Path
+
+from metrics.tracker import MetricTracker
+from schemas.agent import PersonaCoeffs
+from schemas.logs import ActionLog, MsgLog
+
+
+def _action(agent_id: str, tick: int, action_type: str) -> ActionLog:
+    return ActionLog(
+        action_id=f"a-{tick}",
+        run_id="unit",
+        tick=tick,
+        agent_id=agent_id,
+        action_type=action_type,
+        params={},
+        outcome="success",
+        info={},
+    )
+
+
+def _message(agent_id: str, tick: int, snapshot: dict[str, float]) -> MsgLog:
+    return MsgLog(
+        msg_id=f"m-{tick}",
+        run_id="unit",
+        tick=tick,
+        channel="room",
+        from_agent=agent_id,
+        to_agent=None,
+        room_id="commons",
+        content="hello",
+        tokens_in=5,
+        tokens_out=10,
+        temperature=0.1,
+        top_p=0.9,
+        steering_snapshot=snapshot,
+        layers_used=[1],
+    )
+
+
+def test_metric_tracker_handles_personas_and_messages(tmp_path: Path) -> None:
+    personas = {
+        "agent-1": PersonaCoeffs(E=0.2, A=-2.0, C=1.6, O=0.0, N=0.1),
+    }
+    tracker = MetricTracker("unit", agent_personas=personas, out_dir=tmp_path)
+    tracker.on_action(_action("agent-1", 1, "research"), occupants=2)
+    tracker.on_tick_end(1, 0.5)
+    tracker.on_message(_message("agent-1", 1, {"E": 0.8, "A": -2.1}))
+    tracker.flush()
+
+    log_path = tmp_path / "run_unit.jsonl"
+    assert log_path.exists(), "flush should emit a jsonl file"
+
+    lines = [json.loads(line) for line in log_path.read_text().splitlines() if line.strip()]
+    summary = lines[0]["summary"]
+    agent_payload = next(line for line in lines if line.get("agent_id") == "agent-1")
+
+    assert agent_payload["trait_bands"]["A"] == "low"
+    assert agent_payload["total_actions"] == 1
+
+    trait_aggs = summary["trait_band_aggregates"]
+    assert trait_aggs["A:low"]["total_actions"] == 1
+
+    alpha_buckets = summary["alpha_buckets"]
+    assert alpha_buckets["E"]["bucket_counts"]["0.5-1.5"] == 1
+    assert alpha_buckets["A"]["bucket_counts"][">1.5"] == 1
