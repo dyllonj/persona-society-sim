@@ -72,7 +72,8 @@ class MetricTracker:
         self.out_dir = out_dir
         self.agent: DefaultDict[str, AgentMetrics] = defaultdict(AgentMetrics)
         self.tick_collab_ratio: Dict[int, float] = {}
-        self.out_dir.mkdir(parents=True, exist_ok=True)
+        if not self.out_dir.exists():
+            self.out_dir.mkdir(parents=True, exist_ok=True)
         self.agent_trait_bands: Dict[str, Dict[str, str]] = {}
         self.alpha_bucket_counts: DefaultDict[str, DefaultDict[str, int]] = defaultdict(
             lambda: defaultdict(int)
