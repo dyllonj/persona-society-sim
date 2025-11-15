@@ -215,6 +215,7 @@ class SimulationRunner:
                             encounter_participants=encounter.participants,
                             satisfaction=self.agent_satisfaction.get(agent.state.agent_id, 0.0),
                             prompt_hash=decision.prompt_hash,
+                            prompt_text=decision.prompt_text,
                             plan_metadata=decision.plan_metadata,
                         )
                     except Exception:
@@ -333,7 +334,8 @@ class SimulationRunner:
                         )
 
             self.world.step()
-            self._log_tick_snapshots()
+            tick_idx = self._log_tick_snapshots()
+            self._warn_prompt_duplication(tick_idx)
             self.log_sink.flush(self.world.tick)
 
             # Log tick end with duration
@@ -512,9 +514,9 @@ class SimulationRunner:
             return payload
         return None
 
-    def _log_tick_snapshots(self) -> None:
+    def _log_tick_snapshots(self) -> int:
+        tick_idx = max(0, self.world.tick - 1)
         try:
-            tick_idx = max(0, self.world.tick - 1)
             for graph_input in self.tick_instrumentation.graph_inputs():
                 snapshot = graphs.snapshot_from_edges(
                     self.run_id,
@@ -544,6 +546,28 @@ class SimulationRunner:
                 self.log_sink.log_metrics_snapshot(metrics_snapshot)
         except Exception:
             pass
+        return tick_idx
+
+    def _warn_prompt_duplication(self, tick_idx: int) -> None:
+        if tick_idx != 0:
+            return
+        share, sample = self.tick_instrumentation.top_prompt_duplication()
+        if share <= 0.4:
+            return
+        percent = share * 100
+        snippet: str
+        if sample:
+            snippet = sample.strip()
+            max_len = 200
+            if len(snippet) > max_len:
+                snippet = snippet[: max_len - 3] + "..."
+        else:
+            snippet = "<no prompt sample>"
+        message = (
+            f"Tick 0 prompt duplication rate is {percent:.0f}% for a single prompt hash. "
+            f"Sample prompt: {snippet}"
+        )
+        self.console_logger.log_warning(message)
 
     def _log_probe_response(
         self,
