@@ -1,0 +1,638 @@
+{
+  "model": "meta-llama/Llama-3.1-8B-Instruct",
+  "alpha": 1.0,
+  "generated_at": "2025-11-15T13:35:45+00:00",
+  "traits": [
+    {
+      "trait_name": "extraversion",
+      "trait_code": "E",
+      "prompt_path": "data/prompts/extraversion.jsonl",
+      "metadata_path": "/workspace/PLAY/persona-society-sim/data/vectors/E.meta.json",
+      "vector_store_id": "E_caa_v2",
+      "num_prompts": 10,
+      "accuracy": {
+        "baseline": 1.0,
+        "steered": 1.0,
+        "delta": 0.0
+      },
+      "logprob_gap": {
+        "baseline": 5.798347580432892,
+        "steered": 5.7839870810508724,
+        "delta": -0.01436049938201922
+      },
+      "sign_consistency": 1.0,
+      "directional_improvement": 0.6,
+      "per_prompt": [
+        {
+          "prompt_id": "E01",
+          "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+          "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+          "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+          "high_option": "A",
+          "baseline_high_logprob": -19.01079559326172,
+          "baseline_low_logprob": -23.35235893726349,
+          "steered_high_logprob": -19.053107261657715,
+          "steered_low_logprob": -23.260295510292053,
+          "baseline_correct": true,
+          "steered_correct": true
+        },
+        {
+          "prompt_id": "E02",
+          "question": "Two colleagues are chatting nearby during a break.",
+          "option_a": "I join them with a friendly opener and ask about their projects.",
+          "option_b": "I stay by myself and avoid entering the conversation.",
+          "high_option": "A",
+          "baseline_high_logprob": -19.50041902065277,
+          "baseline_low_logprob": -24.449267506599426,
+          "steered_high_logprob": -19.633888483047485,
+          "steered_low_logprob": -24.784542679786682,
+          "baseline_correct": true,
+          "steered_correct": true
+        },
+        {
+          "prompt_id": "E03",
+          "question": "A local club invites volunteers to host a session.",
+          "option_a": "I volunteer to host and propose a lively topic.",
+          "option_b": "I pass on hosting and prefer to attend quietly if at all.",
+          "high_option": "A",
+          "baseline_high_logprob": -19.704522967338562,
+          "baseline_low_logprob": -26.203296899795532,
+          "steered_high_logprob": -19.769594073295593,
+          "steered_low_logprob": -26.31981897354126,
+          "baseline_correct": true,
+          "steered_correct": true
+        },
+        {
+          "prompt_id": "E04",
+          "question": "Networking event with optional speed-chat tables.",
+          "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+          "option_b": "I skip the tables and leave early to avoid small talk.",
+          "high_option": "A",
+          "baseline_high_logprob": -20.395801186561584,
+          "baseline_low_logprob": -25.150190234184265,
+          "steered_high_logprob": -20.158018112182617,
+          "steered_low_logprob": -25.15197491645813,
+          "baseline_correct": true,
+          "steered_correct": true
+        },
+        {
+          "prompt_id": "E05",
+          "question": "Team needs someone to present a short update.",
+          "option_a": "I offer to present and ask for feedback afterward.",
+          "option_b": "I avoid presenting and suggest someone else do it.",
+          "high_option": "A",
+          "baseline_high_logprob": -19.754943251609802,
+          "baseline_low_logprob": -26.237669587135315,
+          "steered_high_logprob": -19.781471371650696,
+          "steered_low_logprob": -26.106473326683044,
+          "baseline_correct": true,
+          "steered_correct": true
+        },
+        {
+          "prompt_id": "E06",
+          "question": "Group activity starts slowly.",
+          "option_a": "I energize the room with a suggestion and invite others to join.",
+          "option_b": "I wait silently for others to take the lead.",
+          "high_option": "A",
+          "baseline_high_logprob": -18.708890080451965,
+          "baseline_low_logprob": -25.85715079307556,
+          "steered_high_logprob": -18.720764756202698,
+          "steered_low_logprob": -26.022966384887695,
+          "baseline_correct": true,
+          "steered_correct": true
+        },
+        {
+          "prompt_id": "E07",
+          "question": "New neighbor moves in next door.",
+          "option_a": "I introduce myself and propose a casual coffee.",
+          "option_b": "I keep to myself and do not initiate contact.",
+          "high_option": "A",
+          "baseline_high_logprob": -20.725963234901428,
+          "baseline_low_logprob": -25.31894326210022,
+          "steered_high_logprob": -20.764818906784058,
+          "steered_low_logprob": -25.425235509872437,
+          "baseline_correct": true,
+          "steered_correct": true
+        },
+        {
+          "prompt_id": "E08",
+          "question": "Opportunity to organize a social outing.",
+          "option_a": "I plan the outing and coordinate details in the group chat.",
+          "option_b": "I do not volunteer and ignore planning messages.",
+          "high_option": "A",
+          "baseline_high_logprob": -19.177818775177002,
+          "baseline_low_logprob": -23.41306185722351,
+          "steered_high_logprob": -19.1814284324646,
+          "steered_low_logprob": -23.838484287261963,
+          "baseline_correct": true,
+          "steered_correct": true
+        },
+        {
+          "prompt_id": "E09",
+          "question": "In a workshop, participants can ask questions.",
+          "option_a": "I ask clarifying questions out loud to engage the speaker.",
+          "option_b": "I avoid speaking up even when confused.",
+          "high_option": "A",
+          "baseline_high_logprob": -18.940728306770325,
+          "baseline_low_logprob": -27.451573848724365,
+          "steered_high_logprob": -18.91684377193451,
+          "steered_low_logprob": -26.695879697799683,
+          "baseline_correct": true,
+          "steered_correct": true
+        },
+        {
+          "prompt_id": "E10",
+          "question": "Community forum opens a welcome thread.",
+          "option_a": "I post an introduction and respond to several others.",
+          "option_b": "I read silently and do not post.",
+          "high_option": "A",
+          "baseline_high_logprob": -19.569934844970703,
+          "baseline_low_logprob": -26.039780139923096,
+          "steered_high_logprob": -19.790029048919678,
+          "steered_low_logprob": -26.00416374206543,
+          "baseline_correct": true,
+          "steered_correct": true
+        }
+      ]
+    },
+    {
+      "trait_name": "agreeableness",
+      "trait_code": "A",
+      "prompt_path": "data/prompts/agreeableness.jsonl",
+      "metadata_path": "/workspace/PLAY/persona-society-sim/data/vectors/A.meta.json",
+      "vector_store_id": "A_caa_v2",
+      "num_prompts": 10,
+      "accuracy": {
+        "baseline": 1.0,
+        "steered": 1.0,
+        "delta": 0.0
+      },
+      "logprob_gap": {
+        "baseline": 6.4718979597091675,
+        "steered": 6.997844195365905,
+        "delta": 0.5259462356567379
+      },
+      "sign_consistency": 1.0,
+      "directional_improvement": 0.8,
+      "per_prompt": [
+        {
+          "prompt_id": "A01",
+          "question": "A teammate makes a mistake that slowed the project.",
+          "option_a": "I address it gently, focus on fixes, and offer help.",
+          "option_b": "I criticize them bluntly and assign blame.",
+          "high_option": "A",
+          "baseline_high_logprob": -19.483108639717102,
+          "baseline_low_logprob": -30.748063683509827,
+          "steered_high_logprob": -19.68548810482025,
+          "steered_low_logprob": -30.74862241744995,
+          "baseline_correct": true,
+          "steered_correct": true
+        },
+        {
+          "prompt_id": "A02",
+          "question": "Two agents disagree over a shared resource.",
+          "option_a": "I propose a fair split and acknowledge both perspectives.",
+          "option_b": "I push for my own share with little regard for theirs.",
+          "high_option": "A",
+          "baseline_high_logprob": -19.18931019306183,
+          "baseline_low_logprob": -26.181013464927673,
+          "steered_high_logprob": -19.235970377922058,
+          "steered_low_logprob": -27.450966835021973,
+          "baseline_correct": true,
+          "steered_correct": true
+        },
+        {
+          "prompt_id": "A03",
+          "question": "A newcomer asks basic questions.",
+          "option_a": "I answer patiently and provide a simple guide.",
+          "option_b": "I dismiss them and say it's not my problem.",
+          "high_option": "A",
+          "baseline_high_logprob": -18.53771448135376,
+          "baseline_low_logprob": -27.27064299583435,
+          "steered_high_logprob": -18.69736421108246,
+          "steered_low_logprob": -28.346006393432617,
+          "baseline_correct": true,
+          "steered_correct": true
+        },
+        {
+          "prompt_id": "A04",
+          "question": "Peer feedback round.",
+          "option_a": "I give constructive comments and highlight strengths.",
+          "option_b": "I focus on faults and use a harsh tone.",
+          "high_option": "A",
+          "baseline_high_logprob": -19.383214116096497,
+          "baseline_low_logprob": -24.059850573539734,
+          "steered_high_logprob": -19.619707345962524,
+          "steered_low_logprob": -24.114604592323303,
+          "baseline_correct": true,
+          "steered_correct": true
+        },
+        {
+          "prompt_id": "A05",
+          "question": "Scheduling conflict arises.",
+          "option_a": "I offer flexible times and seek a compromise.",
+          "option_b": "I insist on my time even if it inconveniences others.",
+          "high_option": "A",
+          "baseline_high_logprob": -19.558084845542908,
+          "baseline_low_logprob": -24.01955282688141,
+          "steered_high_logprob": -19.74621570110321,
+          "steered_low_logprob": -24.463844776153564,
+          "baseline_correct": true,
+          "steered_correct": true
+        },
+        {
+          "prompt_id": "A06",
+          "question": "Someone cuts in line by accident.",
+          "option_a": "I point it out politely and let them proceed if urgent.",
+          "option_b": "I escalate the situation and accuse them.",
+          "high_option": "A",
+          "baseline_high_logprob": -20.087375044822693,
+          "baseline_low_logprob": -30.182514190673828,
+          "steered_high_logprob": -20.280660033226013,
+          "steered_low_logprob": -30.586556434631348,
+          "baseline_correct": true,
+          "steered_correct": true
+        },
+        {
+          "prompt_id": "A07",
+          "question": "A colleague is stressed before a deadline.",
+          "option_a": "I offer support and help prioritize tasks.",
+          "option_b": "I ignore their stress and keep my distance.",
+          "high_option": "A",
+          "baseline_high_logprob": -19.712828040122986,
+          "baseline_low_logprob": -27.66411066055298,
+          "steered_high_logprob": -19.72159481048584,
+          "steered_low_logprob": -29.05593740940094,
+          "baseline_correct": true,
+          "steered_correct": true
+        },
+        {
+          "prompt_id": "A08",
+          "question": "Dispute in group chat grows tense.",
+          "option_a": "I de-escalate, restate shared goals, and mediate.",
+          "option_b": "I take sides and intensify the argument.",
+          "high_option": "A",
+          "baseline_high_logprob": -18.984689354896545,
+          "baseline_low_logprob": -24.153681874275208,
+          "steered_high_logprob": -18.901132225990295,
+          "steered_low_logprob": -24.219861149787903,
+          "baseline_correct": true,
+          "steered_correct": true
+        },
+        {
+          "prompt_id": "A09",
+          "question": "A teammate thanks me for help.",
+          "option_a": "I respond warmly and acknowledge the team's effort.",
+          "option_b": "I downplay their feelings and change the subject.",
+          "high_option": "A",
+          "baseline_high_logprob": -20.53256118297577,
+          "baseline_low_logprob": -23.225112915039062,
+          "steered_high_logprob": -20.828769326210022,
+          "steered_low_logprob": -23.99095129966736,
+          "baseline_correct": true,
+          "steered_correct": true
+        },
+        {
+          "prompt_id": "A10",
+          "question": "An unfair rule harms a minority of agents.",
+          "option_a": "I advocate for a fair adjustment that benefits them.",
+          "option_b": "I ignore their concerns since it doesn't affect me.",
+          "high_option": "A",
+          "baseline_high_logprob": -19.38646709918976,
+          "baseline_low_logprob": -22.06978940963745,
+          "steered_high_logprob": -19.37688946723938,
+          "steered_low_logprob": -23.094882249832153,
+          "baseline_correct": true,
+          "steered_correct": true
+        }
+      ]
+    },
+    {
+      "trait_name": "conscientiousness",
+      "trait_code": "C",
+      "prompt_path": "data/prompts/conscientiousness.jsonl",
+      "metadata_path": "/workspace/PLAY/persona-society-sim/data/vectors/C.meta.json",
+      "vector_store_id": "C_caa_v2",
+      "num_prompts": 10,
+      "accuracy": {
+        "baseline": 1.0,
+        "steered": 1.0,
+        "delta": 0.0
+      },
+      "logprob_gap": {
+        "baseline": 4.70320383310318,
+        "steered": 5.572228753566742,
+        "delta": 0.8690249204635627
+      },
+      "sign_consistency": 1.0,
+      "directional_improvement": 1.0,
+      "per_prompt": [
+        {
+          "prompt_id": "C01",
+          "question": "Task assigned with a two-day deadline.",
+          "option_a": "I plan milestones, start early, and deliver on time.",
+          "option_b": "I procrastinate and risk missing the deadline.",
+          "high_option": "A",
+          "baseline_high_logprob": -18.991293907165527,
+          "baseline_low_logprob": -22.10923731327057,
+          "steered_high_logprob": -19.16194748878479,
+          "steered_low_logprob": -23.196930170059204,
+          "baseline_correct": true,
+          "steered_correct": true
+        },
+        {
+          "prompt_id": "C02",
+          "question": "Shared workspace gets messy.",
+          "option_a": "I tidy my area and set a simple clean-up norm.",
+          "option_b": "I leave items scattered and ignore the mess.",
+          "high_option": "A",
+          "baseline_high_logprob": -19.185903429985046,
+          "baseline_low_logprob": -26.302862763404846,
+          "steered_high_logprob": -19.16210663318634,
+          "steered_low_logprob": -27.205003142356873,
+          "baseline_correct": true,
+          "steered_correct": true
+        },
+        {
+          "prompt_id": "C03",
+          "question": "Budget requires careful tracking.",
+          "option_a": "I keep precise records and reconcile transactions.",
+          "option_b": "I spend without logging and hope it balances later.",
+          "high_option": "A",
+          "baseline_high_logprob": -19.26909363269806,
+          "baseline_low_logprob": -24.96196162700653,
+          "steered_high_logprob": -19.433822631835938,
+          "steered_low_logprob": -25.559624910354614,
+          "baseline_correct": true,
+          "steered_correct": true
+        },
+        {
+          "prompt_id": "C04",
+          "question": "Complex task with unclear steps.",
+          "option_a": "I break it into subtasks and track progress visibly.",
+          "option_b": "I start haphazardly without a plan.",
+          "high_option": "A",
+          "baseline_high_logprob": -19.730401635169983,
+          "baseline_low_logprob": -25.755164742469788,
+          "steered_high_logprob": -19.906790494918823,
+          "steered_low_logprob": -26.131657600402832,
+          "baseline_correct": true,
+          "steered_correct": true
+        },
+        {
+          "prompt_id": "C05",
+          "question": "Conflicting commitments appear.",
+          "option_a": "I renegotiate early and update the schedule.",
+          "option_b": "I overcommit and miss obligations.",
+          "high_option": "A",
+          "baseline_high_logprob": -19.21018612384796,
+          "baseline_low_logprob": -24.136452674865723,
+          "steered_high_logprob": -19.469786763191223,
+          "steered_low_logprob": -24.520233154296875,
+          "baseline_correct": true,
+          "steered_correct": true
+        },
+        {
+          "prompt_id": "C06",
+          "question": "Quality bar is ambiguous.",
+          "option_a": "I define acceptance criteria and verify before submit.",
+          "option_b": "I submit minimal work without checks.",
+          "high_option": "A",
+          "baseline_high_logprob": -19.037822008132935,
+          "baseline_low_logprob": -21.49647068977356,
+          "steered_high_logprob": -19.201829433441162,
+          "steered_low_logprob": -22.217429637908936,
+          "baseline_correct": true,
+          "steered_correct": true
+        },
+        {
+          "prompt_id": "C07",
+          "question": "Recurring meeting lacks agenda.",
+          "option_a": "I propose a brief agenda and action items.",
+          "option_b": "I attend unprepared and let it drift.",
+          "high_option": "A",
+          "baseline_high_logprob": -18.982927918434143,
+          "baseline_low_logprob": -25.353246212005615,
+          "steered_high_logprob": -19.098453879356384,
+          "steered_low_logprob": -26.233378767967224,
+          "baseline_correct": true,
+          "steered_correct": true
+        },
+        {
+          "prompt_id": "C08",
+          "question": "Sensitive data present.",
+          "option_a": "I follow privacy rules and least-access practices.",
+          "option_b": "I share data casually without safeguards.",
+          "high_option": "A",
+          "baseline_high_logprob": -19.25269591808319,
+          "baseline_low_logprob": -24.510501861572266,
+          "steered_high_logprob": -19.4430673122406,
+          "steered_low_logprob": -25.766544342041016,
+          "baseline_correct": true,
+          "steered_correct": true
+        },
+        {
+          "prompt_id": "C09",
+          "question": "Team adopts a new tool.",
+          "option_a": "I read the quickstart and document tips.",
+          "option_b": "I avoid learning it and ask others to do tasks.",
+          "high_option": "A",
+          "baseline_high_logprob": -20.54534661769867,
+          "baseline_low_logprob": -22.61727261543274,
+          "steered_high_logprob": -20.540578603744507,
+          "steered_low_logprob": -23.7495436668396,
+          "baseline_correct": true,
+          "steered_correct": true
+        },
+        {
+          "prompt_id": "C10",
+          "question": "Missed a small step that caused rework.",
+          "option_a": "I add a checklist to prevent the error again.",
+          "option_b": "I ignore the root cause and move on.",
+          "high_option": "A",
+          "baseline_high_logprob": -20.785877585411072,
+          "baseline_low_logprob": -24.78041660785675,
+          "steered_high_logprob": -20.981123685836792,
+          "steered_low_logprob": -27.541449069976807,
+          "baseline_correct": true,
+          "steered_correct": true
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "E": {
+      "vector_store_id": "E_caa_v2",
+      "trait": "E",
+      "method": "caa_ab",
+      "model_name": "meta-llama/Llama-3.1-8B-Instruct",
+      "dataset": {
+        "train_size": 10,
+        "eval_size": 0,
+        "train_hash": "4d7c96abb8be6713118dc0389c1b84c6c357eb9a504c66cd8bc7a875d7de5457",
+        "eval_hash": null
+      },
+      "extraction_hyperparameters": {
+        "prompt_template": "You are rating a persona in a town simulator.\nQuestion: {question}\nAnswer: ({letter})",
+        "token_position": "answer_letter",
+        "pooling": "token",
+        "difference_equation": "high_minus_low",
+        "layers": [
+          6,
+          18,
+          30
+        ]
+      },
+      "layers": [
+        {
+          "layer_id": 6,
+          "vector_path": "/workspace/PLAY/persona-society-sim/data/vectors/E_caa_v2_layer6.npy",
+          "norm": 2.384765625,
+          "accuracy": null,
+          "accuracy_delta": null
+        },
+        {
+          "layer_id": 18,
+          "vector_path": "/workspace/PLAY/persona-society-sim/data/vectors/E_caa_v2_layer18.npy",
+          "norm": 6.671875,
+          "accuracy": null,
+          "accuracy_delta": null
+        },
+        {
+          "layer_id": 30,
+          "vector_path": "/workspace/PLAY/persona-society-sim/data/vectors/E_caa_v2_layer30.npy",
+          "norm": 38.65625,
+          "accuracy": null,
+          "accuracy_delta": null
+        }
+      ],
+      "preferred_layers": [
+        6,
+        18,
+        30
+      ],
+      "layer_sweep": null,
+      "created_at": "2025-11-15T13:34:31Z"
+    },
+    "A": {
+      "vector_store_id": "A_caa_v2",
+      "trait": "A",
+      "method": "caa_ab",
+      "model_name": "meta-llama/Llama-3.1-8B-Instruct",
+      "dataset": {
+        "train_size": 10,
+        "eval_size": 0,
+        "train_hash": "faa2d07c19de8c21de7d092228bae6405781f6fbdaa90a5c06ffaaf5f1f7cd9f",
+        "eval_hash": null
+      },
+      "extraction_hyperparameters": {
+        "prompt_template": "You are rating a persona in a town simulator.\nQuestion: {question}\nAnswer: ({letter})",
+        "token_position": "answer_letter",
+        "pooling": "token",
+        "difference_equation": "high_minus_low",
+        "layers": [
+          8,
+          20,
+          28
+        ]
+      },
+      "layers": [
+        {
+          "layer_id": 8,
+          "vector_path": "/workspace/PLAY/persona-society-sim/data/vectors/A_caa_v2_layer8.npy",
+          "norm": 2.80078125,
+          "accuracy": null,
+          "accuracy_delta": null
+        },
+        {
+          "layer_id": 20,
+          "vector_path": "/workspace/PLAY/persona-society-sim/data/vectors/A_caa_v2_layer20.npy",
+          "norm": 7.73046875,
+          "accuracy": null,
+          "accuracy_delta": null
+        },
+        {
+          "layer_id": 28,
+          "vector_path": "/workspace/PLAY/persona-society-sim/data/vectors/A_caa_v2_layer28.npy",
+          "norm": 24.65625,
+          "accuracy": null,
+          "accuracy_delta": null
+        }
+      ],
+      "preferred_layers": [
+        8,
+        20,
+        28
+      ],
+      "layer_sweep": null,
+      "created_at": "2025-11-15T13:34:56Z"
+    },
+    "C": {
+      "vector_store_id": "C_caa_v2",
+      "trait": "C",
+      "method": "caa_ab",
+      "model_name": "meta-llama/Llama-3.1-8B-Instruct",
+      "dataset": {
+        "train_size": 10,
+        "eval_size": 0,
+        "train_hash": "9d2ad56862a202b5d56ddead09b8768eaeee43ee0b390fde2d805a813d4b97b9",
+        "eval_hash": null
+      },
+      "extraction_hyperparameters": {
+        "prompt_template": "You are rating a persona in a town simulator.\nQuestion: {question}\nAnswer: ({letter})",
+        "token_position": "answer_letter",
+        "pooling": "token",
+        "difference_equation": "high_minus_low",
+        "layers": [
+          10,
+          22,
+          30
+        ]
+      },
+      "layers": [
+        {
+          "layer_id": 10,
+          "vector_path": "/workspace/PLAY/persona-society-sim/data/vectors/C_caa_v2_layer10.npy",
+          "norm": 3.087890625,
+          "accuracy": null,
+          "accuracy_delta": null
+        },
+        {
+          "layer_id": 22,
+          "vector_path": "/workspace/PLAY/persona-society-sim/data/vectors/C_caa_v2_layer22.npy",
+          "norm": 9.8359375,
+          "accuracy": null,
+          "accuracy_delta": null
+        },
+        {
+          "layer_id": 30,
+          "vector_path": "/workspace/PLAY/persona-society-sim/data/vectors/C_caa_v2_layer30.npy",
+          "norm": 35.625,
+          "accuracy": null,
+          "accuracy_delta": null
+        }
+      ],
+      "preferred_layers": [
+        10,
+        22,
+        30
+      ],
+      "layer_sweep": null,
+      "created_at": "2025-11-15T13:35:19Z"
+    }
+  },
+  "manual_transcripts": [],
+  "grading_prompts": {
+    "gpt4": null,
+    "claude": null
+  },
+  "thresholds": {
+    "delta_threshold": 0.1,
+    "sign_threshold": 0.55
+  },
+  "failures": [
+    "extraversion delta 0.000 < 0.100",
+    "agreeableness delta 0.000 < 0.100",
+    "conscientiousness delta 0.000 < 0.100"
+  ]
+}
