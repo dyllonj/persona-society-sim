@@ -18,12 +18,16 @@ DEFAULT_BANNED_PHRASES = [
 ]
 
 
+MAX_NORMALIZED_ALPHA = 1.0
+
+
 @dataclass
 class SafetyConfig:
     alpha_clip: float = 1.0
     toxicity_threshold: float = 0.4  # placeholder for future classifier
     governor_backoff: float = 0.2
     banned_phrases: Iterable[str] = tuple(DEFAULT_BANNED_PHRASES)
+    global_alpha_strength: float = 1.0
 
 
 class SafetyGovernor:
@@ -33,7 +37,11 @@ class SafetyGovernor:
         self.config = config
 
     def clamp(self, value: float) -> float:
-        return max(-self.config.alpha_clip, min(self.config.alpha_clip, value))
+        strength = self.config.global_alpha_strength
+        if strength <= 0:
+            strength = 1.0
+        clip = min(MAX_NORMALIZED_ALPHA, self.config.alpha_clip / strength)
+        return max(-clip, min(clip, value))
 
     def evaluate(
         self,

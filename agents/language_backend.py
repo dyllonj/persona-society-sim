@@ -101,8 +101,15 @@ class HFBackend(LanguageBackend):
                 model_name, torch_dtype=torch.float16, device_map="auto"
             )
 
-        self.vector_norms = vector_norms or {}
-        self.controller = SteeringController(self.model, trait_vectors, vector_norms=self.vector_norms)
+        provided_norms = vector_norms or {}
+        self.vector_norms: Dict[str, Dict[int, float]] = {
+            trait: dict(per_layer) for trait, per_layer in provided_norms.items()
+        }
+        self.controller = SteeringController(
+            self.model,
+            trait_vectors,
+            vector_norms=self.vector_norms,
+        )
         self.controller.register()
 
     def generate(self, prompt: str, max_new_tokens: int, alphas: Dict[str, float]) -> GenerationResult:

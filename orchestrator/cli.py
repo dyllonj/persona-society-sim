@@ -30,7 +30,7 @@ from schemas.agent import AgentState, PersonaCoeffs
 from schemas.objectives import ObjectiveTemplate, DEFAULT_OBJECTIVE_TEMPLATES
 from storage.log_sink import LogSink
 
-TRAIT_KEYS = ["E", "A", "C", "O", "N"]
+TRAIT_KEYS = PersonaCoeffs.TRAITS
 GOAL_LIBRARY = [
     "organize meetup",
     "research town policy",
@@ -45,11 +45,53 @@ def load_config(path: Path) -> Dict:
     return yaml.safe_load(path.read_text())
 
 
-def sample_persona(base: Dict[str, float], rng: random.Random) -> PersonaCoeffs:
-    def jitter(value: float) -> float:
-        return max(-1.0, min(1.0, value + rng.uniform(-0.2, 0.2)))
+def _load_metadata_file(path_value: Optional[str], *, config_dir: Optional[Path]) -> Dict[str, Any]:
+    if not path_value:
+        return {}
+    candidate = Path(path_value)
+    if not candidate.is_absolute():
+        if config_dir is not None:
+            candidate = (config_dir / candidate).resolve()
+        else:
+            candidate = candidate.resolve()
+    if not candidate.exists():
+        return {}
+    try:
+        data = yaml.safe_load(candidate.read_text())
+    except Exception:
+        return {}
+    return data if isinstance(data, dict) else {}
 
-    return PersonaCoeffs(**{trait: jitter(base.get(trait, 0.0)) for trait in TRAIT_KEYS})
+
+def sample_persona(base: Dict[str, float], rng: random.Random, jitter: float = 0.2) -> PersonaCoeffs:
+    jitter = max(0.0, float(jitter))
+
+    def jitter_value(value: float) -> float:
+        if jitter == 0.0:
+            return value
+        return value + rng.uniform(-jitter, jitter)
+
+    raw: Dict[str, float] = {}
+    for trait in TRAIT_KEYS:
+        value = base.get(trait, 0.0)
+        try:
+            numeric_value = float(value)
+        except (TypeError, ValueError):
+            numeric_value = 0.0
+        raw[trait] = jitter_value(numeric_value)
+    return PersonaCoeffs(**raw)
+
+
+def _persona_sampling_jitter(steering_cfg: Dict[str, Any], *, config_dir: Optional[Path]) -> float:
+    metadata_files = steering_cfg.get("metadata_files") or {}
+    personas_meta = _load_metadata_file(metadata_files.get("personas"), config_dir=config_dir)
+    if not isinstance(personas_meta, dict):
+        return 0.2
+    sampling_cfg = personas_meta.get("sampling") or {}
+    try:
+        return float(sampling_cfg.get("jitter", 0.2))
+    except (TypeError, ValueError):
+        return 0.2
 
 
 def _steering_coefficients(steering_cfg: Dict[str, Any]) -> Dict[str, float]:
@@ -154,11 +196,14 @@ def build_agents(
     world: World,
     backend: LanguageBackend,
     safety_governor: SafetyGovernor,
+    *,
+    config_dir: Optional[Path] = None,
 ) -> List[Agent]:
     population = config["population"]
     rng = random.Random(config.get("seed", 7))
     steering_cfg = config.get("steering", {})
     base_persona = _steering_coefficients(steering_cfg)
+    persona_jitter = _persona_sampling_jitter(steering_cfg, config_dir=config_dir)
     inference = config.get("inference", {})
     optimization = config.get("optimization", {})
     max_tokens = inference.get("max_new_tokens", 120)
@@ -168,7 +213,7 @@ def build_agents(
     for idx in range(population):
         agent_id = f"agent-{idx:03d}"
         display_name = f"Agent {idx:03d}"
-        persona = sample_persona(base_persona, rng)
+        persona = sample_persona(base_persona, rng, jitter=persona_jitter)
         location = rng.choice(locations)
         goals = rng.sample(GOAL_LIBRARY, k=min(2, len(GOAL_LIBRARY)))
         state = AgentState(
@@ -297,6 +342,7 @@ def main() -> None:
     config = load_config(args.config)
     run_id = config.get("run_id") or f"run-{uuid4().hex[:6]}"
     steering_cfg = config.get("steering", {})
+    alpha_strength = float(steering_cfg.get("strength", 1.0))
     steering_base = _steering_coefficients(steering_cfg)
     trait_vectors, vector_norms = load_trait_vectors(
         list(steering_base.keys() or TRAIT_KEYS), args.vector_dir
@@ -307,6 +353,7 @@ def main() -> None:
             alpha_clip=safety_cfg.get("alpha_clip", 1.0),
             toxicity_threshold=safety_cfg.get("toxicity_threshold", 0.4),
             governor_backoff=safety_cfg.get("governor_backoff", 0.2),
+            global_alpha_strength=alpha_strength,
         )
     )
     backend = build_language_backend(
@@ -315,7 +362,14 @@ def main() -> None:
     world = World()
     world.configure_environment(args.env, args.difficulty)
     scheduler = Scheduler(world, seed=config.get("seed", 7))
-    agents = build_agents(run_id, config, world, backend, safety)
+    agents = build_agents(
+        run_id,
+        config,
+        world,
+        backend,
+        safety,
+        config_dir=args.config.parent,
+    )
     logging_cfg = config.get("logging", {})
     log_sink = LogSink(run_id, logging_cfg.get("db_url"), logging_cfg.get("parquet_dir"))
     inference = config.get("inference", {})
