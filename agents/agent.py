@@ -71,6 +71,8 @@ class Agent:
         self._last_plan_suggestion: Optional[PlanSuggestion] = None
         self._last_reflection: Optional[Tuple[str, List[str]]] = None
         self._last_plan_location: Optional[str] = None
+        self._last_plan_tick: Optional[int] = None
+        self._last_observation: Optional[str] = None
 
     # ---- persona helpers ----
 
@@ -104,6 +106,8 @@ class Agent:
         current_location: Optional[str] = None,
         active_objective: Optional[Objective] = None,
         rule_context: Optional[List[str]] = None,
+        observation: Optional[str] = None,
+        recent_dialogue: Optional[Sequence[RoomUtterance]] = None,
     ) -> PlanSuggestion:
         # Skip reflection if not on reflection cycle and we have a cached plan
         should_reflect = (tick % self.reflect_every_n_ticks == 0)
@@ -112,6 +116,8 @@ class Agent:
             not should_reflect
             and self._last_plan_suggestion is not None
             and self._last_plan_location == (current_location or "")
+            and self._last_plan_tick is not None
+            and tick - self._last_plan_tick <= 1
         ):
             # Reuse last plan suggestion (fast path)
             return self._last_plan_suggestion
@@ -126,6 +132,7 @@ class Agent:
         implications = [f"Reference memory {ev.memory_id}" for ev in events]
         self.memory.add_reflection(self.state.agent_id, tick, reflection_text, implications=implications)
         self._last_reflection = (summary, implications)
+        observation_hint = self._extract_observation_keywords(observation, recent_dialogue)
         suggestion = self.planner.plan(
             self.state.goals,
             summary,
@@ -133,11 +140,39 @@ class Agent:
             active_objective=active_objective,
             tick=tick,
             rule_context=rule_context,
+            observation_hint=observation_hint if observation_hint else None,
         )
         self.memory.add_plan(self.state.agent_id, tick, tick + 3, [suggestion.action_type])
         self._last_plan_suggestion = suggestion
         self._last_plan_location = current_location or ""
+        self._last_plan_tick = tick
+        if observation is not None:
+            self._last_observation = observation
         return suggestion
+
+    def _extract_observation_keywords(
+        self,
+        observation: Optional[str],
+        recent_dialogue: Optional[Sequence[RoomUtterance]],
+        limit: int = 6,
+    ) -> List[str]:
+        raw_tokens: List[str] = []
+        if observation:
+            raw_tokens.extend(observation.split())
+        if recent_dialogue:
+            for entry in recent_dialogue:
+                raw_tokens.extend(entry.content.split())
+        keywords: List[str] = []
+        seen: set[str] = set()
+        for token in raw_tokens:
+            cleaned = "".join(ch for ch in token.lower() if ch.isalpha() or ch == "_")
+            if len(cleaned) < 3 or cleaned in seen:
+                continue
+            keywords.append(cleaned)
+            seen.add(cleaned)
+            if len(keywords) >= limit:
+                break
+        return keywords
 
     def _build_prompt(
         self,
@@ -204,6 +239,8 @@ class Agent:
             current_location=current_location,
             active_objective=active_objective,
             rule_context=rule_context,
+            observation=observation,
+            recent_dialogue=recent_dialogue,
         )
         # Add a brief pre-talk sync at the very beginning to reduce immediate moves.
         if tick == 0 and suggestion.action_type == "move":
