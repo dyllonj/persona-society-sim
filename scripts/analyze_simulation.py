@@ -5,6 +5,7 @@ import argparse
 import json
 from collections import Counter, defaultdict
 from pathlib import Path
+from typing import Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -36,6 +37,75 @@ def load_simulation_data(dump_dir: Path):
         % (len(actions), len(messages), len(graph_snapshots), len(metrics_snapshots))
     )
     return actions, messages, graph_snapshots, metrics_snapshots
+
+
+def _auto_detect_metric_log(dump_dir: Path) -> Optional[Path]:
+    metrics_dir = dump_dir / "metrics"
+    if not metrics_dir.exists():
+        return None
+    candidates = sorted(metrics_dir.glob("run_*.jsonl"))
+    if not candidates:
+        return None
+    return candidates[-1]
+
+
+def load_metric_tracker_summary(path: Path) -> Optional[dict]:
+    try:
+        with path.open("r", encoding="utf-8") as handle:
+            first_line = handle.readline().strip()
+    except FileNotFoundError:
+        return None
+    except OSError:
+        return None
+    if not first_line:
+        return None
+    try:
+        payload = json.loads(first_line)
+    except json.JSONDecodeError:
+        return None
+    return payload.get("summary")
+
+
+def analyze_metric_tracker_summary(summary: dict, source: Path) -> None:
+    print("\n" + "=" * 80)
+    print("METRIC TRACKER SUMMARY")
+    print("=" * 80)
+    print(f"Source: {source}")
+
+    trait_aggregates = summary.get("trait_band_aggregates", {}) or {}
+    if trait_aggregates:
+        print("\nTop trait bands by total actions:")
+        top_bands = sorted(
+            trait_aggregates.items(),
+            key=lambda item: item[1].get("total_actions", 0),
+            reverse=True,
+        )[:5]
+        for key, stats in top_bands:
+            eff = stats.get("efficiency", 0.0)
+            collab = stats.get("collab_ratio", 0.0)
+            actions = stats.get("total_actions", 0)
+            submit_rate = stats.get("submit_rate", 0.0)
+            print(
+                f"  {key:10s}: actions={actions}, eff={eff:.3f}, collab={collab:.3f}, submit={submit_rate:.3f}"
+            )
+    else:
+        print("\nNo trait band aggregates were recorded.")
+
+    alpha_buckets = summary.get("alpha_buckets", {}) or {}
+    if alpha_buckets:
+        print("\nSteering magnitude buckets:")
+        labels = list(summary.get("alpha_bucket_labels", {}).keys())
+        if not labels and alpha_buckets:
+            sample = next(iter(alpha_buckets.values()))
+            labels = list(sample.get("bucket_counts", {}).keys())
+        for trait, stats in sorted(alpha_buckets.items()):
+            counts = stats.get("bucket_counts", {})
+            bucket_str = ", ".join(f"{label}:{counts.get(label, 0)}" for label in labels)
+            avg = stats.get("avg_magnitude", 0.0)
+            samples = stats.get("samples", 0)
+            print(f"  {trait:5s}: avg|alpha|={avg:.3f} ({samples} samples) -> {bucket_str}")
+    else:
+        print("\nNo steering bucket data recorded.")
 
 
 def analyze_action_distribution(actions):
@@ -255,6 +325,11 @@ def main():
     parser.add_argument(
         "--no-plots", action="store_true", help="Skip generating plots"
     )
+    parser.add_argument(
+        "--metric-log",
+        type=Path,
+        help="Optional path to MetricTracker JSONL output (auto-detected from dump_dir if omitted)",
+    )
     args = parser.parse_args()
 
     if not args.dump_dir.exists():
@@ -276,6 +351,14 @@ def main():
         print("\nAdditional datasets available:")
         print(f"  Graph snapshots:  {len(graph_snapshots)} records")
         print(f"  Metrics snapshots: {len(metrics_snapshots)} records")
+
+    metric_log_path = args.metric_log or _auto_detect_metric_log(args.dump_dir)
+    if metric_log_path:
+        summary = load_metric_tracker_summary(metric_log_path)
+        if summary:
+            analyze_metric_tracker_summary(summary, metric_log_path)
+        else:
+            print(f"\n⚠ Warning: MetricTracker log not readable at {metric_log_path}")
 
     # Generate visualizations
     if not args.no_plots:

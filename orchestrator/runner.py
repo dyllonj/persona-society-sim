@@ -50,7 +50,8 @@ class SimulationRunner:
         self.console_logger = console_logger or ConsoleLogger(enabled=False)
         self.objective_manager = objective_manager
         self.agent_satisfaction: Dict[str, float] = {agent_id: 0.0 for agent_id in self.agents}
-        self.metric_tracker = MetricTracker(run_id)
+        persona_map = {agent_id: agent.state.persona_coeffs for agent_id, agent in self.agents.items()}
+        self.metric_tracker = MetricTracker(run_id, agent_personas=persona_map)
         self.event_bridge = event_bridge
         self.tick_instrumentation = TickInstrumentation()
 
@@ -236,6 +237,10 @@ class SimulationRunner:
                         layers_used=decision.layers_used,
                     )
                     self.log_sink.log_message(msg_log)
+                    try:
+                        self.metric_tracker.on_message(msg_log)
+                    except Exception:
+                        pass
 
                     # Log message to console
                     self.console_logger.log_message(msg_log)
