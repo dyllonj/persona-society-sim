@@ -26,11 +26,26 @@ class SteeringController:
         if torch is None:
             raise ModuleNotFoundError("torch is required for SteeringController")
         self.model = model
-        self.trait_vectors = {
-            trait: {layer: torch.tensor(vec) if not isinstance(vec, torch.Tensor) else vec for layer, vec in by_layer.items()}
-            for trait, by_layer in trait_vectors.items()
+        provided_norms = vector_norms or {}
+        self.vector_norms: Dict[str, Dict[int, float]] = {
+            trait: dict(per_layer) for trait, per_layer in provided_norms.items()
         }
-        self.vector_norms = vector_norms or {}
+        self.trait_vectors: LayerVectors = {}
+        for trait, by_layer in trait_vectors.items():
+            normalized_layers: Dict[int, TorchTensor] = {}
+            for layer, vec in by_layer.items():
+                tensor = vec if isinstance(vec, torch.Tensor) else torch.tensor(vec)
+                if hasattr(torch.linalg, "norm"):
+                    norm_tensor = torch.linalg.norm(tensor)
+                else:  # pragma: no cover - legacy torch fallback
+                    norm_tensor = tensor.norm()
+                norm_value = float(norm_tensor.item()) if hasattr(norm_tensor, "item") else float(norm_tensor)
+                if norm_value > 0:
+                    tensor = tensor / norm_value
+                normalized_layers[layer] = tensor
+                self.vector_norms.setdefault(trait, {})[layer] = norm_value
+            if normalized_layers:
+                self.trait_vectors[trait] = normalized_layers
         self.alphas = {trait: 0.0 for trait in self.trait_vectors}
         self._handles = []
         self.enabled = True

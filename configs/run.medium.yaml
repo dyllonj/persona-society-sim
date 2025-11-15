@@ -1,4 +1,5 @@
 run_id: "study100"
+git_commit: "local"
 model_name: "meta-llama/Llama-3-70b-instruct"
 population: 100
 steps: 500

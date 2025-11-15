@@ -11,3 +11,4 @@ percentiles:
 sampling:
   strategy: "latin-hypercube"
   seed: 1337
+  jitter: 0.2  # steering coefficients are later clamped to [-1, 1]
