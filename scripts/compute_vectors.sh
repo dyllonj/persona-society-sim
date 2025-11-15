@@ -6,7 +6,7 @@ model="${MODEL_NAME:-meta-llama/Llama-3.1-8B-Instruct}"
 vector_root_override="${VECTOR_ROOT:-}"
 selected_traits="${TRAITS:-}"
 
-python3 <<'PY' "$config_file" "$model" "$vector_root_override" "$selected_traits"
+python3 - "$config_file" "$model" "$vector_root_override" "$selected_traits" <<'PY'
 import subprocess
 import sys
 from pathlib import Path

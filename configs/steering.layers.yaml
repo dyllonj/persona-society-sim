@@ -1,7 +1,7 @@
-vector_root: data/vectors
+vector_root: ../data/vectors
 defaults:
   layers: [6, 18, 30]
-  prompt_dir: data/prompts
+  prompt_dir: ../data/prompts
   prompt_masking: true
   extraction: caa_ab_normalized
   notes: |
@@ -12,18 +12,18 @@ traits:
   E:
     name: extraversion
     vector_store_id: E_caa_v2
-    prompt_file: data/prompts/extraversion.jsonl
+    prompt_file: ../data/prompts/extraversion.jsonl
     layers: [6, 18, 30]
     description: Highly weighted early/mid layers to capture affective tone.
   A:
     name: agreeableness
     vector_store_id: A_caa_v2
-    prompt_file: data/prompts/agreeableness.jsonl
+    prompt_file: ../data/prompts/agreeableness.jsonl
     layers: [8, 20, 28]
     description: Mid-late layers emphasize conciliatory phrasing without overwhelming base intent.
   C:
     name: conscientiousness
     vector_store_id: C_caa_v2
-    prompt_file: data/prompts/conscientiousness.jsonl
+    prompt_file: ../data/prompts/conscientiousness.jsonl
     layers: [10, 22, 30]
     description: Later layers highlight procedural focus and planning cues.

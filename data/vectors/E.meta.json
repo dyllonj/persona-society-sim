@@ -1,0 +1,53 @@
+{
+  "vector_store_id": "E_caa_v2",
+  "trait": "E",
+  "method": "caa_ab",
+  "model_name": "meta-llama/Llama-3.1-8B-Instruct",
+  "dataset": {
+    "train_size": 10,
+    "eval_size": 0,
+    "train_hash": "4d7c96abb8be6713118dc0389c1b84c6c357eb9a504c66cd8bc7a875d7de5457",
+    "eval_hash": null
+  },
+  "extraction_hyperparameters": {
+    "prompt_template": "You are rating a persona in a town simulator.\nQuestion: {question}\nAnswer: ({letter})",
+    "token_position": "answer_letter",
+    "pooling": "token",
+    "difference_equation": "high_minus_low",
+    "layers": [
+      6,
+      18,
+      30
+    ]
+  },
+  "layers": [
+    {
+      "layer_id": 6,
+      "vector_path": "/workspace/PLAY/persona-society-sim/data/vectors/E_caa_v2_layer6.npy",
+      "norm": 2.384765625,
+      "accuracy": null,
+      "accuracy_delta": null
+    },
+    {
+      "layer_id": 18,
+      "vector_path": "/workspace/PLAY/persona-society-sim/data/vectors/E_caa_v2_layer18.npy",
+      "norm": 6.671875,
+      "accuracy": null,
+      "accuracy_delta": null
+    },
+    {
+      "layer_id": 30,
+      "vector_path": "/workspace/PLAY/persona-society-sim/data/vectors/E_caa_v2_layer30.npy",
+      "norm": 38.65625,
+      "accuracy": null,
+      "accuracy_delta": null
+    }
+  ],
+  "preferred_layers": [
+    6,
+    18,
+    30
+  ],
+  "layer_sweep": null,
+  "created_at": "2025-11-15T13:31:23Z"
+}
