@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass
-from typing import Dict
+from typing import Any, Dict
 
 from env.world import World
 
@@ -13,7 +12,7 @@ from env.world import World
 class ActionResult:
     action_type: str
     success: bool
-    info: Dict[str, str]
+    info: Dict[str, Any]
 
 
 MAX_BROADCAST_CHARS = 280
@@ -205,11 +204,10 @@ def research(world: World, agent_id: str, query: str | None = None, doc_id: str 
     else:
         note = "ok"
     raw_info = world.research_access(agent_id, doc_id=doc_id, query=query)
-    # Serialize complex objects to strings for ActionLog.info
-    info: Dict[str, str] = {
+    info: Dict[str, Any] = {
         "note": note,
-        "doc_id": str(raw_info.get("doc_id") or ""),
-        "facts_found": json.dumps(raw_info.get("facts_found", [])),
+        "doc_id": raw_info.get("doc_id") or "",
+        "facts_found": raw_info.get("facts_found", []),
     }
     room_id = location if location != "unknown" else None
     research_note = f"{agent_id} researched {raw_info.get('doc_id') or 'unknown'}"
@@ -255,8 +253,7 @@ def submit_report(world: World, agent_id: str) -> ActionResult:
         speaker=agent_id,
         utterance=report_note,
     )
-    # Serialize grading result to string for ActionLog.info
-    return ActionResult("submit_report", True, {"grading": json.dumps(result)})
+    return ActionResult("submit_report", True, result)
 
 
 # Attach dynamically to the router now that functions are defined

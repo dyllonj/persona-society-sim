@@ -17,8 +17,9 @@ except Exception:  # pragma: no cover - defensive optional dependency import
     _PARQUET_AVAILABLE = False
 
 from metrics.persona_bands import BAND_METADATA, BAND_THRESHOLDS, TRAIT_ORDER
+from metrics.research import ResearchMetricAggregator
 from schemas.agent import PersonaCoeffs
-from schemas.logs import ActionLog, MsgLog
+from schemas.logs import ActionLog, MsgLog, CitationLog, ReportGradeLog, ResearchFactLog
 
 
 GOALFUL_ACTIONS = {"research", "cite", "submit_report", "fill_field", "propose_plan", "submit_plan", "scan", "ping"}
@@ -78,6 +79,7 @@ class MetricTracker:
         )
         self.alpha_magnitude_totals: DefaultDict[str, float] = defaultdict(float)
         self.alpha_magnitude_counts: DefaultDict[str, int] = defaultdict(int)
+        self.research_metrics = ResearchMetricAggregator()
         if agent_personas:
             self.register_personas(agent_personas)
 
@@ -150,11 +152,21 @@ class MetricTracker:
             self.alpha_magnitude_totals[trait] += magnitude
             self.alpha_magnitude_counts[trait] += 1
 
+    def on_research_fact(self, log: ResearchFactLog) -> None:
+        self.research_metrics.observe_fact(log)
+
+    def on_citation(self, log: CitationLog) -> None:
+        self.research_metrics.observe_citation(log)
+
+    def on_report_grade(self, log: ReportGradeLog) -> None:
+        self.research_metrics.observe_grade(log)
+
     def flush(self) -> None:
         for agent_id in self.agent_trait_bands:
             self._ensure_agent_registration(agent_id)
         trait_aggregates = self._trait_band_aggregates()
         alpha_summary = self._alpha_bucket_summary()
+        research_summary = self.research_metrics.summary()
         path = self.out_dir / f"run_{self.run_id}.jsonl"
         with path.open("w", encoding="utf-8") as f:
             summary = {
@@ -164,6 +176,7 @@ class MetricTracker:
                 "trait_band_metadata": BAND_METADATA,
                 "alpha_buckets": alpha_summary,
                 "alpha_bucket_labels": self._alpha_bucket_metadata(),
+                "research": research_summary,
             }
             f.write(json.dumps({"summary": summary}) + "\n")
             agent_rows = []

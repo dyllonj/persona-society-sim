@@ -319,8 +319,17 @@ class World:
         facts = self.corpus.get(chosen_doc, {})
         for fact_id, answer in facts.items():
             if fact_id in self.targets:
+                target_answer = self.targets[fact_id]["answer"]
+                is_correct = answer == target_answer
                 state["found_facts"][fact_id] = answer
-                info["facts_found"].append({"fact_id": fact_id, "answer": answer})
+                info["facts_found"].append(
+                    {
+                        "fact_id": fact_id,
+                        "answer": answer,
+                        "target_answer": target_answer,
+                        "correct": is_correct,
+                    }
+                )
         return info
 
     def add_citation(self, agent_id: str, doc_id: str) -> None:

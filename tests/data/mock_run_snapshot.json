@@ -4,12 +4,19 @@
       "tick": 0,
       "agent_id": "agent-000",
       "action_type": "research",
-      "params": {"query": "Collect"},
+      "params": {
+        "query": "Collect"
+      },
       "outcome": "success",
       "info": {
         "note": "ok",
         "doc_id": "doc_alpha",
-        "facts_found": "[{\"fact_id\": \"fact_alpha\", \"answer\": \"Alpha fact about the town\"}]",
+        "facts_found": [
+          {
+            "fact_id": "fact_alpha",
+            "answer": "Alpha fact about the town"
+          }
+        ],
         "utterance": "[mock tokens=16] Persona[A:+0.24, C:+0.20, E:-0.11, N:-0.10, O:+0.08] responds to: agent-000's response:"
       }
     },
@@ -17,12 +24,19 @@
       "tick": 0,
       "agent_id": "agent-001",
       "action_type": "research",
-      "params": {"query": "Collect"},
+      "params": {
+        "query": "Collect"
+      },
       "outcome": "success",
       "info": {
         "note": "ok",
         "doc_id": "doc_alpha",
-        "facts_found": "[{\"fact_id\": \"fact_alpha\", \"answer\": \"Alpha fact about the town\"}]",
+        "facts_found": [
+          {
+            "fact_id": "fact_alpha",
+            "answer": "Alpha fact about the town"
+          }
+        ],
         "utterance": "[mock tokens=16] Persona[A:+0.18, C:+0.34, E:+0.43, N:-0.03, O:-0.25] responds to: agent-001's response:"
       }
     },
@@ -30,12 +44,19 @@
       "tick": 1,
       "agent_id": "agent-000",
       "action_type": "research",
-      "params": {"query": "Collect"},
+      "params": {
+        "query": "Collect"
+      },
       "outcome": "success",
       "info": {
         "note": "ok",
         "doc_id": "doc_alpha",
-        "facts_found": "[{\"fact_id\": \"fact_alpha\", \"answer\": \"Alpha fact about the town\"}]",
+        "facts_found": [
+          {
+            "fact_id": "fact_alpha",
+            "answer": "Alpha fact about the town"
+          }
+        ],
         "utterance": "[mock tokens=16] Persona[A:+0.24, C:+0.20, E:-0.11, N:-0.10, O:+0.08] responds to: agent-000's response:"
       }
     },
@@ -43,12 +64,19 @@
       "tick": 1,
       "agent_id": "agent-001",
       "action_type": "research",
-      "params": {"query": "Collect"},
+      "params": {
+        "query": "Collect"
+      },
       "outcome": "success",
       "info": {
         "note": "ok",
         "doc_id": "doc_alpha",
-        "facts_found": "[{\"fact_id\": \"fact_alpha\", \"answer\": \"Alpha fact about the town\"}]",
+        "facts_found": [
+          {
+            "fact_id": "fact_alpha",
+            "answer": "Alpha fact about the town"
+          }
+        ],
         "utterance": "[mock tokens=16] Persona[A:+0.18, C:+0.34, E:+0.43, N:-0.03, O:-0.25] responds to: agent-001's response:"
       }
     },
@@ -56,12 +84,19 @@
       "tick": 2,
       "agent_id": "agent-000",
       "action_type": "research",
-      "params": {"query": "Collect"},
+      "params": {
+        "query": "Collect"
+      },
       "outcome": "success",
       "info": {
         "note": "ok",
         "doc_id": "doc_alpha",
-        "facts_found": "[{\"fact_id\": \"fact_alpha\", \"answer\": \"Alpha fact about the town\"}]",
+        "facts_found": [
+          {
+            "fact_id": "fact_alpha",
+            "answer": "Alpha fact about the town"
+          }
+        ],
         "utterance": "[mock tokens=16] Persona[A:+0.24, C:+0.20, E:-0.11, N:-0.10, O:+0.08] responds to: agent-000's response:"
       }
     },
@@ -69,12 +104,19 @@
       "tick": 2,
       "agent_id": "agent-001",
       "action_type": "research",
-      "params": {"query": "Collect"},
+      "params": {
+        "query": "Collect"
+      },
       "outcome": "success",
       "info": {
         "note": "ok",
         "doc_id": "doc_alpha",
-        "facts_found": "[{\"fact_id\": \"fact_alpha\", \"answer\": \"Alpha fact about the town\"}]",
+        "facts_found": [
+          {
+            "fact_id": "fact_alpha",
+            "answer": "Alpha fact about the town"
+          }
+        ],
         "utterance": "[mock tokens=16] Persona[A:+0.18, C:+0.34, E:+0.43, N:-0.03, O:-0.25] responds to: agent-001's response:"
       }
     }
