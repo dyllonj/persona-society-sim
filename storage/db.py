@@ -2,10 +2,19 @@
 
 from __future__ import annotations
 
-from typing import Iterable
+from typing import Any, Iterable
 
-from sqlalchemy import text
-from sqlalchemy.engine import Engine, create_engine
+try:  # pragma: no cover - optional dependency for persistence
+    from sqlalchemy import text
+    from sqlalchemy.engine import Engine, create_engine
+except ModuleNotFoundError:  # pragma: no cover
+    Engine = Any  # type: ignore
+
+    def create_engine(_url: str):  # type: ignore
+        raise ModuleNotFoundError("sqlalchemy is required for database logging")
+
+    def text(statement: str) -> str:  # type: ignore
+        return statement
 
 DDL = """
 CREATE TABLE IF NOT EXISTS agent_state (
@@ -57,7 +66,12 @@ CREATE TABLE IF NOT EXISTS action_log (
   action_type TEXT,
   params JSONB,
   outcome TEXT,
-  info JSONB
+  info JSONB,
+  prompt_text TEXT,
+  prompt_hash TEXT,
+  plan_metadata JSONB,
+  reflection_summary TEXT,
+  reflection_implications JSONB
 );
 CREATE TABLE IF NOT EXISTS econ_txn (
   txn_id TEXT PRIMARY KEY,

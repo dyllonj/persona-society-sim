@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Dict, List, Optional
 
-from pydantic import BaseModel
+from utils.pydantic_compat import BaseModel
 
 
 class SteeringVectorEntry(BaseModel):

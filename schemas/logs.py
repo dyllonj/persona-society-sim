@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional
 
-from pydantic import BaseModel, Field
+from utils.pydantic_compat import BaseModel, Field
 
 ChannelLiteral = Literal["public", "room", "direct", "group"]
 ActionLiteral = Literal[
@@ -62,6 +62,11 @@ class ActionLog(BaseModel):
     params: Dict[str, str] = Field(default_factory=dict)
     outcome: OutcomeLiteral
     info: Dict[str, str] = Field(default_factory=dict)
+    prompt_text: Optional[str] = None
+    prompt_hash: Optional[str] = None
+    plan_metadata: Dict[str, Any] = Field(default_factory=dict)
+    reflection_summary: Optional[str] = None
+    reflection_implications: List[str] = Field(default_factory=list)
 
 
 class EconTxn(BaseModel):

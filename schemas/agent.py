@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Dict, List, Literal, Optional
 
-from pydantic import BaseModel, Field
+from utils.pydantic_compat import BaseModel, Field
 
 
 TraitLiteral = Literal["E", "A", "C", "O", "N", "TRUTH", "SYNC"]
