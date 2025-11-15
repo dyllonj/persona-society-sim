@@ -53,6 +53,9 @@ class OptimizationConfig(BaseModel):
     reflect_every_n_ticks: int = 1
     use_quantization: bool = False
     batch_size: Optional[int] = None
+    max_gpu_memory_gb: Optional[float] = None
+    max_cpu_memory_gb: Optional[float] = None
+    offload_folder: Optional[str] = None
 
 
 class ObjectivesConfig(BaseModel):

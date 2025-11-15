@@ -37,5 +37,8 @@ optimization:
   reflect_every_n_ticks: 5  # Only reflect every 5 ticks instead of every tick
   use_quantization: true     # Enable 4-bit quantization
   batch_size: 8              # Batch 8 agents at once (future feature)
+  max_gpu_memory_gb: 16      # Cap GPU usage so other processes fit
+  max_cpu_memory_gb: 64      # Allow spilling a few layers to CPU RAM
+  offload_folder: "./artifacts/offload_cache"
 objectives:
   enabled: true

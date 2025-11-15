@@ -216,7 +216,22 @@ python3 -m orchestrator.cli configs/run.fast.yaml --live
 # 2. Reduce inference.max_new_tokens to 48
 # 3. Reduce layers to [16] only
 # 4. Add optimization.use_quantization: true
+# 5. Cap GPU memory usage and spill extra layers to CPU/offload dir
 ```
+
+### GPU Memory Guardrails
+
+If you share a GPU with other processes, tell Accelerate to keep some layers on CPU:
+
+```yaml
+optimization:
+  max_gpu_memory_gb: 16      # keep ~8 GB free on a 24 GB card
+  max_cpu_memory_gb: 64      # allow CPU RAM for overflow layers
+  offload_folder: "./artifacts/offload_cache"
+```
+
+These caps prevent CUDA OOMs mid-run by forcing the HF loader to spill layers to host
+RAM/offload storage while the hotter layers stay resident on the GPU.
 
 ---
 

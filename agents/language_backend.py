@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Dict, List, Optional, cast
+from pathlib import Path
+from typing import Dict, List, Optional, Union, cast
 
 try:  # pragma: no cover - optional dependency for inference
     import torch
@@ -59,6 +60,9 @@ class LanguageBackend:
         return []
 
 
+MemoryMap = Dict[Union[int, str], str]
+
+
 class HFBackend(LanguageBackend):
     def __init__(
         self,
@@ -69,6 +73,9 @@ class HFBackend(LanguageBackend):
         top_p: float = 0.9,
         use_quantization: bool = False,
         alpha_strength: float = 1.0,
+        max_gpu_memory_gb: Optional[float] = None,
+        max_cpu_memory_gb: Optional[float] = None,
+        offload_folder: Optional[str] = None,
     ):
         if torch is None or AutoModelForCausalLM is None or AutoTokenizer is None:
             raise ModuleNotFoundError("torch and transformers are required for HFBackend")
@@ -81,6 +88,21 @@ class HFBackend(LanguageBackend):
             except Exception:
                 pass
 
+        max_memory = self._build_max_memory_limits(max_gpu_memory_gb, max_cpu_memory_gb)
+        offload_dir: Optional[Path] = None
+        if offload_folder:
+            offload_dir = Path(offload_folder)
+            offload_dir.mkdir(parents=True, exist_ok=True)
+
+        model_kwargs: Dict[str, object] = {
+            "device_map": "auto",
+            "low_cpu_mem_usage": True,
+        }
+        if max_memory:
+            model_kwargs["max_memory"] = max_memory
+        if offload_dir:
+            model_kwargs["offload_folder"] = str(offload_dir)
+
         # Load model with optional quantization
         if use_quantization:
             from transformers import BitsAndBytesConfig
@@ -91,15 +113,11 @@ class HFBackend(LanguageBackend):
                 bnb_4bit_use_double_quant=True,
                 bnb_4bit_quant_type="nf4",
             )
-            self.model = AutoModelForCausalLM.from_pretrained(
-                model_name,
-                quantization_config=quantization_config,
-                device_map="auto",
-            )
+            model_kwargs["quantization_config"] = quantization_config
         else:
-            self.model = AutoModelForCausalLM.from_pretrained(
-                model_name, torch_dtype=torch.float16, device_map="auto"
-            )
+            model_kwargs["torch_dtype"] = torch.float16
+
+        self.model = AutoModelForCausalLM.from_pretrained(model_name, **model_kwargs)
 
         provided_norms = vector_norms or {}
         self.vector_norms: Dict[str, Dict[int, float]] = {
@@ -111,6 +129,34 @@ class HFBackend(LanguageBackend):
             vector_norms=self.vector_norms,
         )
         self.controller.register()
+
+    @staticmethod
+    def _clean_memory_value(value: Optional[float]) -> Optional[float]:
+        if value is None:
+            return None
+        try:
+            numeric = float(value)
+        except (TypeError, ValueError):
+            return None
+        if numeric <= 0:
+            return None
+        return numeric
+
+    @classmethod
+    def _build_max_memory_limits(
+        cls, max_gpu_memory_gb: Optional[float], max_cpu_memory_gb: Optional[float]
+    ) -> Optional[MemoryMap]:
+        gpu_limit = cls._clean_memory_value(max_gpu_memory_gb)
+        cpu_limit = cls._clean_memory_value(max_cpu_memory_gb)
+        limits: MemoryMap = {}
+        if gpu_limit is not None and torch.cuda is not None and torch.cuda.is_available():
+            gpu_count = max(1, torch.cuda.device_count())
+            formatted = f"{gpu_limit:.2f}GiB"
+            for idx in range(gpu_count):
+                limits[idx] = formatted
+        if cpu_limit is not None:
+            limits["cpu"] = f"{cpu_limit:.2f}GiB"
+        return limits or None
 
     def generate(self, prompt: str, max_new_tokens: int, alphas: Dict[str, float]) -> GenerationResult:
         tokens = self.tokenizer(prompt, return_tensors="pt").to(self.model.device)

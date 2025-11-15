@@ -215,6 +215,10 @@ def build_language_backend(
     use_quantization = optimization.get("use_quantization", False)
     steering_cfg = config.get("steering", {})
     alpha_strength = steering_cfg.get("strength", 1.0)
+    max_gpu_memory = _maybe_float(optimization.get("max_gpu_memory_gb"))
+    max_cpu_memory = _maybe_float(optimization.get("max_cpu_memory_gb"))
+    raw_offload = optimization.get("offload_folder")
+    offload_folder = str(raw_offload) if raw_offload else None
 
     if mock:
         return MockBackend(
@@ -235,7 +239,19 @@ def build_language_backend(
         top_p=top_p,
         use_quantization=use_quantization,
         alpha_strength=alpha_strength,
+        max_gpu_memory_gb=max_gpu_memory,
+        max_cpu_memory_gb=max_cpu_memory,
+        offload_folder=offload_folder,
     )
+
+
+def _maybe_float(value: Any) -> Optional[float]:
+    if value is None:
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
 
 
 def build_agents(
