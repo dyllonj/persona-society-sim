@@ -10,7 +10,7 @@ Agents live inside a lightweight world containing locations, resources, institut
 
 ## Core components
 1. **Steering pipeline**
-   - `data/prompts/*.jsonl` store forced-choice IPIP-inspired pairs per trait.
+   - `data/prompts/*.jsonl` store forced-choice IPIP-inspired pairs per trait using the shared stem + A/B option schema (see `data/prompts/schema.py`).
    - `steering/compute_caa.py` loads prompts, runs base model forward passes, and computes residual-difference vectors per selected layer.
    - `steering/vector_store.py` persists vectors as `.npy` with metadata for reproducibility.
    - `steering/hooks.py` attaches PyTorch forward hooks to add \(\alpha_t v_{t,\ell}\) at runtime.
@@ -64,5 +64,6 @@ agent observation -> memory store -> scheduler -> env -> logs -> metrics
 
 ## Extensibility hooks
 - Add new traits by appending prompt JSONL + vector generation config.
+- Use `python -m data.prompts.schema validate data/prompts/*.jsonl` when editing prompts; the CLI enforces the stem + option schema and can convert legacy positive/negative entries via the `convert` sub-command.
 - Plug alternative environments by implementing `WorldLike` protocol in `env/world.py`.
 - Swap storage backends by extending `storage/db.py` interface.

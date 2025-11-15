@@ -14,7 +14,7 @@ Social town simulator where 30–300 activation-steered LLM agents live, convers
 3. **World & scheduler** — `env/world.py`, `env/actions.py`, and `env/economy.py` encode the text town, actions, and markets; `orchestrator/scheduler.py` samples encounters; `orchestrator/runner.py` executes multi-agent ticks and logs outputs.
 4. **Storage & metrics** — `schemas/*.py` define Pydantic models mirrored in SQL; `storage/db.py` wraps SQLite/Postgres; `storage/log_sink.py` streams logs to DB + Parquet; `metrics/*.py` compute graph, cooperation, and polarization metrics for notebooks in `metrics/` and reports in `docs/`.
 5. **Instrumentation & probes** — every `ActionLog` now carries cognitive traces (reflection summaries, plan suggestions, prompt hashes) so persona steering can be audited; `metrics/graphs.py` + `metrics/social_dynamics.py` emit graph snapshots and macro metrics each tick; `metrics/tracker.py` joins persona coefficients and per-message steering alphas; the ProbeManager injects self-report + behavioral probes; research telemetry (facts, citations, report grades) is stored in first-class tables for downstream analysis.
-6. **Data & configs** — `data/prompts/*.jsonl` host IPIP-derived contrast pairs; `configs/run.*.yaml` store reproducible run configs (population, steps, steering, safety bounds).
+6. **Data & configs** — `data/prompts/*.jsonl` host IPIP-derived multiple-choice contrast pairs; `configs/run.*.yaml` store reproducible run configs (population, steps, steering, safety bounds).
 
 ## Getting started
 ```bash
@@ -35,6 +35,23 @@ python3 -m orchestrator.cli configs/run.small.yaml --live --full-messages --env 
 
 pytest  # optional
 ```
+
+### Persona prompt schema & CLI
+
+`data/prompts/*.jsonl` now use a forced-choice format so each record contains a shared stem plus two contrasting options:
+
+```json
+{
+  "id": "A01",
+  "question_text": "A teammate makes a mistake that slowed the project.",
+  "option_a": "I address it gently, focus on fixes, and offer help.",
+  "option_b": "I criticize them bluntly and assign blame.",
+  "option_a_is_high": true,
+  "option_b_is_high": false
+}
+```
+
+Use `python -m data.prompts.schema validate data/prompts/*.jsonl` to ensure every file labels exactly one high-trait answer per stem. If you have legacy `situation`/`positive`/`negative` JSONL items you can convert them with `python -m data.prompts.schema convert old.jsonl new.jsonl`. When authoring new contrast items, keep the stem trait-agnostic, provide two concise behavioral options, and flag whichever option represents the higher expression of the trait with `*_is_high = true`.
 
 ### Optional: 3D web viewer (prototype)
 
@@ -82,7 +99,7 @@ See `AGENTS.md` for a deeper dive into the agent loop, probe lifecycle, and how 
 persona-society-sim/
 ├── agents/           # agent loop, memory, planning
 ├── configs/          # YAML configs for runs/personas/steering layers
-├── data/             # IPIP prompt pairs and saved vectors
+├── data/             # IPIP multiple-choice prompt pairs and saved vectors
 ├── docs/             # design notes, evaluation plan
 ├── env/              # world model, actions, economy, institutions
 ├── metrics/          # network + social dynamics analytics
