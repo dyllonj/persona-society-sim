@@ -399,7 +399,7 @@ def main() -> None:
     parser.add_argument(
         "--viewer",
         action="store_true",
-        help="Start WebSocket bridge and static web viewer (http://127.0.0.1:8000)",
+        help="Start WebSocket bridge and static web viewer (http://127.0.0.1:19123)",
     )
     args = parser.parse_args()
 
@@ -470,7 +470,7 @@ def main() -> None:
             http_server.start()
             if args.live:
                 console_logger.log_info("Viewer: WebSocket ws://127.0.0.1:8765/ws")
-                console_logger.log_info("Viewer: Open http://127.0.0.1:8000 in your browser")
+                console_logger.log_info("Viewer: Open http://127.0.0.1:19123 in your browser")
         except Exception as e:
             if args.live:
                 console_logger.log_warning(f"Failed to start viewer: {e}")

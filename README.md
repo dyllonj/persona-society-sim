@@ -94,11 +94,11 @@ You can stream live simulation events to a lightweight WebSocket bridge and view
 
 ```bash
 python3 -m orchestrator.cli configs/run.small.yaml --mock-model --env research --difficulty 3 --live --viewer
-# Then open http://127.0.0.1:8000 in your browser
+# Then open http://127.0.0.1:19123 in your browser
 ```
 
 Notes:
-- The viewer opens a WebSocket at `ws://127.0.0.1:8765/ws` and serves static assets from `viewer/static/` at `http://127.0.0.1:8000`.
+- The viewer opens a WebSocket at `ws://127.0.0.1:8765/ws` and serves static assets from `viewer/static/` at `http://127.0.0.1:19123`.
 - Agents are rendered as colored spheres around radial “room” anchors; colors are mapped from persona traits.
 - This is a minimal prototype to validate the streaming API; it’s designed to be replaced by a full engine (Godot/Unity/Unreal) later.
 

@@ -1,6 +1,6 @@
 """Simple threaded HTTP server to serve static viewer assets.
 
-Serves files from `viewer/static` on http://127.0.0.1:8000/ by default.
+Serves files from `viewer/static` on http://127.0.0.1:19123/ by default.
 """
 
 from __future__ import annotations
@@ -16,7 +16,7 @@ from pathlib import Path
 @dataclass
 class StaticServerConfig:
     host: str = "127.0.0.1"
-    port: int = 8000
+    port: int = 19123
     directory: Path = Path(__file__).parent / "static"
 
 
