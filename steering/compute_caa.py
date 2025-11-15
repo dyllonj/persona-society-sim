@@ -14,7 +14,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from data.prompts.schema import PromptItem, load_prompt_items
 from steering.vector_store import VectorStore
 
-DEFAULT_LAYERS = [12, 16, 20]
+DEFAULT_LAYERS: Tuple[int, ...] = ()
 DEFAULT_MODEL = "meta-llama/Llama-3.1-8B-Instruct"
 METHOD_NAME = "caa_ab"
 PROMPT_TEMPLATE = (
@@ -114,7 +114,13 @@ def main() -> None:
     parser.add_argument("prompt_file", type=Path, help="Path to trait JSONL prompt file (A/B schema)")
     parser.add_argument("output_dir", type=Path, help="Directory to store vectors and metadata")
     parser.add_argument("--model", default=DEFAULT_MODEL)
-    parser.add_argument("--layers", nargs="*", type=int, default=DEFAULT_LAYERS)
+    parser.add_argument(
+        "--layers",
+        nargs="*",
+        type=int,
+        default=list(DEFAULT_LAYERS),
+        help="Decoder layer ids to sample (required; no implicit default).",
+    )
     parser.add_argument("--vector-store-id")
     args = parser.parse_args()
 
@@ -129,6 +135,10 @@ def main() -> None:
         raise ValueError(f"No prompts found in {args.prompt_file}")
 
     layers = sorted(set(args.layers))
+    if not layers:
+        raise ValueError(
+            "You must provide at least one decoder layer via --layers; the legacy [12, 16, 20] default was removed."
+        )
     vectors, norms = compute_trait_vectors(model, tokenizer, prompts, layers)
 
     store = VectorStore(args.output_dir)

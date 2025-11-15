@@ -28,6 +28,7 @@ from orchestrator.scheduler import Scheduler
 from safety.governor import SafetyConfig, SafetyGovernor
 from schemas.agent import AgentState, PersonaCoeffs
 from schemas.objectives import ObjectiveTemplate, DEFAULT_OBJECTIVE_TEMPLATES
+from steering.vector_store import VectorStore
 from storage.log_sink import LogSink
 
 TRAIT_KEYS = PersonaCoeffs.TRAITS
@@ -109,6 +110,53 @@ def _steering_coefficients(steering_cfg: Dict[str, Any]) -> Dict[str, float]:
 
 
 def load_trait_vectors(
+    traits: List[str],
+    vector_dir: Path,
+    vector_metadata: Optional[Dict[str, Any]] = None,
+) -> Tuple[Dict[str, Dict[int, np.ndarray]], Dict[str, Dict[int, float]]]:
+    metadata_cfg = vector_metadata or {}
+    vector_root = Path(metadata_cfg.get("vector_root") or vector_dir)
+    defaults = metadata_cfg.get("defaults") or {}
+    default_layers = defaults.get("layers")
+    trait_overrides = metadata_cfg.get("traits") or {}
+    store = VectorStore(vector_root)
+    trait_vectors: Dict[str, Dict[int, np.ndarray]] = {}
+    norms: Dict[str, Dict[int, float]] = {}
+    fallback_traits: List[str] = []
+    for trait in traits:
+        override = (
+            trait_overrides.get(trait)
+            or trait_overrides.get(trait.lower())
+            or trait_overrides.get(trait.upper())
+        )
+        vector_store_id = override.get("vector_store_id") if override else None
+        layers = override.get("layers") if override else None
+        if layers is None:
+            layers = default_layers
+        try:
+            bundle = store.load(vector_store_id or trait, layers=layers)
+        except Exception:
+            fallback_traits.append(trait)
+            continue
+        trait_vectors[trait] = bundle.vectors
+        layer_norms: Dict[int, float] = {}
+        for layer_id, layer_meta in bundle.layer_metadata.items():
+            norm_val = layer_meta.get("norm")
+            if norm_val is not None:
+                layer_norms[layer_id] = float(norm_val)
+        if layer_norms:
+            norms[trait] = layer_norms
+    if fallback_traits:
+        legacy_vectors, legacy_norms = _load_vectors_from_meta_files(
+            fallback_traits, vector_root
+        )
+        trait_vectors.update(legacy_vectors)
+        for trait, per_layer in legacy_norms.items():
+            norms.setdefault(trait, {}).update(per_layer)
+    return trait_vectors, norms
+
+
+def _load_vectors_from_meta_files(
     traits: List[str], vector_dir: Path
 ) -> Tuple[Dict[str, Dict[int, np.ndarray]], Dict[str, Dict[int, float]]]:
     store: Dict[str, Dict[int, np.ndarray]] = {}
@@ -344,8 +392,14 @@ def main() -> None:
     steering_cfg = config.get("steering", {})
     alpha_strength = float(steering_cfg.get("strength", 1.0))
     steering_base = _steering_coefficients(steering_cfg)
+    metadata_files = steering_cfg.get("metadata_files") or {}
+    vector_metadata = _load_metadata_file(
+        metadata_files.get("vectors"), config_dir=args.config.parent
+    )
     trait_vectors, vector_norms = load_trait_vectors(
-        list(steering_base.keys() or TRAIT_KEYS), args.vector_dir
+        list(steering_base.keys() or TRAIT_KEYS),
+        args.vector_dir,
+        vector_metadata=vector_metadata,
     )
     safety_cfg = config.get("safety", {})
     safety = SafetyGovernor(

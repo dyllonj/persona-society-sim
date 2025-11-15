@@ -1,10 +1,29 @@
-layer_bands:
-  default: [8, 26]
-  high_control: [12, 32]
-  low_latency: [4, 18]
-apply:
-  extraversion: [12, 18, 24]
-  agreeableness: [10, 16, 22]
-  conscientiousness: [14, 20, 26]
-  openness: [16, 22, 28]
-  neuroticism: [8, 12, 30]
+vector_root: data/vectors
+defaults:
+  layers: [6, 18, 30]
+  prompt_dir: data/prompts
+  prompt_masking: true
+  extraction: caa_ab_normalized
+  notes: |
+    Steering vectors are normalized residual differences computed from the forced-choice
+    (A/B) prompt schema. Prompt tokens are masked during runtime steering so only the
+    generated continuation receives residual offsets.
+traits:
+  E:
+    name: extraversion
+    vector_store_id: E_caa_v2
+    prompt_file: data/prompts/extraversion.jsonl
+    layers: [6, 18, 30]
+    description: Highly weighted early/mid layers to capture affective tone.
+  A:
+    name: agreeableness
+    vector_store_id: A_caa_v2
+    prompt_file: data/prompts/agreeableness.jsonl
+    layers: [8, 20, 28]
+    description: Mid-late layers emphasize conciliatory phrasing without overwhelming base intent.
+  C:
+    name: conscientiousness
+    vector_store_id: C_caa_v2
+    prompt_file: data/prompts/conscientiousness.jsonl
+    layers: [10, 22, 30]
+    description: Later layers highlight procedural focus and planning cues.

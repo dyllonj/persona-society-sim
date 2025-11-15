@@ -89,7 +89,7 @@ class VectorStore:
             },
             "extraction_hyperparameters": hyperparameters,
             "layers": sorted(layer_records, key=lambda item: item["layer_id"]),
-            "preferred_layers": [],
+            "preferred_layers": sorted(layer_vectors.keys()),
             "layer_sweep": None,
             "created_at": datetime.utcnow().isoformat(timespec="seconds") + "Z",
         }

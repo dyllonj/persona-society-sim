@@ -5,7 +5,7 @@ population: 100
 steps: 500
 seed: 42
 steering:
-  strength: 1.0
+  strength: 1.0  # global alpha multiplier used by steering hooks and eval harness
   coefficients:
     E: 0.9
     A: 0.7
@@ -20,7 +20,7 @@ steering:
     N: 1.0
   metadata_files:
     personas: configs/personas.bigfive.yaml
-    vectors: configs/steering.layers.yaml
+    vectors: configs/steering.layers.yaml  # metadata-aware vector loader
 scenario: "project_market_mix"
 logging:
   db_url: "postgresql+psycopg://persona:persona@localhost:5432/persona"
