@@ -7,8 +7,10 @@ from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from schemas.objectives import Objective
+    from schemas.agent import Rule
 else:  # pragma: no cover - runtime fallback when schemas are unavailable
     Objective = Any
+    Rule = Any
 
 
 @dataclass
@@ -102,7 +104,7 @@ class Planner:
         current_location: Optional[str] = None,
         active_objective: Optional[Objective] = None,
         tick: int = 0,
-        rule_context: Optional[List[str]] = None,
+        rule_context: Optional[List[Rule]] = None,
         last_reflection_tick: Optional[int] = None,
         last_alignment_tick: Optional[int] = None,
         observation_keywords: Optional[List[str]] = None,
@@ -110,15 +112,26 @@ class Planner:
     ) -> PlanSuggestion:
         location = current_location or self.default_location
 
-        if rule_context:
-            rule_plan = self._plan_from_rules(rule_context, location)
-            if rule_plan:
-                return rule_plan
-
+        objective_type: Optional[str] = None
+        objective_pending = False
         if active_objective:
+            objective_type = getattr(active_objective, "type", None)
+            if isinstance(objective_type, str):
+                objective_type = objective_type.lower()
+            objective_pending = self._objective_pending(active_objective)
             objective_plan = self._plan_for_objective(active_objective, location, tick)
             if objective_plan:
                 return objective_plan
+
+        if rule_context:
+            rule_plan = self._plan_from_rules(
+                rule_context,
+                location,
+                objective_pending=objective_pending,
+                objective_type=objective_type,
+            )
+            if rule_plan:
+                return rule_plan
 
         lowered_summary = memory_summary.lower()
         observation_terms = [hint.lower() for hint in (observation_keywords or [])]
@@ -320,7 +333,12 @@ class Planner:
         return PlanSuggestion("move", {"destination": next_location}, utterance)
 
     def _plan_from_rules(
-        self, rule_context: List[str], current_location: str
+        self,
+        rule_context: List[Rule],
+        current_location: str,
+        *,
+        objective_pending: bool = False,
+        objective_type: Optional[str] = None,
     ) -> Optional[PlanSuggestion]:
         keyword_map = [
             ("market", "trade"),
@@ -332,8 +350,16 @@ class Planner:
             ("library", "research"),
             ("scan", "navigation"),
         ]
-        for rule_text in reversed(rule_context):
+        for rule in reversed(rule_context):
+            rule_text = getattr(rule, "text", "")
             lowered = rule_text.lower()
+            priority = getattr(rule, "priority", "mandatory")
+            if (
+                objective_pending
+                and objective_type in {"research", "research_facts"}
+                and priority == "advisory"
+            ):
+                continue
             for keyword, heuristic_key in keyword_map:
                 if keyword in lowered:
                     heuristic = self._objective_heuristics.get(heuristic_key)
@@ -385,3 +411,26 @@ class Planner:
             available = [d for d in destinations if d != heuristic.get("location")]
             return {"destination": available[0] if available else self.default_location}
         return {}
+
+    def _objective_pending(self, objective: Objective) -> bool:
+        if not objective:
+            return False
+        checker = getattr(objective, "is_complete", None)
+        if callable(checker):
+            try:
+                return not checker()
+            except Exception:  # pragma: no cover - defensive fallback
+                pass
+        requirements = getattr(objective, "requirements", {}) or {}
+        progress = getattr(objective, "progress", {}) or {}
+        if isinstance(requirements, dict) and requirements:
+            for key, required in requirements.items():
+                try:
+                    current = progress.get(key, 0) if isinstance(progress, dict) else 0
+                except Exception:  # pragma: no cover - defensive fallback
+                    current = 0
+                if current < required:
+                    return True
+            return False
+        # If we cannot reason about requirements, assume pending to avoid starving objectives
+        return True

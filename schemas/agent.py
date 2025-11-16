@@ -74,6 +74,8 @@ class Rule(BaseModel):
     proposer_id: Optional[str] = None
     enacted_at_tick: Optional[int] = None
     active: bool = False
+    priority: Literal["mandatory", "advisory"] = "mandatory"
+    environment_tags: List[str] = Field(default_factory=list)
 
 
 class WorldState(BaseModel):

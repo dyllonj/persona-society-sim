@@ -66,6 +66,14 @@ class BaseModel:
                 result[name] = deepcopy(value)
         return result
 
+    def model_copy(self, *, update: Dict[str, Any] | None = None, deep: bool = True):  # noqa: D401 - simple stub
+        payload = self.model_dump()
+        if update:
+            payload.update(update)
+        if not deep:
+            return self.__class__(**payload)
+        return self.__class__(**deepcopy(payload))
+
     def model_dump_json(self) -> str:
         return json.dumps(self.model_dump(), default=_json_encoder)
 

@@ -1,6 +1,9 @@
 from types import SimpleNamespace
 
+from types import SimpleNamespace
+
 from agents.planner import Planner
+from schemas.agent import Rule
 
 
 def _make_objective(obj_type: str, description: str):
@@ -144,3 +147,47 @@ def test_alignment_plan_includes_contextual_details():
     assert "agent-42" in plan.params["utterance"]
     assert "library" in plan.params["utterance"].lower()
     assert plan.params["topic"].startswith("alignment:library")
+
+
+def test_planner_prioritizes_research_objective_over_advisory_rule():
+    planner = Planner()
+    objective = SimpleNamespace(
+        objective_id="research-1",
+        agent_id="agent-7",
+        type="research",
+        description="Research and report",
+        requirements={"submit_report": 1},
+        progress={"submit_report": 0},
+    )
+    advisory_rule = Rule(
+        rule_id="rule-1",
+        text="Keep commerce flowing through the market square.",
+        priority="advisory",
+        environment_tags=["commerce"],
+    )
+
+    plan = planner.plan(
+        [],
+        "",
+        current_location="library",
+        active_objective=objective,
+        tick=0,
+        rule_context=[advisory_rule],
+    )
+
+    assert plan.action_type == "research"
+
+
+def test_planner_respects_mandatory_rule_when_no_objective():
+    planner = Planner()
+    rule = Rule(
+        rule_id="rule-2",
+        text="Keep commerce flowing through the market square.",
+        priority="mandatory",
+        environment_tags=["commerce"],
+    )
+
+    plan = planner.plan([], "", current_location="library", rule_context=[rule])
+
+    assert plan.action_type == "move"
+    assert plan.params["destination"] == "market"

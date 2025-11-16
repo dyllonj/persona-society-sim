@@ -217,8 +217,23 @@ class World:
         rule = self.institutions.propose_rule(agent_id, summary, self.tick)
         return self.institutions.enact_rule(rule.rule_id, self.tick)
 
-    def institutional_guidance(self) -> List[str]:
-        return [rule.text for rule in self.institutions.active_rules()]
+    def institutional_guidance(self) -> List[Rule]:
+        """Return active rules, marking advisory overrides for current environment."""
+
+        guidance: List[Rule] = []
+        for rule in self.institutions.active_rules():
+            normalized_tags = {tag.lower() for tag in rule.environment_tags}
+            is_commerce_rule = (
+                "commerce" in normalized_tags
+                or "market" in normalized_tags
+                or "economy" in normalized_tags
+                or "keep commerce" in rule.text.lower()
+            )
+            if self.environment == "research" and is_commerce_rule:
+                guidance.append(rule.model_copy(update={"priority": "advisory"}))
+            else:
+                guidance.append(rule)
+        return guidance
 
     # ---- checklist helpers ----
 
@@ -410,7 +425,12 @@ class World:
 
         if self.institutions.active_rules():
             return
+        priority = "advisory" if self.environment == "research" else "mandatory"
         baseline = self.institutions.propose_rule(
-            "council", "Keep commerce flowing through the market square.", self.tick
+            "council",
+            "Keep commerce flowing through the market square.",
+            self.tick,
+            priority=priority,
+            environment_tags=["commerce", "market"],
         )
         self.institutions.enact_rule(baseline.rule_id, self.tick)

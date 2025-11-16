@@ -3,16 +3,115 @@ from pathlib import Path
 
 import pytest
 
-for dependency in ("numpy", "torch", "pydantic", "yaml", "transformers", "pyarrow"):
-    pytest.importorskip(dependency)
+import importlib.util
+import json
+from datetime import datetime, timezone
+from pathlib import Path
+from types import SimpleNamespace
 
-from orchestrator.cli import build_agents, build_language_backend, build_objective_manager
-from orchestrator.console_logger import ConsoleLogger
-from orchestrator.runner import SimulationRunner
-from orchestrator.scheduler import Scheduler
+import pytest
+
+from agents.agent import Agent
+from agents.language_backend import GenerationResult, LanguageBackend
+from agents.memory import MemoryStore
+from agents.planner import Planner
+from agents.retrieval import MemoryRetriever
 from safety.governor import SafetyConfig, SafetyGovernor
+from schemas.agent import AgentState, PersonaCoeffs, Rule, SteeringVectorRef
 from storage.log_sink import LogSink
-from env.world import World
+
+REQUIRED_DEPENDENCIES = ("numpy", "torch", "pydantic", "yaml", "transformers", "pyarrow")
+MISSING_DEPENDENCIES = [
+    dep for dep in REQUIRED_DEPENDENCIES if importlib.util.find_spec(dep) is None
+]
+MISSING_DEP_REASON = (
+    "Missing dependencies: " + ", ".join(MISSING_DEPENDENCIES)
+    if MISSING_DEPENDENCIES
+    else ""
+)
+
+
+class _StubLanguageBackend(LanguageBackend):
+    def __init__(self):
+        super().__init__(temperature=0.1, top_p=0.95)
+
+    def generate(self, prompt, max_new_tokens, alphas):  # pragma: no cover - stub
+        return GenerationResult("ack", 1, 1)
+
+    def layers_used(self):  # pragma: no cover - stub
+        return []
+
+
+def _make_research_agent(planner: Planner) -> Agent:
+    memory = MemoryStore()
+    retriever = MemoryRetriever(memory)
+    backend = _StubLanguageBackend()
+    safety = SafetyGovernor(
+        SafetyConfig(alpha_clip=1.0, toxicity_threshold=1.0, governor_backoff=0.1)
+    )
+    state = AgentState(
+        agent_id="agent-research",
+        display_name="agent-research",
+        persona_coeffs=PersonaCoeffs(),
+        steering_refs=[
+            SteeringVectorRef(
+                trait="E",
+                method="CAA",
+                layer_ids=[0],
+                vector_store_id="vs-1",
+                version="v1",
+            )
+        ],
+        system_prompt="",
+        location_id="library",
+        goals=["Research"],
+        created_at=datetime.now(timezone.utc),
+        last_tick=0,
+    )
+    return Agent(
+        run_id="test-run",
+        state=state,
+        language_backend=backend,
+        memory=memory,
+        retriever=retriever,
+        planner=planner,
+        safety_governor=safety,
+        reflect_every_n_ticks=1,
+    )
+
+
+def test_agents_emit_research_cycle_despite_advisory_rule():
+    planner = Planner()
+    agent = _make_research_agent(planner)
+    objective = SimpleNamespace(
+        objective_id="research-1",
+        agent_id="agent-research",
+        type="research",
+        description="Complete the research cycle",
+        requirements={"submit_report": 1},
+        progress={"submit_report": 0},
+    )
+    advisory_rule = Rule(
+        rule_id="rule-research",
+        text="Keep commerce flowing through the market square.",
+        priority="advisory",
+        environment_tags=["commerce"],
+    )
+
+    observed_actions = []
+    for tick in range(4):
+        decision = agent.act(
+            "Library quiet work.",
+            tick,
+            current_location="library",
+            active_objective=objective,
+            recent_dialogue=None,
+            rule_context=[advisory_rule],
+            peers_present=False,
+        )
+        observed_actions.append(decision.action_type)
+
+    assert observed_actions == ["research", "research", "cite", "submit_report"]
 
 
 class SpyLogSink(LogSink):
@@ -88,7 +187,14 @@ def _message_snapshot(logs):
     ]
 
 
+@pytest.mark.skipif(bool(MISSING_DEPENDENCIES), reason=MISSING_DEP_REASON)
 def test_mock_simulation_reaches_objective(tmp_path):
+    from orchestrator.cli import build_agents, build_language_backend, build_objective_manager
+    from orchestrator.console_logger import ConsoleLogger
+    from orchestrator.runner import SimulationRunner
+    from orchestrator.scheduler import Scheduler
+    from env.world import World
+
     config = _build_test_config()
     world = World(data_dir="tests/data")
     world.configure_environment("research", difficulty=1)
