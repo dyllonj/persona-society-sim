@@ -19,13 +19,13 @@ def _make_objective(obj_type: str, description: str):
 
 def test_planner_moves_toward_objective_location_when_needed():
     planner = Planner()
-    objective = _make_objective("gather", "gather needed supplies")
+    objective = _make_objective("gather", "gather needed citations")
 
-    plan = planner.plan([], "", current_location="library", active_objective=objective)
+    plan = planner.plan([], "", current_location="community_center", active_objective=objective)
 
     assert plan.action_type == "move"
-    assert plan.params["destination"] == "town_square"
-    assert "town square" in plan.utterance.lower()
+    assert plan.params["destination"] == "library"
+    assert "library" in plan.utterance.lower()
 
 
 def test_planner_uses_objective_specific_action_when_at_location():
@@ -77,12 +77,12 @@ def test_planner_uses_observation_hint_keywords():
 
     plan = planner.plan(
         ["Assist"],
-        "No location clues",  # memory summary without market keyword
-        current_location="town_square",
-        observation_keywords=["market is busy", "stalls"],
+        "No location clues",  # memory summary without library keyword
+        current_location="library",
+        observation_keywords=["remember to cite", "sources"],
     )
 
-    assert plan.action_type == "trade"
+    assert plan.action_type == "cite"
 
 
 def test_planner_aligns_once_per_reflection():
@@ -121,14 +121,14 @@ def test_planner_keyword_fallback_after_alignment_block():
     plan = planner.plan(
         ["Assist"],
         "",
-        current_location="town_square",
+        current_location="library",
         tick=6,
         last_reflection_tick=6,
         last_alignment_tick=6,
-        observation_keywords=["market crowd"],
+        observation_keywords=["report review"],
     )
 
-    assert plan.action_type == "trade"
+    assert plan.action_type == "submit_report"
 
 
 def test_alignment_plan_includes_contextual_details():
@@ -161,9 +161,9 @@ def test_planner_prioritizes_research_objective_over_advisory_rule():
     )
     advisory_rule = Rule(
         rule_id="rule-1",
-        text="Keep civic coordination flowing through the town square.",
+        text="Share research findings in the library and cite sources for others.",
         priority="advisory",
-        environment_tags=["commerce"],
+        environment_tags=["research"],
     )
 
     plan = planner.plan(
@@ -182,12 +182,12 @@ def test_planner_respects_mandatory_rule_when_no_objective():
     planner = Planner()
     rule = Rule(
         rule_id="rule-2",
-        text="Keep civic coordination flowing through the town square.",
+        text="Share research findings in the library and cite sources for others.",
         priority="mandatory",
-        environment_tags=["civic"],
+        environment_tags=["research"],
     )
 
-    plan = planner.plan([], "", current_location="library", rule_context=[rule])
+    plan = planner.plan([], "", current_location="town_square", rule_context=[rule])
 
     assert plan.action_type == "move"
-    assert plan.params["destination"] == "town_square"
+    assert plan.params["destination"] == "library"

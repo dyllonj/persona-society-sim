@@ -378,9 +378,9 @@ class World:
         priority = "advisory" if self.environment == "research" else "mandatory"
         baseline = self.institutions.propose_rule(
             "council",
-            "Keep civic coordination flowing through the town square.",
+            "Share research findings in the library and cite sources for others.",
             self.tick,
             priority=priority,
-            environment_tags=["civic", "town_square"],
+            environment_tags=["research", "library"],
         )
         self.institutions.enact_rule(baseline.rule_id, self.tick)

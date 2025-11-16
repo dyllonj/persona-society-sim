@@ -40,11 +40,9 @@ class Planner:
                 "utterance": "Let's collaborate on ways to strengthen our community.",
             },
             "gather": {
-                "location": "town_square",
-                "action": "trade",
-                "item": "supplies",
-                "qty": "1",
-                "utterance": "I'm arranging exchanges in the town square to gather supplies.",
+                "location": "library",
+                "action": "cite",
+                "utterance": "I'm gathering references in the library to cite for our report.",
             },
             "research": {
                 "location": "library",
@@ -65,13 +63,6 @@ class Planner:
                 "location": "community_center",
                 "action": "talk",
                 "utterance": "I'm here to meet and connect with others.",
-            },
-            "trade": {
-                "location": "town_square",
-                "action": "trade",
-                "item": "goods",
-                "qty": "1",
-                "utterance": "I'm looking to trade and support the civic exchange at the square.",
             },
             "work": {
                 "location": "community_center",
@@ -94,8 +85,27 @@ class Planner:
                 "action": "scan",
                 "utterance": "Covering new ground to find scan tokens.",
             },
+            "report": {
+                "location": "library",
+                "action": "submit_report",
+                "utterance": "I'm compiling our findings into a report at the library.",
+            },
         }
-        self._nav_cycle = ["town_square", "library", "community_center"]
+        known_locations = {self.default_location}
+        for heuristic in self._objective_heuristics.values():
+            target = heuristic.get("location")
+            if target:
+                known_locations.add(target)
+        nav_defaults = ["town_square", "community_center", "library"]
+        cycle = [room for room in nav_defaults if room in known_locations]
+        if self.default_location in cycle:
+            cycle.remove(self.default_location)
+            cycle.insert(0, self.default_location)
+        elif cycle:
+            cycle.insert(0, self.default_location)
+        else:
+            cycle = [self.default_location]
+        self._nav_cycle = cycle
 
     def plan(
         self,
@@ -167,9 +177,12 @@ class Planner:
         elif "project" in goal.lower() or "task" in goal.lower():
             action = "work"
             params = {"task": goal}
-        elif keyword_score("market") > 0 or keyword_score("trade") > 0:
-            action = "trade"
-            params = {"item": "produce", "qty": "1"}
+        elif keyword_score("report") > 0:
+            action = "submit_report"
+            params = {}
+        elif keyword_score("cite") > 0 or keyword_score("reference") > 0:
+            action = "cite"
+            params = {}
         elif keyword_score("work") > 0 or keyword_score("project") > 0:
             action = "work"
             params = {"task": goal or "community project"}
@@ -246,11 +259,43 @@ class Planner:
         def has_term(term: str) -> bool:
             return any(term in keyword for keyword in observation_terms)
 
-        if has_term("market"):
+        if has_term("library") or has_term("research"):
+            if location != "library":
+                return PlanSuggestion(
+                    "move",
+                    {"destination": "library"},
+                    "Heading to the library to dig into the research people flagged.",
+                )
             return PlanSuggestion(
-                "trade",
-                {"item": "produce", "qty": "1"},
-                "I'll take care of the civic exchange tasks people mentioned.",
+                "research",
+                {"query": "community topics"},
+                "I'll investigate the research leads that just came up.",
+            )
+
+        if has_term("cite") or has_term("citation") or has_term("reference"):
+            if location != "library":
+                return PlanSuggestion(
+                    "move",
+                    {"destination": "library"},
+                    "Heading to the library so I can cite the sources people requested.",
+                )
+            return PlanSuggestion(
+                "cite",
+                {},
+                "I'll cite a source to back up our discussion.",
+            )
+
+        if has_term("report") or has_term("brief"):
+            if location != "library":
+                return PlanSuggestion(
+                    "move",
+                    {"destination": "library"},
+                    "Heading to the library to wrap up the report folks asked about.",
+                )
+            return PlanSuggestion(
+                "submit_report",
+                {},
+                "I'll submit a concise report based on our findings.",
             )
 
         if has_term("wellbeing"):
@@ -341,15 +386,15 @@ class Planner:
         objective_type: Optional[str] = None,
     ) -> Optional[PlanSuggestion]:
         keyword_map = [
-            ("market", "trade"),
-            ("town square", "trade"),
-            ("civic", "trade"),
-            ("trade", "trade"),
+            ("library", "research"),
+            ("research", "research"),
+            ("cite", "gather"),
+            ("reference", "gather"),
+            ("report", "report"),
+            ("brief", "report"),
             ("work", "work"),
             ("community", "community"),
             ("talk", "community"),
-            ("research", "research"),
-            ("library", "research"),
             ("scan", "navigation"),
         ]
         for rule in reversed(rule_context):
@@ -399,15 +444,13 @@ class Planner:
     def _params_for_action(self, action_type: str, heuristic: Dict[str, str]) -> Dict[str, str]:
         if action_type == "talk":
             return {"utterance": heuristic.get("utterance", "Let's sync up.")}
-        if action_type == "trade":
-            return {
-                "item": heuristic.get("item", "goods"),
-                "qty": heuristic.get("qty", "1"),
-                "side": heuristic.get("side", "buy"),
-                "price": heuristic.get("price", "1"),
-            }
         if action_type == "work":
             return {"task": heuristic.get("task", "project")}
+        if action_type == "cite":
+            doc_id = heuristic.get("doc_id")
+            return {"doc_id": doc_id} if doc_id else {}
+        if action_type == "submit_report":
+            return {}
         if action_type == "move":
             destinations = ["town_square", "community_center", "library"]
             available = [d for d in destinations if d != heuristic.get("location")]
