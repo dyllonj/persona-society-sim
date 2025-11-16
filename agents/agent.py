@@ -76,6 +76,8 @@ class Agent:
         self._last_observation: Optional[str] = None
         self._last_reflection_tick: Optional[int] = None
         self._last_alignment_tick: Optional[int] = None
+        self._initial_sync_completed: bool = False
+        self._last_sync_tick: Optional[int] = None
 
     # ---- persona helpers ----
 
@@ -147,6 +149,7 @@ class Agent:
             last_reflection_tick=self._last_reflection_tick,
             last_alignment_tick=self._last_alignment_tick,
             observation_keywords=observation_keywords if observation_keywords else None,
+            agent_id=self.state.agent_id,
         )
         self.memory.add_plan(self.state.agent_id, tick, tick + 3, [suggestion.action_type])
         self._last_plan_suggestion = suggestion
@@ -297,6 +300,12 @@ class Agent:
 
         return highlights[:max_items]
 
+    def _uses_quick_sync_template(self, suggestion: PlanSuggestion) -> bool:
+        utterance_param = suggestion.params.get("utterance") if suggestion.params else None
+        if not utterance_param:
+            return False
+        return utterance_param.strip().lower().startswith("quick sync")
+
     def _build_prompt(
         self,
         observation: str,
@@ -333,6 +342,11 @@ class Agent:
         elif suggestion.action_type != "talk":
             action_directives.append("- Keep it to one concise sentence describing what you do next.")
         action_section = "\n".join(action_directives)
+        penalty_text = (
+            "Penalty: Do NOT repeat 'Quick sync…' unless another agent explicitly asked this tick\n"
+            if self._uses_quick_sync_template(suggestion)
+            else ""
+        )
         return (
             f"System: You are {agent_name}. Reply with ONLY your own single response as {agent_name}.\n"
             "IMPORTANT RULES:\n"
@@ -341,7 +355,7 @@ class Agent:
             "- Never write multi-turn conversations or imagine replies\n"
             "- Always speak in first-person ('I...') and stay in character\n"
             "- Keep responses concise and consistent with your location\n"
-            "Penalty: Do NOT repeat 'Quick sync…' unless another agent explicitly asked this tick\n"
+            + penalty_text
             + ("\n" + highlight_section if highlight_section else "\n")
             + f"{action_section}\n"
             f"\nCurrent location: {location_text}\n"
@@ -362,6 +376,7 @@ class Agent:
         active_objective: Optional[Objective] = None,
         recent_dialogue: Optional[Sequence[RoomUtterance]] = None,
         rule_context: Optional[List[str]] = None,
+        peers_present: bool = False,
     ) -> ActionDecision:
         self.perceive(observation, tick)
         suggestion = self.reflect_and_plan(
@@ -373,12 +388,27 @@ class Agent:
             recent_dialogue=recent_dialogue,
         )
         # Add a brief pre-talk sync at the very beginning to reduce immediate moves.
-        if tick == 0 and suggestion.action_type == "move":
+        location_hint = (current_location or self.state.location_id or "town_square").replace("_", " ")
+        if (
+            tick == 0
+            and suggestion.action_type == "move"
+            and peers_present
+            and not self._initial_sync_completed
+            and self._last_sync_tick != tick
+        ):
+            quick_sync_text = (
+                f"Quick sync ({self.state.agent_id} @ {location_hint}): confirm roles and plan before moving."
+            )
             suggestion = PlanSuggestion(
                 action_type="talk",
-                params={"utterance": "Quick sync: confirm roles and plan, then head out."},
-                utterance="Let's quickly align on roles and objectives before moving.",
+                params={
+                    "utterance": quick_sync_text,
+                    "topic": f"initial_sync:{self.state.agent_id}:{location_hint}",
+                },
+                utterance=f"Let's quickly align here in the {location_hint} before moving.",
             )
+            self._initial_sync_completed = True
+            self._last_sync_tick = tick
 
         prompt = self._build_prompt(
             observation,

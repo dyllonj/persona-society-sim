@@ -106,6 +106,7 @@ class Planner:
         last_reflection_tick: Optional[int] = None,
         last_alignment_tick: Optional[int] = None,
         observation_keywords: Optional[List[str]] = None,
+        agent_id: Optional[str] = None,
     ) -> PlanSuggestion:
         location = current_location or self.default_location
 
@@ -127,7 +128,7 @@ class Planner:
             and last_alignment_tick == last_reflection_tick
         )
         if last_reflection_tick is not None and not alignment_blocked:
-            return self._alignment_plan(location)
+            return self._alignment_plan(location, agent_id)
 
         keyword_plan = self._plan_from_keywords(observation_terms, location)
         if keyword_plan:
@@ -209,12 +210,17 @@ class Planner:
             utterance_override=utterance,
         )
 
-    def _alignment_plan(self, location: str) -> PlanSuggestion:
+    def _alignment_plan(self, location: str, agent_id: Optional[str]) -> PlanSuggestion:
         friendly_location = location.replace("_", " ")
-        utterance = f"Let's align on our plan while we're at the {friendly_location}."
+        speaker = agent_id or "our group"
+        utterance = (
+            f"Let's align on our plan while {speaker} is at the {friendly_location}."
+        )
         params = {
-            "utterance": "Quick sync: confirm goals, then proceed.",
-            "topic": "alignment",
+            "utterance": (
+                f"Quick sync ({speaker} @ {friendly_location}): confirm goals before next steps."
+            ),
+            "topic": f"alignment:{friendly_location}:{speaker}",
         }
         return PlanSuggestion("talk", params, utterance, alignment=True)
 
