@@ -89,7 +89,8 @@ class TickInstrumentation:
         if action_type == "talk":
             self._record_message_edges(agent_id, encounter_participants, trait_key)
         elif action_type in {"trade", "gift"}:
-            self._record_trade_edge(agent_id, params, trait_key, encounter_room)
+            if success:
+                self._record_trade_edge(agent_id, params, trait_key, encounter_room)
         elif action_type == "enforce":
             self._record_enforcement(agent_id, params, info, trait_key)
 
