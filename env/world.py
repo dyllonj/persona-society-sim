@@ -135,56 +135,6 @@ class World:
     def agent_inventory(self, agent_id: str) -> Dict[str, int]:
         return self.economy.snapshot().get(agent_id, {})
 
-    def trade_with_location(
-        self,
-        agent_id: str,
-        location_id: str,
-        item: str,
-        qty: int,
-        price: float,
-        side: str,
-    ) -> tuple[bool, Dict[str, str]]:
-        location = self.locations.get(location_id)
-        if not location:
-            return False, {"error": "invalid_location"}
-        if qty <= 0:
-            return False, {"error": "invalid_qty"}
-        normalized_side = side.lower()
-        if normalized_side not in {"buy", "sell"}:
-            normalized_side = "buy"
-        total_price = int(max(0, round(price * qty)))
-        if normalized_side == "buy":
-            stock = location.resources.get(item, 0)
-            if stock < qty:
-                return False, {"error": "insufficient_stock"}
-            if self.resource_balance(agent_id, "credits") < total_price:
-                return False, {"error": "insufficient_credits"}
-            location.resources[item] = stock - qty
-            self.adjust_resource(agent_id, item, qty)
-            if total_price:
-                location.resources["credits"] = location.resources.get("credits", 0) + total_price
-                self.adjust_resource(agent_id, "credits", -total_price)
-            return True, {
-                "note": "purchased",
-                "price_paid": str(total_price),
-                "balance": str(self.resource_balance(agent_id, item)),
-            }
-        # selling path
-        if self.resource_balance(agent_id, item) < qty:
-            return False, {"error": "insufficient_inventory"}
-        if location.resources.get("credits", 0) < total_price:
-            return False, {"error": "location_insufficient_credits"}
-        location.resources[item] = location.resources.get(item, 0) + qty
-        self.adjust_resource(agent_id, item, -qty)
-        if total_price:
-            location.resources["credits"] = max(0, location.resources.get("credits", 0) - total_price)
-            self.adjust_resource(agent_id, "credits", total_price)
-        return True, {
-            "note": "sold",
-            "price_paid": str(total_price),
-            "balance": str(self.resource_balance(agent_id, item)),
-        }
-
     def serialize(self, include_agents: bool = False, agent_ids: Optional[Iterable[str]] = None) -> Dict[str, object]:
         state: Dict[str, object] = {
             "tick": self.tick,

@@ -336,10 +336,7 @@ class Agent:
             f"- Parameters: {param_text}",
             f"- Utterance guidance: {suggestion.utterance}",
         ]
-        if suggestion.action_type == "trade":
-            action_directives.append("- Craft a <=100 character trade offer that states item, qty, and price.")
-            action_directives.append("- No narration or extra dialogue—just the trade text you would post.")
-        elif suggestion.action_type != "talk":
+        if suggestion.action_type != "talk":
             action_directives.append("- Keep it to one concise sentence describing what you do next.")
         action_section = "\n".join(action_directives)
         penalty_text = (

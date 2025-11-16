@@ -48,34 +48,7 @@ def trade(
     price: str = "1",
     side: str = "buy",
 ) -> ActionResult:
-    try:
-        qty_int = max(1, int(qty))
-    except ValueError:
-        return ActionResult("trade", False, {"error": "invalid_qty"})
-    try:
-        unit_price = float(price)
-    except ValueError:
-        unit_price = 1.0
-    location = world.agent_location(agent_id)
-    if location == "unknown":
-        return ActionResult("trade", False, {"error": "no_location"})
-    success, info = world.trade_with_location(
-        agent_id=agent_id,
-        location_id=location,
-        item=item,
-        qty=qty_int,
-        price=unit_price,
-        side=side,
-    )
-    room_id = location
-    action_note = (
-        f"{agent_id} {info.get('note', 'traded')} {qty_int} {item} ({side}) at {location}"
-        if success
-        else f"{agent_id} trade failed: {info.get('error', 'unknown')}"
-    )
-    world.broadcast(action_note[:MAX_BROADCAST_CHARS], room_id=room_id, speaker=agent_id, utterance=action_note)
-    info.update({"item": item, "qty": str(qty_int), "side": side})
-    return ActionResult("trade", success, info)
+    return ActionResult("trade", False, {"error": "disabled"})
 
 
 # ---- Town economy + policy actions ----
@@ -175,7 +148,6 @@ def submit_plan(world: World, agent_id: str) -> ActionResult:
 ACTION_ROUTER = {
     "move": move,
     "talk": talk,
-    "trade": trade,
     "work": None,
     "gift": None,
     "scan": None,
