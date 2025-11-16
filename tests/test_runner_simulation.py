@@ -93,7 +93,7 @@ def test_agents_emit_research_cycle_despite_advisory_rule():
     )
     advisory_rule = Rule(
         rule_id="rule-research",
-        text="Keep commerce flowing through the market square.",
+        text="Keep civic coordination flowing through the town square.",
         priority="advisory",
         environment_tags=["commerce"],
     )

@@ -24,7 +24,7 @@ Agents live inside a lightweight world containing locations, resources, institut
 3. **World + scheduler**
    - `env/world.py` tracks locations, noticeboards, economy state, and calendars.
    - `env/actions.py` validates and executes moves, conversations, trades, proposals, sanctions, etc.
-   - `env/economy.py` models a simple market (quotes, clearing, wealth updates).
+   - `env/economy.py` models a simple civic exchange (quotes, clearing, wealth updates).
    - `orchestrator/scheduler.py` samples encounters each tick; `orchestrator/runner.py` executes ticks, logs outputs, and handles safety governors.
 
 4. **Telemetry + storage**

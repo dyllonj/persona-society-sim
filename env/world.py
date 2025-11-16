@@ -48,30 +48,26 @@ class World:
         self.locations: Dict[str, Location] = {
             "town_square": Location(
                 "town_square",
-                "Central gathering spot",
+                "Central gathering spot and civic exchange plaza",
                 x=0.0,
                 y=0.0,
-                neighbors={"market", "community_center", "library"},
+                neighbors={"community_center", "library"},
                 capacity=20,
-                resources={"credits": 20, "tokens": 3},
+                resources={
+                    "credits": 40,
+                    "tokens": 3,
+                    "produce": 12,
+                    "tools": 6,
+                },
             ),
             "community_center": Location(
                 "community_center",
                 "Meetings, classes, and civic events",
                 x=-6.0,
                 y=-8.0,
-                neighbors={"town_square", "market", "library"},
+                neighbors={"town_square", "library"},
                 capacity=14,
                 resources={"supplies": 5, "credits": 15},
-            ),
-            "market": Location(
-                "market",
-                "Barter goods and post offers",
-                x=10.0,
-                y=-2.0,
-                neighbors={"town_square", "community_center"},
-                capacity=16,
-                resources={"produce": 12, "tools": 6, "credits": 50},
             ),
             "library": Location(
                 "library",
@@ -223,13 +219,17 @@ class World:
         guidance: List[Rule] = []
         for rule in self.institutions.active_rules():
             normalized_tags = {tag.lower() for tag in rule.environment_tags}
-            is_commerce_rule = (
+            lowered_text = rule.text.lower()
+            is_civic_coord_rule = (
                 "commerce" in normalized_tags
                 or "market" in normalized_tags
                 or "economy" in normalized_tags
-                or "keep commerce" in rule.text.lower()
+                or "civic" in normalized_tags
+                or "town_square" in normalized_tags
+                or "keep commerce" in lowered_text
+                or "keep civic" in lowered_text
             )
-            if self.environment == "research" and is_commerce_rule:
+            if self.environment == "research" and is_civic_coord_rule:
                 guidance.append(rule.model_copy(update={"priority": "advisory"}))
             else:
                 guidance.append(rule)
@@ -428,9 +428,9 @@ class World:
         priority = "advisory" if self.environment == "research" else "mandatory"
         baseline = self.institutions.propose_rule(
             "council",
-            "Keep commerce flowing through the market square.",
+            "Keep civic coordination flowing through the town square.",
             self.tick,
             priority=priority,
-            environment_tags=["commerce", "market"],
+            environment_tags=["civic", "town_square"],
         )
         self.institutions.enact_rule(baseline.rule_id, self.tick)

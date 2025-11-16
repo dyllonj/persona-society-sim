@@ -36,7 +36,7 @@ GOAL_LIBRARY = [
     "organize meetup",
     "research town policy",
     "write collaborative brief",
-    "support market trade",
+    "support civic exchange",
     "improve community wellbeing",
     "explore new ideas",
 ]
