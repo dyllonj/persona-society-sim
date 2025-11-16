@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from copy import deepcopy
 from datetime import date, datetime
-from typing import Any, Dict
+from typing import Any, ClassVar, Dict, get_origin, get_type_hints
 
 _UNSET = object()
 
@@ -27,9 +27,11 @@ class BaseModel:
     """Very small subset of the Pydantic BaseModel API used in tests."""
 
     def __init__(self, **data: Any) -> None:
-        annotations = getattr(self.__class__, "__annotations__", {})
-        for name in annotations:
+        annotations = _resolve_annotations(self.__class__)
+        for name, annotation in annotations.items():
             if name.startswith("_"):
+                continue
+            if get_origin(annotation) is ClassVar:
                 continue
             value = data.pop(name, _UNSET)
             if value is _UNSET:
@@ -50,10 +52,12 @@ class BaseModel:
             setattr(self, extra, value)
 
     def model_dump(self) -> Dict[str, Any]:
-        annotations = getattr(self.__class__, "__annotations__", {})
+        annotations = _resolve_annotations(self.__class__)
         result: Dict[str, Any] = {}
-        for name in annotations:
+        for name, annotation in annotations.items():
             if name.startswith("_"):
+                continue
+            if get_origin(annotation) is ClassVar:
                 continue
             value = getattr(self, name)
             if isinstance(value, BaseModel):
@@ -84,3 +88,10 @@ def _json_encoder(value: Any) -> Any:
 
 
 __all__ = ["BaseModel", "Field"]
+
+
+def _resolve_annotations(cls) -> Dict[str, Any]:
+    try:
+        return get_type_hints(cls)
+    except Exception:
+        return getattr(cls, "__annotations__", {})

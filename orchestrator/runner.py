@@ -129,6 +129,7 @@ class SimulationRunner:
                 for agent_id in encounter.participants:
                     agent = self.agents[agent_id]
                     current_location = self.world.agent_location(agent.state.agent_id)
+                    peers_present = any(peer != agent.state.agent_id for peer in encounter.participants)
                     active_objective = (
                         self.objective_manager.current_objective(agent.state.agent_id)
                         if self.objective_manager
@@ -154,6 +155,7 @@ class SimulationRunner:
                         active_objective=active_objective,
                         recent_dialogue=tuple(encounter_transcript),
                         rule_context=self.world.institutional_guidance(),
+                        peers_present=peers_present,
                     )
                     if probe_assignment:
                         decision.probe_id = probe_assignment.probe_id

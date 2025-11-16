@@ -92,6 +92,7 @@ def test_planner_aligns_once_per_reflection():
         tick=4,
         last_reflection_tick=4,
         last_alignment_tick=None,
+        agent_id="agent-88",
     )
 
     assert first.alignment is True
@@ -104,6 +105,7 @@ def test_planner_aligns_once_per_reflection():
         tick=5,
         last_reflection_tick=4,
         last_alignment_tick=4,
+        agent_id="agent-88",
     )
 
     assert second.alignment is False
@@ -124,3 +126,21 @@ def test_planner_keyword_fallback_after_alignment_block():
     )
 
     assert plan.action_type == "trade"
+
+
+def test_alignment_plan_includes_contextual_details():
+    planner = Planner()
+
+    plan = planner.plan(
+        ["Collaborate"],
+        "",
+        current_location="library",
+        tick=2,
+        last_reflection_tick=2,
+        last_alignment_tick=None,
+        agent_id="agent-42",
+    )
+
+    assert "agent-42" in plan.params["utterance"]
+    assert "library" in plan.params["utterance"].lower()
+    assert plan.params["topic"].startswith("alignment:library")
