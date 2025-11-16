@@ -40,11 +40,11 @@ class Planner:
                 "utterance": "Let's collaborate on ways to strengthen our community.",
             },
             "gather": {
-                "location": "market",
+                "location": "town_square",
                 "action": "trade",
                 "item": "supplies",
                 "qty": "1",
-                "utterance": "I'm arranging trades to gather the supplies we need.",
+                "utterance": "I'm arranging exchanges in the town square to gather supplies.",
             },
             "research": {
                 "location": "library",
@@ -67,11 +67,11 @@ class Planner:
                 "utterance": "I'm here to meet and connect with others.",
             },
             "trade": {
-                "location": "market",
+                "location": "town_square",
                 "action": "trade",
                 "item": "goods",
                 "qty": "1",
-                "utterance": "I'm looking to trade and support the local market.",
+                "utterance": "I'm looking to trade and support the civic exchange at the square.",
             },
             "work": {
                 "location": "community_center",
@@ -95,7 +95,7 @@ class Planner:
                 "utterance": "Covering new ground to find scan tokens.",
             },
         }
-        self._nav_cycle = ["town_square", "market", "library", "community_center"]
+        self._nav_cycle = ["town_square", "library", "community_center"]
 
     def plan(
         self,
@@ -250,7 +250,7 @@ class Planner:
             return PlanSuggestion(
                 "trade",
                 {"item": "produce", "qty": "1"},
-                "I'll take care of the market trades being mentioned.",
+                "I'll take care of the civic exchange tasks people mentioned.",
             )
 
         if has_term("wellbeing"):
@@ -342,6 +342,8 @@ class Planner:
     ) -> Optional[PlanSuggestion]:
         keyword_map = [
             ("market", "trade"),
+            ("town square", "trade"),
+            ("civic", "trade"),
             ("trade", "trade"),
             ("work", "work"),
             ("community", "community"),
@@ -407,7 +409,7 @@ class Planner:
         if action_type == "work":
             return {"task": heuristic.get("task", "project")}
         if action_type == "move":
-            destinations = ["town_square", "community_center", "market", "library"]
+            destinations = ["town_square", "community_center", "library"]
             available = [d for d in destinations if d != heuristic.get("location")]
             return {"destination": available[0] if available else self.default_location}
         return {}

@@ -21,11 +21,11 @@ def test_planner_moves_toward_objective_location_when_needed():
     planner = Planner()
     objective = _make_objective("gather", "gather needed supplies")
 
-    plan = planner.plan([], "", current_location="town_square", active_objective=objective)
+    plan = planner.plan([], "", current_location="library", active_objective=objective)
 
     assert plan.action_type == "move"
-    assert plan.params["destination"] == "market"
-    assert "market" in plan.utterance
+    assert plan.params["destination"] == "town_square"
+    assert "town square" in plan.utterance.lower()
 
 
 def test_planner_uses_objective_specific_action_when_at_location():
@@ -91,7 +91,7 @@ def test_planner_aligns_once_per_reflection():
     first = planner.plan(
         ["Collaborate"],
         "",
-        current_location="market",
+        current_location="town_square",
         tick=4,
         last_reflection_tick=4,
         last_alignment_tick=None,
@@ -104,7 +104,7 @@ def test_planner_aligns_once_per_reflection():
     second = planner.plan(
         ["Collaborate"],
         "",
-        current_location="market",
+        current_location="town_square",
         tick=5,
         last_reflection_tick=4,
         last_alignment_tick=4,
@@ -121,7 +121,7 @@ def test_planner_keyword_fallback_after_alignment_block():
     plan = planner.plan(
         ["Assist"],
         "",
-        current_location="market",
+        current_location="town_square",
         tick=6,
         last_reflection_tick=6,
         last_alignment_tick=6,
@@ -161,7 +161,7 @@ def test_planner_prioritizes_research_objective_over_advisory_rule():
     )
     advisory_rule = Rule(
         rule_id="rule-1",
-        text="Keep commerce flowing through the market square.",
+        text="Keep civic coordination flowing through the town square.",
         priority="advisory",
         environment_tags=["commerce"],
     )
@@ -182,12 +182,12 @@ def test_planner_respects_mandatory_rule_when_no_objective():
     planner = Planner()
     rule = Rule(
         rule_id="rule-2",
-        text="Keep commerce flowing through the market square.",
+        text="Keep civic coordination flowing through the town square.",
         priority="mandatory",
-        environment_tags=["commerce"],
+        environment_tags=["civic"],
     )
 
     plan = planner.plan([], "", current_location="library", rule_context=[rule])
 
     assert plan.action_type == "move"
-    assert plan.params["destination"] == "market"
+    assert plan.params["destination"] == "town_square"

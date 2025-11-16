@@ -7,8 +7,8 @@ from env import actions
 def test_world_move():
     world = World()
     world.add_agent("agent-1", "town_square")
-    world.move_agent("agent-1", "market")
-    assert "agent-1" in world.locations["market"].occupants
+    world.move_agent("agent-1", "community_center")
+    assert "agent-1" in world.locations["community_center"].occupants
 
 
 def test_recent_room_context_tracks_messages():
@@ -25,10 +25,10 @@ def test_recent_room_context_tracks_messages():
 
 def test_recent_room_transcript_includes_metadata():
     world = World()
-    world.add_agent("agent-2", "market")
-    world.broadcast("agent-2: hi", room_id="market", speaker="agent-2", utterance="hi")
+    world.add_agent("agent-2", "town_square")
+    world.broadcast("agent-2: hi", room_id="town_square", speaker="agent-2", utterance="hi")
 
-    transcript = world.recent_room_transcript("market", limit=1)
+    transcript = world.recent_room_transcript("town_square", limit=1)
 
     assert len(transcript) == 1
     assert transcript[0].speaker == "agent-2"
@@ -58,13 +58,16 @@ def test_fill_field_and_submit_plan_require_unique_entries():
 def test_scan_consumes_tokens_once_per_room():
     world = World()
     world.configure_environment("nav", 1)
-    world.add_agent("agent-5", "market")
+    world.add_agent("agent-5", "town_square")
+
+    assert "town_square" in world.location_scan_tokens
+    assert world.location_scan_tokens["town_square"], "Expected scan tokens for town_square"
 
     found = actions.scan(world, "agent-5")
     assert found.success
     assert "token" in found.info
 
     # Exhaust tokens to force a failure path
-    world.location_scan_tokens["market"] = []
+    world.location_scan_tokens["town_square"] = []
     empty = actions.scan(world, "agent-5")
     assert not empty.success

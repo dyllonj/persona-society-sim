@@ -83,7 +83,7 @@ DEFAULT_OBJECTIVE_TEMPLATES: Dict[str, ObjectiveTemplate] = {
     "support_market": ObjectiveTemplate(
         name="support_market",
         type="trade",
-        description="Participate in one trade and one gift exchange.",
+        description="Participate in one trade and one gift exchange to support civic life.",
         requirements={"trade": 1, "gift": 1},
         reward={"satisfaction": 2.5},
     ),

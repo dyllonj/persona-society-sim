@@ -94,16 +94,16 @@ def test_agent_plan_cache_expires_after_two_ticks():
 
     first = agent.reflect_and_plan(
         tick=5,
-        current_location="market",
-        observation="Watching the busy market square.",
+        current_location="town_square",
+        observation="Watching the busy town square.",
         recent_dialogue=None,
     )
     assert planner.calls == 1
 
     second = agent.reflect_and_plan(
         tick=6,
-        current_location="market",
-        observation="Still waiting at the market.",
+        current_location="town_square",
+        observation="Still waiting at the square.",
         recent_dialogue=None,
     )
     assert planner.calls == 1
@@ -111,8 +111,8 @@ def test_agent_plan_cache_expires_after_two_ticks():
 
     third = agent.reflect_and_plan(
         tick=7,
-        current_location="market",
-        observation="Market crowd is thinning.",
+        current_location="town_square",
+        observation="Civic crowd is thinning.",
         recent_dialogue=None,
     )
     assert planner.calls == 2
@@ -135,7 +135,9 @@ def test_initial_sync_prompts_unique_reduce_duplication():
             agent_id=None,
         ):
             self.calls += 1
-            return PlanSuggestion("move", {"destination": "market"}, "Heading to market.")
+            return PlanSuggestion(
+                "move", {"destination": "town_square"}, "Heading to town square."
+            )
 
     observation = "Location: library (Quiet). Nearby agents: agent-2."
     agent_one, _ = _make_agent(agent_id="agent-1", planner=MovePlanner())

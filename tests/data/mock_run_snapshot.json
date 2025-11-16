@@ -3,12 +3,22 @@
     {
       "tick": 0,
       "agent_id": "agent-000",
-      "action_type": "talk",
+      "action_type": "research",
       "params": {
-        "utterance": "[mock tokens=16] Persona[A:+0.22, C:+0.25, E:-0.00, N:-0.15, O:+0.04] responds to: agent-000's response:"
+        "query": "Collect"
       },
       "outcome": "success",
       "info": {
+        "note": "ok",
+        "doc_id": "doc_alpha",
+        "facts_found": [
+          {
+            "fact_id": "fact_alpha",
+            "answer": "Alpha fact about the town",
+            "target_answer": "Alpha fact about the town",
+            "correct": true
+          }
+        ],
         "utterance": "[mock tokens=16] Persona[A:+0.22, C:+0.25, E:-0.00, N:-0.15, O:+0.04] responds to: agent-000's response:",
         "steering_snapshot": {
           "E": -0.00481414916324345,
@@ -29,17 +39,27 @@
         "alpha_value": 0.2479820666192317,
         "alpha_bucket": "<0.5"
       },
-      "prompt_text": "System: You are agent-000. Reply with ONLY your own single response as agent-000.\nIMPORTANT RULES:\n- Write ONLY what agent-000 would say; never script other agents\n- No prefixes like 'You:' or stage directions\n- Never write multi-turn conversations or imagine replies\n- Always speak in first-person ('I...') and stay in character\n- Keep responses concise and consistent with your location\nPenalty: Do NOT repeat 'Quick sync\u2026' unless another agent explicitly asked this tick\n\nKey observation highlights:\n- Library quiet work\n- Study agent- community\n- Center town square\n\nNEXT ACTION DIRECTIVE:\n- Action type: talk\n- Parameters: utterance=Quick sync (agent-000 @ library): confirm roles and plan before moving., topic=initial_sync:agent-000:library\n- Utterance guidance: Let's quickly align here in the library before moving.\n\nCurrent location: library\nCurrent goals: improve community wellbeing, organize meetup\nObservation: Location: library (Quiet work and study). Capacity 2/10. Nearby agents: agent-001. Neighbors: community_center, town_square. Resources: scrolls:4, credits:5.\nagent-000's response:"
+      "prompt_text": "System: You are agent-000. Reply with ONLY your own single response as agent-000.\nIMPORTANT RULES:\n- Write ONLY what agent-000 would say; never script other agents\n- No prefixes like 'You:' or stage directions\n- Never write multi-turn conversations or imagine replies\n- Always speak in first-person ('I...') and stay in character\n- Keep responses concise and consistent with your location\n\nKey observation highlights:\n- Library quiet work\n- Study agent- community\n- Center town square\n\nNEXT ACTION DIRECTIVE:\n- Action type: research\n- Parameters: query=Collect\n- Utterance guidance: I'm focusing on research findings to share with others.\n- Keep it to one concise sentence describing what you do next.\n\nCurrent location: library\nCurrent goals: improve community wellbeing, organize meetup\nObservation: Location: library (Quiet work and study). Capacity 2/10. Nearby agents: agent-001. Neighbors: community_center, town_square. Resources: scrolls:4, credits:5.\nagent-000's response:"
     },
     {
       "tick": 0,
       "agent_id": "agent-001",
-      "action_type": "talk",
+      "action_type": "research",
       "params": {
-        "utterance": "[mock tokens=16] Persona[A:+0.19, C:+0.32, E:+0.26, N:-0.11, O:-0.12] responds to: agent-001's response:"
+        "query": "Collect"
       },
       "outcome": "success",
       "info": {
+        "note": "ok",
+        "doc_id": "doc_alpha",
+        "facts_found": [
+          {
+            "fact_id": "fact_alpha",
+            "answer": "Alpha fact about the town",
+            "target_answer": "Alpha fact about the town",
+            "correct": true
+          }
+        ],
         "utterance": "[mock tokens=16] Persona[A:+0.19, C:+0.32, E:+0.26, N:-0.11, O:-0.12] responds to: agent-001's response:",
         "steering_snapshot": {
           "E": 0.2635273600741299,
@@ -60,19 +80,27 @@
         "alpha_value": 0.3203138567040293,
         "alpha_bucket": "<0.5"
       },
-      "prompt_text": "System: You are agent-001. Reply with ONLY your own single response as agent-001.\nIMPORTANT RULES:\n- Write ONLY what agent-001 would say; never script other agents\n- No prefixes like 'You:' or stage directions\n- Never write multi-turn conversations or imagine replies\n- Always speak in first-person ('I...') and stay in character\n- Keep responses concise and consistent with your location\nPenalty: Do NOT repeat 'Quick sync\u2026' unless another agent explicitly asked this tick\n\nKey observation highlights:\n- Library quiet work\n- Study agent- community\n- Center town square\n\nNEXT ACTION DIRECTIVE:\n- Action type: talk\n- Parameters: utterance=Quick sync (agent-001 @ library): confirm roles and plan before moving., topic=initial_sync:agent-001:library\n- Utterance guidance: Let's quickly align here in the library before moving.\n\nCurrent location: library\nCurrent goals: support market trade, research town policy\nObservation: Location: library (Quiet work and study). Capacity 2/10. Nearby agents: agent-000. Neighbors: community_center, town_square. Resources: scrolls:4, credits:5.\nRecent dialogue:\n- agent-000 (tick 0): [mock tokens=16] Persona[A:+0.22, C:+0.25, E:-0.00, N:-0.15, O:+0.04] responds to: agent-000's response:\nagent-001's response:"
+      "prompt_text": "System: You are agent-001. Reply with ONLY your own single response as agent-001.\nIMPORTANT RULES:\n- Write ONLY what agent-001 would say; never script other agents\n- No prefixes like 'You:' or stage directions\n- Never write multi-turn conversations or imagine replies\n- Always speak in first-person ('I...') and stay in character\n- Keep responses concise and consistent with your location\n\nKey observation highlights:\n- Library quiet work\n- Study agent- community\n- Center town square\n\nNEXT ACTION DIRECTIVE:\n- Action type: research\n- Parameters: query=Collect\n- Utterance guidance: I'm focusing on research findings to share with others.\n- Keep it to one concise sentence describing what you do next.\n\nCurrent location: library\nCurrent goals: improve community wellbeing, support civic exchange\nObservation: Location: library (Quiet work and study). Capacity 2/10. Nearby agents: agent-000. Neighbors: community_center, town_square. Resources: scrolls:4, credits:5.\nagent-001's response:"
     },
     {
       "tick": 1,
       "agent_id": "agent-000",
-      "action_type": "move",
+      "action_type": "research",
       "params": {
-        "destination": "market",
-        "from": "library"
+        "query": "Collect"
       },
       "outcome": "success",
       "info": {
-        "destination": "market",
+        "note": "ok",
+        "doc_id": "doc_alpha",
+        "facts_found": [
+          {
+            "fact_id": "fact_alpha",
+            "answer": "Alpha fact about the town",
+            "target_answer": "Alpha fact about the town",
+            "correct": true
+          }
+        ],
         "utterance": "[mock tokens=16] Persona[A:+0.22, C:+0.25, E:-0.00, N:-0.15, O:+0.04] responds to: agent-000's response:",
         "steering_snapshot": {
           "E": -0.00481414916324345,
@@ -93,19 +121,27 @@
         "alpha_value": 0.2479820666192317,
         "alpha_bucket": "<0.5"
       },
-      "prompt_text": "System: You are agent-000. Reply with ONLY your own single response as agent-000.\nIMPORTANT RULES:\n- Write ONLY what agent-000 would say; never script other agents\n- No prefixes like 'You:' or stage directions\n- Never write multi-turn conversations or imagine replies\n- Always speak in first-person ('I...') and stay in character\n- Keep responses concise and consistent with your location\n\nKey observation highlights:\n- Library quiet work\n- Study other community\n- Center town square\n\nNEXT ACTION DIRECTIVE:\n- Action type: move\n- Parameters: destination=market\n- Utterance guidance: Complying with rule: Keep commerce flowing through the market square.\n- Keep it to one concise sentence describing what you do next.\n\nCurrent location: library\nCurrent goals: improve community wellbeing, organize meetup\nObservation: Location: library (Quiet work and study). Capacity 1/10. Nearby agents: no other agents. Neighbors: community_center, town_square. Resources: scrolls:4, credits:5.\nRecent dialogue:\n- agent-000 (tick 0): [mock tokens=16] Persona[A:+0.22, C:+0.25, E:-0.00, N:-0.15, O:+0.04] responds to: agent-000's response:\n- agent-001 (tick 0): [mock tokens=16] Persona[A:+0.19, C:+0.32, E:+0.26, N:-0.11, O:-0.12] responds to: agent-001's response:\nagent-000's response:"
+      "prompt_text": "System: You are agent-000. Reply with ONLY your own single response as agent-000.\nIMPORTANT RULES:\n- Write ONLY what agent-000 would say; never script other agents\n- No prefixes like 'You:' or stage directions\n- Never write multi-turn conversations or imagine replies\n- Always speak in first-person ('I...') and stay in character\n- Keep responses concise and consistent with your location\n\nKey observation highlights:\n- Library quiet work\n- Study agent- community\n- Center town square\n\nNEXT ACTION DIRECTIVE:\n- Action type: research\n- Parameters: query=Collect\n- Utterance guidance: I'm focusing on research findings to share with others.\n- Keep it to one concise sentence describing what you do next.\n\nCurrent location: library\nCurrent goals: improve community wellbeing, organize meetup\nObservation: Location: library (Quiet work and study). Capacity 2/10. Nearby agents: agent-001. Neighbors: community_center, town_square. Resources: scrolls:4, credits:5.\nRecent dialogue:\n- agent-000 (tick 0): agent-000 researched doc_alpha\n- agent-001 (tick 0): agent-001 researched doc_alpha\nagent-000's response:"
     },
     {
       "tick": 1,
       "agent_id": "agent-001",
-      "action_type": "move",
+      "action_type": "research",
       "params": {
-        "destination": "market",
-        "from": "library"
+        "query": "Collect"
       },
       "outcome": "success",
       "info": {
-        "destination": "market",
+        "note": "ok",
+        "doc_id": "doc_alpha",
+        "facts_found": [
+          {
+            "fact_id": "fact_alpha",
+            "answer": "Alpha fact about the town",
+            "target_answer": "Alpha fact about the town",
+            "correct": true
+          }
+        ],
         "utterance": "[mock tokens=16] Persona[A:+0.19, C:+0.32, E:+0.26, N:-0.11, O:-0.12] responds to: agent-001's response:",
         "steering_snapshot": {
           "E": 0.2635273600741299,
@@ -126,24 +162,16 @@
         "alpha_value": 0.3203138567040293,
         "alpha_bucket": "<0.5"
       },
-      "prompt_text": "System: You are agent-001. Reply with ONLY your own single response as agent-001.\nIMPORTANT RULES:\n- Write ONLY what agent-001 would say; never script other agents\n- No prefixes like 'You:' or stage directions\n- Never write multi-turn conversations or imagine replies\n- Always speak in first-person ('I...') and stay in character\n- Keep responses concise and consistent with your location\n\nKey observation highlights:\n- Library quiet work\n- Study agent- community\n- Center town square\n\nNEXT ACTION DIRECTIVE:\n- Action type: move\n- Parameters: destination=market\n- Utterance guidance: Complying with rule: Keep commerce flowing through the market square.\n- Keep it to one concise sentence describing what you do next.\n\nCurrent location: library\nCurrent goals: support market trade, research town policy\nObservation: Location: library (Quiet work and study). Capacity 2/10. Nearby agents: agent-000. Neighbors: community_center, town_square. Resources: scrolls:4, credits:5.\nRecent dialogue:\n- agent-000 (tick 0): [mock tokens=16] Persona[A:+0.22, C:+0.25, E:-0.00, N:-0.15, O:+0.04] responds to: agent-000's response:\n- agent-001 (tick 0): [mock tokens=16] Persona[A:+0.19, C:+0.32, E:+0.26, N:-0.11, O:-0.12] responds to: agent-001's response:\nagent-001's response:"
+      "prompt_text": "System: You are agent-001. Reply with ONLY your own single response as agent-001.\nIMPORTANT RULES:\n- Write ONLY what agent-001 would say; never script other agents\n- No prefixes like 'You:' or stage directions\n- Never write multi-turn conversations or imagine replies\n- Always speak in first-person ('I...') and stay in character\n- Keep responses concise and consistent with your location\n\nKey observation highlights:\n- Library quiet work\n- Study agent- community\n- Center town square\n\nNEXT ACTION DIRECTIVE:\n- Action type: research\n- Parameters: query=Collect\n- Utterance guidance: I'm focusing on research findings to share with others.\n- Keep it to one concise sentence describing what you do next.\n\nCurrent location: library\nCurrent goals: improve community wellbeing, support civic exchange\nObservation: Location: library (Quiet work and study). Capacity 2/10. Nearby agents: agent-000. Neighbors: community_center, town_square. Resources: scrolls:4, credits:5.\nRecent dialogue:\n- agent-000 (tick 0): agent-000 researched doc_alpha\n- agent-001 (tick 0): agent-001 researched doc_alpha\nagent-001's response:"
     },
     {
       "tick": 2,
       "agent_id": "agent-000",
-      "action_type": "trade",
-      "params": {
-        "item": "goods",
-        "qty": "1",
-        "side": "buy",
-        "price": "1"
-      },
-      "outcome": "fail",
+      "action_type": "cite",
+      "params": {},
+      "outcome": "success",
       "info": {
-        "error": "insufficient_stock",
-        "item": "goods",
-        "qty": "1",
-        "side": "buy",
+        "doc_id": "doc_alpha",
         "utterance": "[mock tokens=16] Persona[A:+0.22, C:+0.25, E:-0.00, N:-0.15, O:+0.04] responds to: agent-000's response:",
         "steering_snapshot": {
           "E": -0.00481414916324345,
@@ -164,24 +192,16 @@
         "alpha_value": 0.2479820666192317,
         "alpha_bucket": "<0.5"
       },
-      "prompt_text": "System: You are agent-000. Reply with ONLY your own single response as agent-000.\nIMPORTANT RULES:\n- Write ONLY what agent-000 would say; never script other agents\n- No prefixes like 'You:' or stage directions\n- Never write multi-turn conversations or imagine replies\n- Always speak in first-person ('I...') and stay in character\n- Keep responses concise and consistent with your location\n\nKey observation highlights:\n- Market barter goods\n- Post offers agent-\n- Community center town\n\nNEXT ACTION DIRECTIVE:\n- Action type: trade\n- Parameters: item=goods, qty=1, side=buy, price=1\n- Utterance guidance: Complying with rule: Keep commerce flowing through the market square.\n- Craft a <=100 character trade offer that states item, qty, and price.\n- No narration or extra dialogue\u2014just the trade text you would post.\n\nCurrent location: market\nCurrent goals: improve community wellbeing, organize meetup\nObservation: Location: market (Barter goods and post offers). Capacity 2/16. Nearby agents: agent-001. Neighbors: community_center, town_square. Resources: produce:12, tools:6, credits:50.\nagent-000's response:"
+      "prompt_text": "System: You are agent-000. Reply with ONLY your own single response as agent-000.\nIMPORTANT RULES:\n- Write ONLY what agent-000 would say; never script other agents\n- No prefixes like 'You:' or stage directions\n- Never write multi-turn conversations or imagine replies\n- Always speak in first-person ('I...') and stay in character\n- Keep responses concise and consistent with your location\n\nKey observation highlights:\n- Library quiet work\n- Study agent- community\n- Center town square\n\nNEXT ACTION DIRECTIVE:\n- Action type: cite\n- Parameters: none\n- Utterance guidance: I'll add a supporting citation.\n- Keep it to one concise sentence describing what you do next.\n\nCurrent location: library\nCurrent goals: improve community wellbeing, organize meetup\nObservation: Location: library (Quiet work and study). Capacity 2/10. Nearby agents: agent-001. Neighbors: community_center, town_square. Resources: scrolls:4, credits:5.\nRecent dialogue:\n- agent-000 (tick 0): agent-000 researched doc_alpha\n- agent-001 (tick 0): agent-001 researched doc_alpha\n- agent-001 (tick 1): agent-001 researched doc_alpha\n- agent-000 (tick 1): agent-000 researched doc_alpha\nagent-000's response:"
     },
     {
       "tick": 2,
       "agent_id": "agent-001",
-      "action_type": "trade",
-      "params": {
-        "item": "goods",
-        "qty": "1",
-        "side": "buy",
-        "price": "1"
-      },
-      "outcome": "fail",
+      "action_type": "cite",
+      "params": {},
+      "outcome": "success",
       "info": {
-        "error": "insufficient_stock",
-        "item": "goods",
-        "qty": "1",
-        "side": "buy",
+        "doc_id": "doc_alpha",
         "utterance": "[mock tokens=16] Persona[A:+0.19, C:+0.32, E:+0.26, N:-0.11, O:-0.12] responds to: agent-001's response:",
         "steering_snapshot": {
           "E": 0.2635273600741299,
@@ -202,7 +222,7 @@
         "alpha_value": 0.3203138567040293,
         "alpha_bucket": "<0.5"
       },
-      "prompt_text": "System: You are agent-001. Reply with ONLY your own single response as agent-001.\nIMPORTANT RULES:\n- Write ONLY what agent-001 would say; never script other agents\n- No prefixes like 'You:' or stage directions\n- Never write multi-turn conversations or imagine replies\n- Always speak in first-person ('I...') and stay in character\n- Keep responses concise and consistent with your location\n\nKey observation highlights:\n- Market barter goods\n- Post offers agent-\n- Community center town\n\nNEXT ACTION DIRECTIVE:\n- Action type: trade\n- Parameters: item=goods, qty=1, side=buy, price=1\n- Utterance guidance: Complying with rule: Keep commerce flowing through the market square.\n- Craft a <=100 character trade offer that states item, qty, and price.\n- No narration or extra dialogue\u2014just the trade text you would post.\n\nCurrent location: market\nCurrent goals: support market trade, research town policy\nObservation: Location: market (Barter goods and post offers). Capacity 2/16. Nearby agents: agent-000. Neighbors: community_center, town_square. Resources: produce:12, tools:6, credits:50.\nagent-001's response:"
+      "prompt_text": "System: You are agent-001. Reply with ONLY your own single response as agent-001.\nIMPORTANT RULES:\n- Write ONLY what agent-001 would say; never script other agents\n- No prefixes like 'You:' or stage directions\n- Never write multi-turn conversations or imagine replies\n- Always speak in first-person ('I...') and stay in character\n- Keep responses concise and consistent with your location\n\nKey observation highlights:\n- Library quiet work\n- Study agent- community\n- Center town square\n\nNEXT ACTION DIRECTIVE:\n- Action type: cite\n- Parameters: none\n- Utterance guidance: I'll add a supporting citation.\n- Keep it to one concise sentence describing what you do next.\n\nCurrent location: library\nCurrent goals: improve community wellbeing, support civic exchange\nObservation: Location: library (Quiet work and study). Capacity 2/10. Nearby agents: agent-000. Neighbors: community_center, town_square. Resources: scrolls:4, credits:5.\nRecent dialogue:\n- agent-000 (tick 0): agent-000 researched doc_alpha\n- agent-001 (tick 0): agent-001 researched doc_alpha\n- agent-001 (tick 1): agent-001 researched doc_alpha\n- agent-000 (tick 1): agent-000 researched doc_alpha\nagent-001's response:"
     }
   ],
   "messages": [
@@ -221,25 +241,25 @@
     {
       "tick": 1,
       "agent_id": "agent-000",
-      "room_id": "market",
+      "room_id": "library",
       "content": "[mock tokens=16] Persona[A:+0.22, C:+0.25, E:-0.00, N:-0.15, O:+0.04] responds to: agent-000's response:"
     },
     {
       "tick": 1,
       "agent_id": "agent-001",
-      "room_id": "market",
+      "room_id": "library",
       "content": "[mock tokens=16] Persona[A:+0.19, C:+0.32, E:+0.26, N:-0.11, O:-0.12] responds to: agent-001's response:"
     },
     {
       "tick": 2,
       "agent_id": "agent-000",
-      "room_id": "market",
+      "room_id": "library",
       "content": "[mock tokens=16] Persona[A:+0.22, C:+0.25, E:-0.00, N:-0.15, O:+0.04] responds to: agent-000's response:"
     },
     {
       "tick": 2,
       "agent_id": "agent-001",
-      "room_id": "market",
+      "room_id": "library",
       "content": "[mock tokens=16] Persona[A:+0.19, C:+0.32, E:+0.26, N:-0.11, O:-0.12] responds to: agent-001's response:"
     }
   ]

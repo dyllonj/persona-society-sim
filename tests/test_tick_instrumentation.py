@@ -114,7 +114,7 @@ def test_failed_trade_records_failure_without_edges_or_cooperation():
         info={},
         steering_snapshot={},
         persona_coeffs={"E": 0.0, "A": 0.0, "C": 0.0, "O": 0.0, "N": 0.0},
-        encounter_room="market",
+        encounter_room="town_square",
         encounter_participants=("agent-1", "agent-2"),
         satisfaction=0.0,
         prompt_hash=None,
