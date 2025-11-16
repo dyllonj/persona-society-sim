@@ -26,13 +26,12 @@ class MacroInput:
     band_metadata: Dict[str, object]
     wealth: Dict[str, float]
     opinions: Dict[str, float]
-    trade_failures: int
     prompt_duplication_rate: float
     plan_reuse_rate: float
 
 
 class TickInstrumentation:
-    COOP_ACTIONS = {"talk", "trade", "work", "gift", "research", "cite", "submit_report"}
+    COOP_ACTIONS = {"talk", "work", "gift", "research", "cite", "submit_report"}
     CONFLICT_ACTIONS = {"steal", "report"}
 
     def __init__(self) -> None:
@@ -47,7 +46,6 @@ class TickInstrumentation:
         self._prompt_samples: Dict[str, str] = {}
         self._total_prompts = 0
         self._total_plans = 0
-        self._trade_failures: Dict[Optional[str], int] = defaultdict(int)
 
     def on_tick_start(self, tick: int) -> None:
         self._edges.clear()
@@ -61,7 +59,6 @@ class TickInstrumentation:
         self._prompt_samples.clear()
         self._total_prompts = 0
         self._total_plans = 0
-        self._trade_failures.clear()
 
     def record_action(
         self,
@@ -88,9 +85,9 @@ class TickInstrumentation:
 
         if action_type == "talk":
             self._record_message_edges(agent_id, encounter_participants, trait_key)
-        elif action_type in {"trade", "gift"}:
+        elif action_type == "gift":
             if success:
-                self._record_trade_edge(agent_id, params, trait_key, encounter_room)
+                self._record_gift_edge(agent_id, params, trait_key, encounter_room)
         elif action_type == "enforce":
             self._record_enforcement(agent_id, params, info, trait_key)
 
@@ -100,8 +97,6 @@ class TickInstrumentation:
             self._increment_conflict(trait_key)
         if action_type == "enforce":
             self._increment_enforcement_cost(info, trait_key)
-        if action_type == "trade" and not success:
-            self._register_trade_failure(trait_key)
         if prompt_hash:
             self._total_prompts += 1
             self._prompt_counts[prompt_hash] += 1
@@ -153,7 +148,6 @@ class TickInstrumentation:
                     band_metadata=band_metadata(trait_key),
                     wealth=wealth_slice,
                     opinions=opinion_slice,
-                    trade_failures=self._trade_failures.get(trait_key, 0),
                     prompt_duplication_rate=prompt_dup_rate,
                     plan_reuse_rate=plan_dup_rate,
                 )
@@ -168,7 +162,6 @@ class TickInstrumentation:
                     band_metadata={},
                     wealth={agent: float(sum(holdings.values())) for agent, holdings in wealth_snapshot.items()},
                     opinions=dict(opinions),
-                    trade_failures=self._trade_failures.get(None, 0),
                     prompt_duplication_rate=prompt_dup_rate,
                     plan_reuse_rate=plan_dup_rate,
                 )
@@ -185,11 +178,11 @@ class TickInstrumentation:
             edge = Edge(src=agent_id, dst=peer, weight=1.0, kind="message")
             self._append_edge(edge, trait_key)
 
-    def _record_trade_edge(
+    def _record_gift_edge(
         self, agent_id: str, params: Dict[str, str], trait_key: Optional[str], room_id: str
     ) -> None:
         target = params.get("recipient") or params.get("counterparty") or room_id
-        edge = Edge(src=agent_id, dst=target, weight=1.0, kind="trade")
+        edge = Edge(src=agent_id, dst=target, weight=1.0, kind="gift")
         self._append_edge(edge, trait_key)
 
     def _record_enforcement(
@@ -226,11 +219,6 @@ class TickInstrumentation:
         self._edges[None].append(edge)
         if trait_key:
             self._edges[trait_key].append(edge)
-
-    def _register_trade_failure(self, trait_key: Optional[str]) -> None:
-        self._trade_failures[None] += 1
-        if trait_key:
-            self._trade_failures[trait_key] += 1
 
     def _duplication_rate(self, counts: Dict[str, int], total: int) -> float:
         if total <= 1:
