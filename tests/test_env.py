@@ -73,11 +73,19 @@ def test_scan_consumes_tokens_once_per_room():
     assert not empty.success
 
 
-def test_trade_action_is_disabled():
+def test_research_and_cite_interactions_from_community_center():
     world = World()
-    world.add_agent("agent-7", "town_square")
+    world.add_agent("agent-7", "community_center")
 
-    result = actions.trade(world, "agent-7", item="produce", qty="2", price="3", side="buy")
+    research_result = actions.research(world, "agent-7", query="fact_a")
+    assert research_result.success
+    assert research_result.info["doc_id"]
+    assert research_result.info["note"] == "research outside library"
 
-    assert not result.success
-    assert result.info == {"error": "disabled"}
+    cite_result = actions.cite(world, "agent-7")
+    assert cite_result.success
+    assert cite_result.info["doc_id"]
+
+    context = world.recent_room_context("community_center", limit=2)
+    assert "researched" in context
+    assert "cited" in context

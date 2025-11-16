@@ -94,16 +94,16 @@ def test_agent_plan_cache_expires_after_two_ticks():
 
     first = agent.reflect_and_plan(
         tick=5,
-        current_location="town_square",
-        observation="Watching the busy town square.",
+        current_location="community_center",
+        observation="Reviewing notices at the community center.",
         recent_dialogue=None,
     )
     assert planner.calls == 1
 
     second = agent.reflect_and_plan(
         tick=6,
-        current_location="town_square",
-        observation="Still waiting at the square.",
+        current_location="community_center",
+        observation="Still waiting near the bulletin board.",
         recent_dialogue=None,
     )
     assert planner.calls == 1
@@ -111,8 +111,8 @@ def test_agent_plan_cache_expires_after_two_ticks():
 
     third = agent.reflect_and_plan(
         tick=7,
-        current_location="town_square",
-        observation="Civic crowd is thinning.",
+        current_location="community_center",
+        observation="Civic crowd is thinning near the hall.",
         recent_dialogue=None,
     )
     assert planner.calls == 2
@@ -136,17 +136,17 @@ def test_initial_sync_prompts_unique_reduce_duplication():
         ):
             self.calls += 1
             return PlanSuggestion(
-                "move", {"destination": "town_square"}, "Heading to town square."
+                "move", {"destination": "community_center"}, "Heading to community center."
             )
 
-    observation = "Location: library (Quiet). Nearby agents: agent-2."
+    observation = "Location: community_center (Busy). Nearby agents: agent-2."
     agent_one, _ = _make_agent(agent_id="agent-1", planner=MovePlanner())
     agent_two, _ = _make_agent(agent_id="agent-2", planner=MovePlanner())
 
     decision_one = agent_one.act(
         observation,
         tick=0,
-        current_location="library",
+        current_location="community_center",
         recent_dialogue=tuple(),
         rule_context=None,
         peers_present=True,
@@ -154,7 +154,7 @@ def test_initial_sync_prompts_unique_reduce_duplication():
     decision_two = agent_two.act(
         observation,
         tick=0,
-        current_location="library",
+        current_location="community_center",
         recent_dialogue=tuple(),
         rule_context=None,
         peers_present=True,
@@ -173,7 +173,7 @@ def test_initial_sync_prompts_unique_reduce_duplication():
         info={},
         steering_snapshot=decision_one.steering_snapshot,
         persona_coeffs=agent_one.state.persona_coeffs.model_dump(),
-        encounter_room="library",
+        encounter_room="community_center",
         encounter_participants=participants,
         satisfaction=0.0,
         prompt_hash=decision_one.prompt_hash,
@@ -190,7 +190,7 @@ def test_initial_sync_prompts_unique_reduce_duplication():
         info={},
         steering_snapshot=decision_two.steering_snapshot,
         persona_coeffs=agent_two.state.persona_coeffs.model_dump(),
-        encounter_room="library",
+        encounter_room="community_center",
         encounter_participants=participants,
         satisfaction=0.0,
         prompt_hash=decision_two.prompt_hash,

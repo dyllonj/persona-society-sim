@@ -88,6 +88,8 @@ Set `STEERING_ALPHA` before running the script to mirror the `steering.strength`
 
 The v2 steering pipeline requires A/B prompt files, metadata-aware vector extraction, and re-running the evaluation harness before you launch new simulations. Follow [`docs/migration.md`](docs/migration.md) for a checklist that covers converting legacy prompt schema files, regenerating vectors, validating them, and updating your run configs.
 
+For operators upgrading from versions that still logged marketplace activity, run `python scripts/migrate_remove_trade_records.py --sqlite <log.db> --parquet-dir <dump_root>` before restarting simulations. The utility deletes `trade` actions and graph edges from both SQLite tables and Parquet shards so downstream notebooks do not expect market rooms or transactions.
+
 ### Optional: 3D web viewer (prototype)
 
 You can stream live simulation events to a lightweight WebSocket bridge and view a simple 3D layout in your browser.
