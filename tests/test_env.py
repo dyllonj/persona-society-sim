@@ -71,3 +71,13 @@ def test_scan_consumes_tokens_once_per_room():
     world.location_scan_tokens["town_square"] = []
     empty = actions.scan(world, "agent-5")
     assert not empty.success
+
+
+def test_trade_action_is_disabled():
+    world = World()
+    world.add_agent("agent-7", "town_square")
+
+    result = actions.trade(world, "agent-7", item="produce", qty="2", price="3", side="buy")
+
+    assert not result.success
+    assert result.info == {"error": "disabled"}
