@@ -14,7 +14,7 @@ class _DummyScheduler:
 
 
 class _DummyLogSink:
-    pass
+    parquet_dir = None
 
 
 class _LoggerStub:
@@ -100,3 +100,32 @@ def test_prompt_duplication_warning_emitted_for_tick_zero():
     warning = logger.warnings[0]
     assert "Tick 0 prompt duplication rate" in warning
     assert "Sample prompt" in warning
+
+
+def test_failed_trade_records_failure_without_edges_or_cooperation():
+    instrumentation = TickInstrumentation()
+    instrumentation.on_tick_start(0)
+
+    instrumentation.record_action(
+        agent_id="agent-1",
+        action_type="trade",
+        success=False,
+        params={"recipient": "agent-2"},
+        info={},
+        steering_snapshot={},
+        persona_coeffs={"E": 0.0, "A": 0.0, "C": 0.0, "O": 0.0, "N": 0.0},
+        encounter_room="market",
+        encounter_participants=("agent-1", "agent-2"),
+        satisfaction=0.0,
+        prompt_hash=None,
+        plan_metadata=None,
+    )
+
+    assert instrumentation.graph_inputs() == []
+
+    macros = instrumentation.macro_inputs(
+        {"agent-1": {"credits": 1}, "agent-2": {"credits": 0}},
+        opinions={},
+    )
+    assert any(m.trade_failures == 1 for m in macros)
+    assert all(not m.cooperation_events for m in macros)
