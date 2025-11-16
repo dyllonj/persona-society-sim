@@ -129,7 +129,6 @@ CREATE TABLE IF NOT EXISTS metrics_snapshot (
   polarization_modularity FLOAT,
   conflicts INT,
   rule_enforcement_cost FLOAT,
-  trade_failures INT,
   prompt_duplication_rate FLOAT,
   plan_reuse_rate FLOAT,
   PRIMARY KEY (run_id, tick, trait_key)

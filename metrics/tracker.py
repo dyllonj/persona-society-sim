@@ -118,7 +118,7 @@ class MetricTracker:
         m.total_actions += 1
         if log.action_type in GOALFUL_ACTIONS:
             m.goalful_actions += 1
-        if occupants is not None and log.action_type in {"talk", "trade", "work", "research", "scan"}:
+        if occupants is not None and log.action_type in {"talk", "work", "research", "scan"}:
             if occupants > 1:
                 m.collab_actions += 1
         if m.first_action_tick is None:

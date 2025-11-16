@@ -246,7 +246,7 @@ class SimulationRunner:
                     try:
                         # Count actions that broadcast or imply collaboration in-room
                         executed_type = env_result.action_type
-                        collab_like = {"talk", "trade", "work", "research", "cite", "submit_report"}
+                        collab_like = {"talk", "work", "research", "cite", "submit_report"}
                         if executed_type in collab_like:
                             # Use source location occupancy (pre-move context)
                             room = src_location
@@ -543,7 +543,6 @@ class SimulationRunner:
                     macro.enforcement_cost,
                     trait_key=macro.trait_key,
                     band_metadata=macro.band_metadata,
-                    trade_failures=macro.trade_failures,
                     prompt_duplication_rate=macro.prompt_duplication_rate,
                     plan_reuse_rate=macro.plan_reuse_rate,
                 )

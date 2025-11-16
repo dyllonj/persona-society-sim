@@ -102,7 +102,7 @@ def test_prompt_duplication_warning_emitted_for_tick_zero():
     assert "Sample prompt" in warning
 
 
-def test_failed_trade_records_failure_without_edges_or_cooperation():
+def test_trade_actions_are_ignored_in_metrics():
     instrumentation = TickInstrumentation()
     instrumentation.on_tick_start(0)
 
@@ -127,5 +127,4 @@ def test_failed_trade_records_failure_without_edges_or_cooperation():
         {"agent-1": {"credits": 1}, "agent-2": {"credits": 0}},
         opinions={},
     )
-    assert any(m.trade_failures == 1 for m in macros)
     assert all(not m.cooperation_events for m in macros)

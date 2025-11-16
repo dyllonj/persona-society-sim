@@ -30,8 +30,8 @@ class ConsoleLogger:
     ACTION_COLORS = {
         "move": "blue",
         "talk": "green",
-        "trade": "yellow",
         "work": "cyan",
+        "gift": "yellow",
     }
 
     def __init__(

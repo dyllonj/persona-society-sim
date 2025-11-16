@@ -50,7 +50,6 @@ def build_metrics_snapshot(
     *,
     trait_key: Optional[str] = None,
     band_metadata: Optional[Dict[str, object]] = None,
-    trade_failures: int = 0,
     prompt_duplication_rate: float = 0.0,
     plan_reuse_rate: float = 0.0,
 ) -> MetricsSnapshot:
@@ -64,7 +63,6 @@ def build_metrics_snapshot(
         rule_enforcement_cost=enforcement_cost,
         trait_key=trait_key,
         band_metadata=band_metadata or {},
-        trade_failures=trade_failures,
         prompt_duplication_rate=prompt_duplication_rate,
         plan_reuse_rate=plan_reuse_rate,
     )
