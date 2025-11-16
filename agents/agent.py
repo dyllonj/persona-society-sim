@@ -18,7 +18,7 @@ from agents.memory import MemoryStore
 from agents.planner import PlanSuggestion, Planner
 from agents.retrieval import MemoryRetriever
 from safety.governor import SafetyGovernor
-from schemas.agent import AgentState
+from schemas.agent import AgentState, Rule
 from env.world import RoomUtterance
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
@@ -110,7 +110,7 @@ class Agent:
         tick: int,
         current_location: Optional[str] = None,
         active_objective: Optional[Objective] = None,
-        rule_context: Optional[List[str]] = None,
+        rule_context: Optional[List[Rule]] = None,
         observation: Optional[str] = None,
         recent_dialogue: Optional[Sequence[RoomUtterance]] = None,
     ) -> PlanSuggestion:
@@ -375,7 +375,7 @@ class Agent:
         current_location: Optional[str] = None,
         active_objective: Optional[Objective] = None,
         recent_dialogue: Optional[Sequence[RoomUtterance]] = None,
-        rule_context: Optional[List[str]] = None,
+        rule_context: Optional[List[Rule]] = None,
         peers_present: bool = False,
     ) -> ActionDecision:
         self.perceive(observation, tick)
