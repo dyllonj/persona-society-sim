@@ -80,11 +80,11 @@ DEFAULT_OBJECTIVE_TEMPLATES: Dict[str, ObjectiveTemplate] = {
         requirements={"work": 2},
         reward={"satisfaction": 2.0},
     ),
-    "support_market": ObjectiveTemplate(
-        name="support_market",
-        type="trade",
-        description="Participate in one trade and one gift exchange to support civic life.",
-        requirements={"trade": 1, "gift": 1},
+    "share_findings": ObjectiveTemplate(
+        name="share_findings",
+        type="report",
+        description="Research, cite, and submit a collaborative report from the library.",
+        requirements={"research": 1, "cite": 1, "submit_report": 1},
         reward={"satisfaction": 2.5},
     ),
     "explore": ObjectiveTemplate(
@@ -104,8 +104,8 @@ DEFAULT_OBJECTIVE_TEMPLATES: Dict[str, ObjectiveTemplate] = {
     "gather": ObjectiveTemplate(
         name="gather",
         type="gather",
-        description="Collect resources through trading.",
-        requirements={"trade": 2},
+        description="Gather citations at the library to strengthen the community report.",
+        requirements={"cite": 2},
         reward={"satisfaction": 2.0},
     ),
     "research": ObjectiveTemplate(
