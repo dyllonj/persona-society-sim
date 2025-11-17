@@ -27,7 +27,7 @@ def move(world: World, agent_id: str, destination: str) -> ActionResult:
     return ActionResult("move", True, {"destination": destination})
 
 
-def talk(world: World, agent_id: str, utterance: str) -> ActionResult:
+def talk(world: World, agent_id: str, utterance: str, topic: str | None = None) -> ActionResult:
     location = world.agent_location(agent_id)
     truncated = utterance[:MAX_BROADCAST_CHARS]
     room_id = location if location != "unknown" else None
