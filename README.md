@@ -27,6 +27,9 @@ python3 -m orchestrator.cli configs/run.small.yaml --mock-model --env research -
 # run with HF weights + steering vectors (Research Sprint)
 python3 -m orchestrator.cli configs/run.small.yaml --env research --difficulty 3
 
+# run neutral agents without loading steering vectors
+python3 -m orchestrator.cli configs/run.small.yaml --env research --difficulty 3 --no-steering
+
 # follow live logs with colored, truncated output
 python3 -m orchestrator.cli configs/run.small.yaml --live --env research
 
@@ -35,6 +38,8 @@ python3 -m orchestrator.cli configs/run.small.yaml --live --full-messages --env 
 
 pytest  # optional
 ```
+
+Set `steering.enabled: false` in your YAML config (or pass `--no-steering`) to skip loading trait vectors and run agents with zeroed persona alphas.
 
 ### Simulation parameters
 

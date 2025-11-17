@@ -38,13 +38,20 @@ class BatchGenerationRequest:
 
 class LanguageBackend:
     def __init__(
-        self, temperature: float = 0.7, top_p: float = 0.9, alpha_strength: float = 1.0
+        self,
+        temperature: float = 0.7,
+        top_p: float = 0.9,
+        alpha_strength: float = 1.0,
+        suppress_alphas: bool = False,
     ):
         self.temperature = temperature
         self.top_p = top_p
         self.alpha_strength = alpha_strength
+        self.suppress_alphas = suppress_alphas
 
     def _scale_alphas(self, alphas: Dict[str, float]) -> Dict[str, float]:
+        if self.suppress_alphas:
+            return {trait: 0.0 for trait in alphas.keys()}
         if abs(self.alpha_strength - 1.0) < 1e-6:
             return alphas
         return {trait: coeff * self.alpha_strength for trait, coeff in alphas.items()}
@@ -76,10 +83,16 @@ class HFBackend(LanguageBackend):
         max_gpu_memory_gb: Optional[float] = None,
         max_cpu_memory_gb: Optional[float] = None,
         offload_folder: Optional[str] = None,
+        suppress_alphas: bool = False,
     ):
         if torch is None or AutoModelForCausalLM is None or AutoTokenizer is None:
             raise ModuleNotFoundError("torch and transformers are required for HFBackend")
-        super().__init__(temperature=temperature, top_p=top_p, alpha_strength=alpha_strength)
+        super().__init__(
+            temperature=temperature,
+            top_p=top_p,
+            alpha_strength=alpha_strength,
+            suppress_alphas=suppress_alphas,
+        )
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         # Reduce Transformers log verbosity (e.g., pad_token warnings)
         if hf_logging is not None:
@@ -123,12 +136,16 @@ class HFBackend(LanguageBackend):
         self.vector_norms: Dict[str, Dict[int, float]] = {
             trait: dict(per_layer) for trait, per_layer in provided_norms.items()
         }
-        self.controller = SteeringController(
-            self.model,
-            trait_vectors,
-            vector_norms=self.vector_norms,
-        )
-        self.controller.register()
+        self.controller: Optional[SteeringController]
+        if suppress_alphas or not trait_vectors:
+            self.controller = None
+        else:
+            self.controller = SteeringController(
+                self.model,
+                trait_vectors,
+                vector_norms=self.vector_norms,
+            )
+            self.controller.register()
 
     @staticmethod
     def _clean_memory_value(value: Optional[float]) -> Optional[float]:
@@ -162,7 +179,8 @@ class HFBackend(LanguageBackend):
         tokens = self.tokenizer(prompt, return_tensors="pt").to(self.model.device)
         prompt_length = tokens["input_ids"].shape[-1]
         scaled_alphas = self._scale_alphas(alphas)
-        self.controller.set_alphas(scaled_alphas, prompt_length=prompt_length)
+        if self.controller:
+            self.controller.set_alphas(scaled_alphas, prompt_length=prompt_length)
         with torch.no_grad():
             try:
                 output = self.model.generate(
@@ -173,7 +191,8 @@ class HFBackend(LanguageBackend):
                     pad_token_id=self.tokenizer.pad_token_id or self.tokenizer.eos_token_id,
                 )
             finally:
-                self.controller.clear_prompt_metadata()
+                if self.controller:
+                    self.controller.clear_prompt_metadata()
         tokens_in = tokens["input_ids"].shape[-1]
         generated = output[0][tokens_in:]
         decoded = self.tokenizer.decode(generated, skip_special_tokens=True)
@@ -202,7 +221,10 @@ class HFBackend(LanguageBackend):
 
             input_lengths = (tokens["attention_mask"].sum(dim=1)).tolist()
             batched_alphas = [self._scale_alphas(req.alphas) for _, req in bucket]
-            self.controller.set_batched_alphas(batched_alphas, prompt_lengths=input_lengths)
+            if self.controller:
+                self.controller.set_batched_alphas(
+                    batched_alphas, prompt_lengths=input_lengths
+                )
 
             with torch.no_grad():
                 try:
@@ -214,8 +236,9 @@ class HFBackend(LanguageBackend):
                         pad_token_id=self.tokenizer.pad_token_id or self.tokenizer.eos_token_id,
                     )
                 finally:
-                    self.controller.clear_prompt_metadata()
-                    self.controller.clear_batched_alphas()
+                    if self.controller:
+                        self.controller.clear_prompt_metadata()
+                        self.controller.clear_batched_alphas()
 
             for (original_idx, req), output, input_len in zip(bucket, outputs, input_lengths):
                 generated = output[input_len : input_len + req.max_new_tokens]
@@ -233,6 +256,8 @@ class HFBackend(LanguageBackend):
         return [cast(GenerationResult, res) for res in results]
 
     def layers_used(self) -> List[int]:
+        if not self.controller:
+            return []
         return self.controller.needed_layers
 
 
@@ -243,8 +268,14 @@ class MockBackend(LanguageBackend):
         temperature: float = 0.0,
         top_p: float = 1.0,
         alpha_strength: float = 1.0,
+        suppress_alphas: bool = False,
     ):
-        super().__init__(temperature=temperature, top_p=top_p, alpha_strength=alpha_strength)
+        super().__init__(
+            temperature=temperature,
+            top_p=top_p,
+            alpha_strength=alpha_strength,
+            suppress_alphas=suppress_alphas,
+        )
         self.seed = seed
 
     def generate(self, prompt: str, max_new_tokens: int, alphas: Dict[str, float]) -> GenerationResult:
