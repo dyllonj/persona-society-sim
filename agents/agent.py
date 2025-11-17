@@ -59,6 +59,7 @@ class Agent:
         safety_governor: SafetyGovernor,
         max_new_tokens: int = 120,
         reflect_every_n_ticks: int = 1,
+        suppress_alphas: bool = False,
     ):
         self.run_id = run_id
         self.state = state
@@ -69,6 +70,7 @@ class Agent:
         self.safety_governor = safety_governor
         self.max_new_tokens = max_new_tokens
         self.reflect_every_n_ticks = reflect_every_n_ticks
+        self._suppress_alphas = suppress_alphas
         self._last_plan_suggestion: Optional[PlanSuggestion] = None
         self._last_reflection: Optional[Tuple[str, List[str]]] = None
         self._last_plan_location: Optional[str] = None
@@ -82,6 +84,8 @@ class Agent:
     # ---- persona helpers ----
 
     def persona_alphas(self) -> Dict[str, float]:
+        if self._suppress_alphas:
+            return {trait: 0.0 for trait in self.state.persona_coeffs.model_dump().keys()}
         base = self.state.persona_coeffs.model_dump()
         alphas = {}
         for trait, coef in base.items():

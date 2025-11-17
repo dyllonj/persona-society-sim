@@ -208,6 +208,8 @@ def build_language_backend(
     trait_vectors: Dict[str, Dict[int, np.ndarray]],
     vector_norms: Dict[str, Dict[int, float]],
     mock: bool,
+    *,
+    suppress_alphas: bool = False,
 ) -> LanguageBackend:
     inference = config.get("inference", {})
     optimization = config.get("optimization", {})
@@ -216,6 +218,8 @@ def build_language_backend(
     use_quantization = optimization.get("use_quantization", False)
     steering_cfg = config.get("steering", {})
     alpha_strength = steering_cfg.get("strength", 1.0)
+    if suppress_alphas:
+        alpha_strength = 0.0
     max_gpu_memory = _maybe_float(optimization.get("max_gpu_memory_gb"))
     max_cpu_memory = _maybe_float(optimization.get("max_cpu_memory_gb"))
     raw_offload = optimization.get("offload_folder")
@@ -227,6 +231,7 @@ def build_language_backend(
             temperature=temperature,
             top_p=top_p,
             alpha_strength=alpha_strength,
+            suppress_alphas=suppress_alphas,
         )
     torch_vectors = {
         trait: {layer: torch.tensor(vector) for layer, vector in per_layer.items()}
@@ -243,6 +248,7 @@ def build_language_backend(
         max_gpu_memory_gb=max_gpu_memory,
         max_cpu_memory_gb=max_cpu_memory,
         offload_folder=offload_folder,
+        suppress_alphas=suppress_alphas,
     )
 
 
@@ -263,12 +269,16 @@ def build_agents(
     safety_governor: SafetyGovernor,
     *,
     config_dir: Optional[Path] = None,
+    suppress_alphas: bool = False,
 ) -> List[Agent]:
     population = config["population"]
     rng = random.Random(config.get("seed", 7))
     steering_cfg = config.get("steering", {})
-    base_persona = _steering_coefficients(steering_cfg)
-    persona_jitter = _persona_sampling_jitter(steering_cfg, config_dir=config_dir)
+    base_persona = {}
+    persona_jitter = 0.0
+    if not suppress_alphas:
+        base_persona = _steering_coefficients(steering_cfg)
+        persona_jitter = _persona_sampling_jitter(steering_cfg, config_dir=config_dir)
     inference = config.get("inference", {})
     optimization = config.get("optimization", {})
     max_tokens = inference.get("max_new_tokens", 120)
@@ -306,6 +316,7 @@ def build_agents(
             safety_governor=safety_governor,
             max_new_tokens=max_tokens,
             reflect_every_n_ticks=reflect_every_n,
+            suppress_alphas=suppress_alphas,
         )
         agents.append(agent)
     return agents
@@ -402,22 +413,32 @@ def main() -> None:
         action="store_true",
         help="Start WebSocket bridge and static web viewer (http://127.0.0.1:19123)",
     )
+    parser.add_argument(
+        "--no-steering",
+        action="store_true",
+        help="Disable persona steering vectors and run agents with neutral traits",
+    )
     args = parser.parse_args()
 
     config = load_config(args.config)
     run_id = config.get("run_id") or f"run-{uuid4().hex[:6]}"
     steering_cfg = config.get("steering", {})
-    alpha_strength = float(steering_cfg.get("strength", 1.0))
-    steering_base = _steering_coefficients(steering_cfg)
+    steering_enabled = bool(steering_cfg.get("enabled", True)) and not args.no_steering
+    alpha_strength = float(steering_cfg.get("strength", 1.0)) if steering_enabled else 0.0
+    steering_base = _steering_coefficients(steering_cfg) if steering_enabled else {}
     metadata_files = steering_cfg.get("metadata_files") or {}
-    vector_metadata = _load_metadata_file(
-        metadata_files.get("vectors"), config_dir=args.config.parent
-    )
-    trait_vectors, vector_norms = load_trait_vectors(
-        list(steering_base.keys() or TRAIT_KEYS),
-        args.vector_dir,
-        vector_metadata=vector_metadata,
-    )
+    trait_vectors: Dict[str, Dict[int, np.ndarray]] = {}
+    vector_norms: Dict[str, Dict[int, float]] = {}
+    vector_metadata: Dict[str, Any] = {}
+    if steering_enabled:
+        vector_metadata = _load_metadata_file(
+            metadata_files.get("vectors"), config_dir=args.config.parent
+        )
+        trait_vectors, vector_norms = load_trait_vectors(
+            list(steering_base.keys() or TRAIT_KEYS),
+            args.vector_dir,
+            vector_metadata=vector_metadata,
+        )
     safety_cfg = config.get("safety", {})
     safety = SafetyGovernor(
         SafetyConfig(
@@ -428,7 +449,11 @@ def main() -> None:
         )
     )
     backend = build_language_backend(
-        config, trait_vectors, vector_norms, mock=args.mock_model
+        config,
+        trait_vectors,
+        vector_norms,
+        mock=args.mock_model,
+        suppress_alphas=not steering_enabled,
     )
     world = World()
     world.configure_environment(args.env, args.difficulty)
@@ -440,6 +465,7 @@ def main() -> None:
         backend,
         safety,
         config_dir=args.config.parent,
+        suppress_alphas=not steering_enabled,
     )
     logging_cfg = config.get("logging", {})
     log_sink = LogSink(run_id, logging_cfg.get("db_url"), logging_cfg.get("parquet_dir"))

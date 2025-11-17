@@ -5,6 +5,7 @@ population: 100
 steps: 500
 seed: 42
 steering:
+  enabled: true
   strength: 1.0  # global alpha multiplier used by steering hooks and eval harness
   coefficients:
     E: 0.9
