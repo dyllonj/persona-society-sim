@@ -346,6 +346,10 @@ class Agent:
                 alignment_lines.append(
                     f"- Priority for you: {alignment_context.agent_priority}"
                 )
+            if alignment_context.task_hint:
+                alignment_lines.append(f"- Task focus: {alignment_context.task_hint}")
+            for hint in alignment_context.planning_hints or []:
+                alignment_lines.append(f"- Planning hint: {hint}")
             for reminder in alignment_context.reminders or []:
                 alignment_lines.append(f"- {reminder}")
             alignment_section = "\n".join(alignment_lines) + "\n\n"

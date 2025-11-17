@@ -16,6 +16,8 @@ class AlignmentContext:
     agent_priority: Optional[str] = None
     reminders: List[str] = field(default_factory=list)
     broadcast: Optional[str] = None
+    planning_hints: List[str] = field(default_factory=list)
+    task_hint: Optional[str] = None
 
 
 class MetaOrchestrator:
@@ -25,10 +27,22 @@ class MetaOrchestrator:
         self,
         global_goals: Optional[List[str]] = None,
         recurring_reminders: Optional[List[str]] = None,
+        agent_directives: Optional[Dict[str, List[str]]] = None,
     ) -> None:
         self.global_goals = list(global_goals or [])
         self.recurring_reminders = list(recurring_reminders or [])
+        self.agent_directives: Dict[str, List[str]] = agent_directives or {}
         self.last_broadcast: Optional[str] = None
+
+    def update_global_goals(self, goals: Iterable[str]) -> None:
+        """Replace the shared run-level goals the meta agent is pursuing."""
+
+        self.global_goals = list(goals)
+
+    def set_agent_directives(self, agent_id: str, directives: Iterable[str]) -> None:
+        """Persist meta-level planning hints for a specific agent."""
+
+        self.agent_directives[agent_id] = list(directives)
 
     def reprioritize_objectives(
         self, objective_manager, agent_ids: Iterable[str]
@@ -70,10 +84,13 @@ class MetaOrchestrator:
         for agent_id in agents.keys():
             reminders: List[str] = []
             priority: Optional[str] = None
+            planning_hints = list(self.agent_directives.get(agent_id, []))
+            task_hint: Optional[str] = None
             objective = active_objectives.get(agent_id) if active_objectives else None
             if objective and isinstance(objective, Objective):
                 priority = objective.description
                 reminders.append(f"Stay focused on: {objective.description}")
+                task_hint = self._task_assignment_hint(objective)
             if broadcast:
                 reminders.append(f"Meta reminder: {broadcast}")
 
@@ -82,8 +99,22 @@ class MetaOrchestrator:
                 agent_priority=priority,
                 reminders=reminders,
                 broadcast=broadcast,
+                planning_hints=planning_hints,
+                task_hint=task_hint,
             )
         return contexts
+
+    def _task_assignment_hint(self, objective: Objective) -> Optional[str]:
+        """Summarize the next outstanding requirement to push progress forward."""
+
+        if not objective.requirements:
+            return None
+        for key, required in objective.requirements.items():
+            progress = objective.progress.get(key, 0)
+            remaining = max(0, required - progress)
+            if remaining:
+                return f"Advance '{key}' ({remaining} remaining)"
+        return "Wrap up and report progress"
 
 
 __all__ = ["AlignmentContext", "MetaOrchestrator"]
