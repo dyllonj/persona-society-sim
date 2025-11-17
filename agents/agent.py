@@ -23,8 +23,10 @@ from env.world import RoomUtterance
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from schemas.objectives import Objective
+    from orchestrator.meta_manager import AlignmentContext
 else:  # pragma: no cover - runtime fallback for optional dependency
     Objective = object
+    AlignmentContext = object
 from schemas.logs import SafetyEvent
 
 
@@ -317,6 +319,7 @@ class Agent:
         *,
         current_location: Optional[str] = None,
         recent_dialogue: Optional[Sequence[RoomUtterance]] = None,
+        alignment_context: Optional["AlignmentContext"] = None,
     ) -> str:
         goals_text = ", ".join(self.state.goals) or "explore town"
         location_text = current_location or "unknown"
@@ -333,6 +336,19 @@ class Agent:
         if highlights:
             highlight_lines = ["Key observation highlights:"] + [f"- {item}" for item in highlights]
             highlight_section = "\n".join(highlight_lines) + "\n\n"
+        alignment_section = ""
+        if alignment_context:
+            alignment_lines = ["Alignment guidance:"]
+            if alignment_context.global_goals:
+                shared_goals = "; ".join(alignment_context.global_goals)
+                alignment_lines.append(f"- Shared goals: {shared_goals}")
+            if alignment_context.agent_priority:
+                alignment_lines.append(
+                    f"- Priority for you: {alignment_context.agent_priority}"
+                )
+            for reminder in alignment_context.reminders or []:
+                alignment_lines.append(f"- {reminder}")
+            alignment_section = "\n".join(alignment_lines) + "\n\n"
         param_text = ", ".join(f"{k}={v}" for k, v in suggestion.params.items()) or "none"
         action_directives = [
             "NEXT ACTION DIRECTIVE:",
@@ -357,6 +373,7 @@ class Agent:
             "- Always speak in first-person ('I...') and stay in character\n"
             "- Keep responses concise and consistent with your location\n"
             + penalty_text
+            + alignment_section
             + ("\n" + highlight_section if highlight_section else "\n")
             + f"{action_section}\n"
             f"\nCurrent location: {location_text}\n"
@@ -378,6 +395,7 @@ class Agent:
         recent_dialogue: Optional[Sequence[RoomUtterance]] = None,
         rule_context: Optional[List[Rule]] = None,
         peers_present: bool = False,
+        alignment_context: Optional["AlignmentContext"] = None,
     ) -> ActionDecision:
         self.perceive(observation, tick)
         suggestion = self.reflect_and_plan(
@@ -416,6 +434,7 @@ class Agent:
             suggestion,
             current_location=current_location,
             recent_dialogue=recent_dialogue,
+            alignment_context=alignment_context,
         )
         prompt_hash = hashlib.sha256(prompt.encode("utf-8")).hexdigest()
         alphas = self.persona_alphas()

@@ -16,6 +16,7 @@ from orchestrator.console_logger import ConsoleLogger
 from orchestrator.objectives import ObjectiveManager
 from orchestrator.probes import ProbeAssignment, ProbeManager
 from orchestrator.scheduler import Scheduler
+from orchestrator.meta_manager import AlignmentContext, MetaOrchestrator
 from schemas.logs import (
     ActionLog,
     MsgLog,
@@ -61,6 +62,7 @@ class SimulationRunner:
         objective_manager: Optional[ObjectiveManager] = None,
         event_bridge: Optional[object] = None,
         probe_manager: Optional[ProbeManager] = None,
+        meta_orchestrator: Optional[MetaOrchestrator] = None,
     ):
         self.run_id = run_id
         self.world = world
@@ -78,6 +80,7 @@ class SimulationRunner:
         self.event_bridge = event_bridge
         self.tick_instrumentation = TickInstrumentation()
         self.probe_manager = probe_manager
+        self.meta_orchestrator = meta_orchestrator
 
         if self.objective_manager:
             self.objective_manager.register_reward_callback(self._handle_objective_reward)
@@ -124,6 +127,28 @@ class SimulationRunner:
             # Log tick start
             self.console_logger.log_tick_start(self.world.tick, len(encounters))
 
+            alignment_contexts: Dict[str, AlignmentContext] = {}
+            if self.meta_orchestrator:
+                alignment_contexts = self.meta_orchestrator.alignment_directives(
+                    self.world.tick, self.agents, self.objective_manager
+                )
+                if self.meta_orchestrator.last_broadcast:
+                    self.console_logger.log_info(
+                        f"Meta broadcast: {self.meta_orchestrator.last_broadcast}"
+                    )
+                    if self.event_bridge and hasattr(self.event_bridge, "broadcast"):
+                        try:
+                            self.event_bridge.broadcast(
+                                {
+                                    "type": "meta_broadcast",
+                                    "tick": self.world.tick,
+                                    "message": self.meta_orchestrator.last_broadcast,
+                                    "global_goals": list(self.meta_orchestrator.global_goals),
+                                }
+                            )
+                        except Exception:
+                            pass
+
             for encounter in encounters:
                 encounter_transcript: List[RoomUtterance] = list(encounter.transcript)
                 for agent_id in encounter.participants:
@@ -156,6 +181,7 @@ class SimulationRunner:
                         recent_dialogue=tuple(encounter_transcript),
                         rule_context=self.world.institutional_guidance(),
                         peers_present=peers_present,
+                        alignment_context=alignment_contexts.get(agent.state.agent_id),
                     )
                     if probe_assignment:
                         decision.probe_id = probe_assignment.probe_id
