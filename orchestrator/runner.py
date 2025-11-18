@@ -97,6 +97,13 @@ class SimulationRunner:
         history: List[TickResult] = []
         sim_start_time = time.time()
 
+        # Start viewer if it has a start method (e.g. TUI or WebSocket server)
+        if self.event_bridge and hasattr(self.event_bridge, "start"):
+            try:
+                self.event_bridge.start()
+            except Exception:
+                pass
+
         # Broadcast initialization snapshot to viewer if available
         if self.event_bridge and hasattr(self.event_bridge, "broadcast"):
             try:
@@ -407,6 +414,14 @@ class SimulationRunner:
             self.metric_tracker.flush()
         except Exception:
             pass
+
+        # Stop viewer if it has a stop method
+        if self.event_bridge and hasattr(self.event_bridge, "stop"):
+            try:
+                self.event_bridge.stop()
+            except Exception:
+                pass
+
         return history
 
     def _trait_metadata(self, agent: Agent, steering_snapshot: Dict[str, float]) -> TraitMetadata:

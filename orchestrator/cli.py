@@ -233,7 +233,6 @@ def build_language_backend(
             temperature=temperature,
             top_p=top_p,
             alpha_strength=alpha_strength,
-            alpha_strength=alpha_strength,
             suppress_alphas=suppress_alphas,
         )
     
@@ -428,6 +427,11 @@ def main() -> None:
         help="Start WebSocket bridge and static web viewer (http://127.0.0.1:19123)",
     )
     parser.add_argument(
+        "--tui",
+        action="store_true",
+        help="Enable ASCII TUI visualization (replaces web viewer)",
+    )
+    parser.add_argument(
         "--no-steering",
         action="store_true",
         help="Disable persona steering vectors and run agents with neutral traits",
@@ -516,6 +520,14 @@ def main() -> None:
         except Exception as e:
             if args.live:
                 console_logger.log_warning(f"Failed to start viewer: {e}")
+
+    if args.tui:
+        from viewer.ascii_tui import AsciiViewer
+        event_bridge = AsciiViewer()
+        # Disable console logger to avoid interference with TUI
+        console_logger = ConsoleLogger(enabled=False)
+        # Also disable standard print output from runner summary if possible, 
+        # though runner uses console_logger mostly.
 
     runner = SimulationRunner(
         run_id=run_id,
