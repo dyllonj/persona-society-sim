@@ -15,6 +15,7 @@ import torch
 import yaml
 
 from agents.agent import Agent
+from agents.gemini_backend import GeminiBackend
 from agents.language_backend import HFBackend, LanguageBackend, MockBackend
 from agents.memory import MemoryStore
 from agents.planner import Planner
@@ -208,6 +209,7 @@ def build_language_backend(
     trait_vectors: Dict[str, Dict[int, np.ndarray]],
     vector_norms: Dict[str, Dict[int, float]],
     mock: bool,
+    use_gemini: bool = False,
     *,
     suppress_alphas: bool = False,
 ) -> LanguageBackend:
@@ -231,8 +233,19 @@ def build_language_backend(
             temperature=temperature,
             top_p=top_p,
             alpha_strength=alpha_strength,
+            alpha_strength=alpha_strength,
             suppress_alphas=suppress_alphas,
         )
+    
+    if use_gemini:
+        return GeminiBackend(
+            model_name="gemini-1.5-flash", # Could be configurable via config
+            temperature=temperature,
+            top_p=top_p,
+            alpha_strength=alpha_strength,
+            suppress_alphas=suppress_alphas,
+        )
+
     torch_vectors = {
         trait: {layer: torch.tensor(vector) for layer, vector in per_layer.items()}
         for trait, per_layer in trait_vectors.items()
@@ -393,6 +406,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Persona Society Sim runner")
     parser.add_argument("config", type=Path, help="Path to YAML config")
     parser.add_argument("--mock-model", action="store_true", help="Use mock backend instead of HF model")
+    parser.add_argument("--gemini", action="store_true", help="Use Gemini backend")
     parser.add_argument("--max-events", type=int, default=16, help="Max encounters per tick")
     parser.add_argument("--vector-dir", type=Path, default=Path("data/vectors"), help="Directory with steering vectors")
     parser.add_argument("--env", choices=["research", "policy", "nav"], default="research", help="Select experiment environment (research, policy, nav)")
@@ -453,6 +467,7 @@ def main() -> None:
         trait_vectors,
         vector_norms,
         mock=args.mock_model,
+        use_gemini=args.gemini,
         suppress_alphas=not steering_enabled,
     )
     world = World()

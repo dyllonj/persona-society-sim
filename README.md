@@ -39,6 +39,22 @@ python3 -m orchestrator.cli configs/run.small.yaml --live --full-messages --env 
 pytest  # optional
 ```
 
+### Using Gemini API (New)
+You can now run the simulation using Google's Gemini models via the API. This uses prompt-based steering instead of activation engineering.
+
+1. **Set your API key**:
+   ```bash
+   export GEMINI_API_KEY="your_api_key_here"
+   ```
+
+2. **Run with Gemini backend**:
+   ```bash
+   python3 -m orchestrator.cli configs/run.small.yaml --gemini --env research
+   ```
+
+**Note on Steering**: When using the Gemini backend, the "alphas" (trait coefficients) are mapped to natural language system instructions (e.g., "You are highly extraverted...") rather than being injected into model activations. This allows for "black-box" steering of API models.
+
+
 Set `steering.enabled: false` in your YAML config (or pass `--no-steering`) to skip loading trait vectors and run agents with zeroed persona alphas.
 
 ### Simulation parameters
