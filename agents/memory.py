@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 from datetime import datetime
-from typing import Iterable, List, Optional, Sequence
+from typing import Dict, Iterable, List, Optional, Sequence
 from uuid import uuid4
 
 from schemas.memory import MemoryEvent, Plan, Reflection
@@ -25,9 +25,45 @@ class MemoryStore:
             timestamp=datetime.utcnow(),
             text=text,
             importance=importance,
+            traits=self._tag_traits(text),
         )
         self.events.append(event)
         return event
+
+    def _tag_traits(self, text: str) -> Dict[str, float]:
+        """Heuristic tagging of memory content with Big Five traits."""
+        traits = {}
+        lowered = text.lower()
+        
+        # Extraversion: Social interactions
+        if any(w in lowered for w in ["party", "social", "meet", "talk", "chat", "community"]):
+            traits["Extraversion"] = 0.8
+        elif any(w in lowered for w in ["alone", "quiet", "read", "solitary"]):
+            traits["Extraversion"] = -0.5
+            
+        # Conscientiousness: Work and duty
+        if any(w in lowered for w in ["work", "task", "plan", "schedule", "duty", "report"]):
+            traits["Conscientiousness"] = 0.8
+        elif any(w in lowered for w in ["lazy", "late", "forgot", "messy"]):
+            traits["Conscientiousness"] = -0.5
+            
+        # Openness: Learning and novelty
+        if any(w in lowered for w in ["learn", "read", "library", "research", "explore", "new"]):
+            traits["Openness"] = 0.8
+            
+        # Agreeableness: Conflict vs Harmony
+        if any(w in lowered for w in ["help", "agree", "support", "kind"]):
+            traits["Agreeableness"] = 0.6
+        elif any(w in lowered for w in ["argue", "fight", "disagree", "rude"]):
+            traits["Agreeableness"] = -0.6
+            
+        # Neuroticism: Stress vs Calm
+        if any(w in lowered for w in ["worry", "scared", "stress", "panic", "nervous"]):
+            traits["Neuroticism"] = 0.8
+        elif any(w in lowered for w in ["calm", "relax", "peace", "steady"]):
+            traits["Neuroticism"] = -0.5
+            
+        return traits
 
     def add_reflection(self, agent_id: str, tick: int, text: str, implications: Iterable[str]) -> Reflection:
         reflection = Reflection(
@@ -60,8 +96,9 @@ class MemoryStore:
         current_tick: int | None = None,
         limit: int = 10,
         focus_terms: Optional[Sequence[str]] = None,
+        agent_persona: Optional[Dict[str, float]] = None,
     ) -> List[MemoryEvent]:
-        """Score events by keyword overlap × recency × importance (with optional focus boosts)."""
+        """Score events by keyword overlap × recency × importance × trait resonance."""
 
         keywords = set(query.lower().split())
         focus_tokens: set[str] = set()
@@ -78,7 +115,29 @@ class MemoryStore:
             if current_tick is not None:
                 gap = max(0, current_tick - event.tick)
                 recency = max(0.1, 1.0 - 0.01 * gap)
-            score = overlap + focus_bonus + (event.importance or 0.0) + recency
+            
+            # Trait Resonance: Boost memories that align with the agent's personality
+            resonance = 0.0
+            if agent_persona and event.traits:
+                # Dot product of agent traits and memory traits
+                for trait, value in event.traits.items():
+                    # Normalize trait key to match persona keys (e.g. "Extraversion" vs "E" or "Extraversion")
+                    # Assuming agent_persona uses full names or we map them. 
+                    # Let's assume full names for now based on prompt_steering.py, 
+                    # but if persona_coeffs uses "E", "A", etc., we need mapping.
+                    # The schema uses "E", "A", "C", "O", "N".
+                    short_map = {
+                        "Extraversion": "E",
+                        "Agreeableness": "A",
+                        "Conscientiousness": "C",
+                        "Neuroticism": "N",
+                        "Openness": "O"
+                    }
+                    pkey = short_map.get(trait, trait)
+                    agent_val = agent_persona.get(pkey, 0.0)
+                    resonance += value * agent_val
+            
+            score = overlap + focus_bonus + (event.importance or 0.0) + recency + (resonance * 0.5)
             # Deterministic jitter breaks ties so neighboring agents don't grab identical bundles.
             jitter_seed = hashlib.sha256(event.memory_id.encode("utf-8")).digest()
             jitter = int.from_bytes(jitter_seed[:2], "big") / 65535.0  # 0-1 range

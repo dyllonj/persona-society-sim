@@ -138,6 +138,7 @@ class Agent:
             self.state.goals,
             current_tick=tick,
             focus_terms=[current_location] if current_location else None,
+            agent_persona=self.persona_alphas(),
         )
         reflection_text = f"Focus: {', '.join(self.state.goals) or 'open exploration'}"
         implications = [f"Reference memory {ev.memory_id}" for ev in events]
@@ -336,6 +337,16 @@ class Agent:
         if highlights:
             highlight_lines = ["Key observation highlights:"] + [f"- {item}" for item in highlights]
             highlight_section = "\n".join(highlight_lines) + "\n\n"
+        
+        # Personality Override Section
+        alphas = self.persona_alphas()
+        trait_summary = []
+        for trait, val in alphas.items():
+            if abs(val) > 0.3:
+                level = "High" if val > 0 else "Low"
+                trait_summary.append(f"{level} {trait}")
+        persona_text = ", ".join(trait_summary) if trait_summary else "Neutral"
+
         alignment_section = ""
         if alignment_context:
             alignment_lines = ["Alignment guidance:"]
@@ -355,10 +366,15 @@ class Agent:
             alignment_section = "\n".join(alignment_lines) + "\n\n"
         param_text = ", ".join(f"{k}={v}" for k, v in suggestion.params.items()) or "none"
         action_directives = [
-            "NEXT ACTION DIRECTIVE:",
+            "SUGGESTED COURSE OF ACTION (Heuristic):",
             f"- Action type: {suggestion.action_type}",
             f"- Parameters: {param_text}",
             f"- Utterance guidance: {suggestion.utterance}",
+            "",
+            f"You are {agent_name} ({persona_text}).",
+            "CRITICAL INSTRUCTION: The suggestion above is a default heuristic.",
+            "If this action conflicts with your personality, YOU MUST REJECT IT and choose an action that fits you better.",
+            "Otherwise, follow the suggestion."
         ]
         if suggestion.action_type != "talk":
             action_directives.append("- Keep it to one concise sentence describing what you do next.")
