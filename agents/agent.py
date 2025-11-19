@@ -119,6 +119,7 @@ class Agent:
         rule_context: Optional[List[Rule]] = None,
         observation: Optional[str] = None,
         recent_dialogue: Optional[Sequence[RoomUtterance]] = None,
+        alignment_context: Optional["AlignmentContext"] = None,
     ) -> PlanSuggestion:
         # Skip reflection if not on reflection cycle and we have a cached plan
         should_reflect = (tick % self.reflect_every_n_ticks == 0)
@@ -146,6 +147,11 @@ class Agent:
         self._last_reflection = (summary, implications)
         self._last_reflection_tick = tick
         observation_keywords = self._extract_observation_keywords(observation, recent_dialogue)
+        
+        planning_hints = []
+        if alignment_context:
+            planning_hints = alignment_context.planning_hints
+
         suggestion = self.planner.plan(
             self.state.goals,
             summary,
@@ -157,6 +163,7 @@ class Agent:
             last_alignment_tick=self._last_alignment_tick,
             observation_keywords=observation_keywords if observation_keywords else None,
             agent_id=self.state.agent_id,
+            planning_hints=planning_hints,
         )
         self.memory.add_plan(self.state.agent_id, tick, tick + 3, [suggestion.action_type])
         self._last_plan_suggestion = suggestion
@@ -425,6 +432,7 @@ class Agent:
             rule_context=rule_context,
             observation=observation,
             recent_dialogue=recent_dialogue,
+            alignment_context=alignment_context,
         )
         # Add a brief pre-talk sync at the very beginning to reduce immediate moves.
         location_hint = (current_location or self.state.location_id or "town_square").replace("_", " ")

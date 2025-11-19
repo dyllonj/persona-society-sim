@@ -136,8 +136,13 @@ class SimulationRunner:
 
             alignment_contexts: Dict[str, AlignmentContext] = {}
             if self.meta_orchestrator:
+                # Build simple location map for the orchestrator
+                world_state = {
+                    agent_id: self.world.agent_location(agent_id)
+                    for agent_id in self.agents
+                }
                 alignment_contexts = self.meta_orchestrator.alignment_directives(
-                    self.world.tick, self.agents, self.objective_manager
+                    self.world.tick, self.agents, self.objective_manager, world_state=world_state
                 )
                 if self.meta_orchestrator.last_broadcast:
                     self.console_logger.log_info(
@@ -387,7 +392,53 @@ class SimulationRunner:
                             )
                         )
 
+            if self.meta_orchestrator:
+                # Identify rooms where conversation happened
+                active_rooms = set()
+                for log in tick_logs:
+                    if log.action_type == "talk" and log.outcome == "success":
+                        # We need the room ID. It's in info['room_id'] usually, or we can infer from agent location
+                        # But agent might have moved.
+                        # Let's look at the log info or the msg_log if we had it.
+                        # Actually, we can just track it during the loop below.
+                        pass
+
             self.world.step()
+            
+            # Report activity to meta orchestrator
+            if self.meta_orchestrator:
+                # We need to know which rooms had "talk" actions. 
+                # Let's re-scan tick_logs or just track it in a set during the loop.
+                # Tracking in loop is better but requires more code changes.
+                # Let's scan tick_logs.
+                active_rooms = set()
+                for log in tick_logs:
+                    if log.action_type == "talk" and log.outcome == "success":
+                        # We can try to get room from info, or just look up agent location (post-tick might be wrong if they moved)
+                        # But "talk" usually doesn't happen same tick as "move" unless we allow multiple actions?
+                        # The system seems to allow 1 action per tick per agent.
+                        # If they talked, they didn't move. So their current location is valid.
+                        # Wait, world.step() might have moved OTHER agents, but the talker stayed put.
+                        # Actually, world.step() processes moves.
+                        # So we should capture location BEFORE world.step().
+                        pass
+                
+                # Actually, let's just do it right:
+                # We can iterate tick_logs. For 'talk', the agent was at 'from' location (if they moved? no they can't move and talk).
+                # So we can just check their location in the world *before* step? No, we are after step.
+                # But if they talked, they are still there.
+                talk_rooms = set()
+                for log in tick_logs:
+                    if log.action_type == "talk":
+                        # We can't easily get the room from ActionLog params/info without digging.
+                        # But we know the agent_id.
+                        # And if they talked, they didn't move.
+                        # So self.world.agent_location(log.agent_id) should be correct even after step()
+                        # unless some external force moved them, which is rare.
+                        rid = self.world.agent_location(log.agent_id)
+                        talk_rooms.add(rid)
+                self.meta_orchestrator.update_activity(self.world.tick, talk_rooms)
+
             tick_idx = self._log_tick_snapshots()
             self._warn_prompt_duplication(tick_idx)
             self.log_sink.flush(self.world.tick)

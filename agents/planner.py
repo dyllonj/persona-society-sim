@@ -119,8 +119,21 @@ class Planner:
         last_alignment_tick: Optional[int] = None,
         observation_keywords: Optional[List[str]] = None,
         agent_id: Optional[str] = None,
+        planning_hints: Optional[List[str]] = None,
     ) -> PlanSuggestion:
         location = current_location or self.default_location
+
+        # 0. Forced collaboration override
+        if planning_hints and "force_collaboration" in planning_hints:
+            return PlanSuggestion(
+                action_type="talk",
+                params={
+                    "utterance": "Let's sync up on our tasks.",
+                    "topic": "forced_collab",
+                },
+                utterance="I need to coordinate with everyone here.",
+                alignment=True,
+            )
 
         objective_type: Optional[str] = None
         objective_pending = False

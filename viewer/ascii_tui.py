@@ -109,59 +109,39 @@ class AsciiViewer:
         self.layout["status"].update(self._render_status())
 
     def _render_map(self) -> Panel:
-        # Create a grid of rooms
-        grid = Table.grid(expand=True, padding=1)
-        
-        # Simple 2x2 or 3x3 grid logic depending on room count
-        # For now, let's just list them in rows
+        # Create a dense grid of rooms
+        grid = Table.grid(expand=True, padding=(0, 1))
         
         rooms = sorted(self.locations.keys())
         if not rooms:
             return Panel("Waiting for world state...", title=f"World Map (Tick {self.tick})")
 
-        # Group rooms into rows of 3
-        rows = []
-        current_row = []
-        for room in rooms:
-            current_row.append(room)
-            if len(current_row) == 3:
-                rows.append(current_row)
-                current_row = []
-        if current_row:
-            rows.append(current_row)
+        # Compact list view instead of big boxes
+        # Columns: Room Name | Occupants
+        table = Table(show_header=True, header_style="bold green", box=None, expand=True)
+        table.add_column("Location", style="green")
+        table.add_column("Agents", style="white")
 
-        for row_rooms in rows:
-            cells = []
-            for room_id in row_rooms:
-                occupants = self.locations.get(room_id, [])
-                
-                agent_texts = []
-                for aid in occupants:
-                    # Shorten ID for display, e.g., "agent-001" -> "001"
-                    short_id = aid.split("-")[-1] if "-" in aid else aid[:3]
-                    agent_texts.append(f"[bold white on blue]{short_id}[/]")
-                
-                content = "\n".join(agent_texts) if agent_texts else "[dim]Empty[/dim]"
-                
-                room_panel = Panel(
-                    content,
-                    title=f"[bold green]{room_id.replace('_', ' ').title()}[/]",
-                    border_style="green",
-                    height=8  # Fixed height for uniformity
-                )
-                cells.append(room_panel)
+        for room_id in rooms:
+            occupants = self.locations.get(room_id, [])
+            agent_texts = []
+            for aid in occupants:
+                # Shorten ID: "agent-001" -> "001"
+                short_id = aid.split("-")[-1] if "-" in aid else aid[:3]
+                agent_texts.append(f"[{short_id}]")
             
-            # Pad row if needed
-            while len(cells) < 3:
-                cells.append(Text(""))
-                
-            grid.add_row(*cells)
+            occupants_str = " ".join(agent_texts) if agent_texts else "[dim]-[/dim]"
+            table.add_row(room_id.replace("_", " ").title(), occupants_str)
 
-        return Panel(grid, title=f"World Map (Tick {self.tick})", border_style="blue")
+        return Panel(table, title=f"World Map (Tick {self.tick})", border_style="green")
 
     def _render_log(self) -> Panel:
+        # Reverse log to show newest at bottom naturally, but deque is appended.
+        # We want the log panel to look like a scrolling terminal.
         text = "\n".join(self.log_messages)
-        return Panel(text, title="Dialogue Log", border_style="yellow")
+        return Panel(text, title="Dialogue Log", border_style="yellow", height=10)
 
     def _render_status(self) -> Panel:
-        return Panel(self.current_status, title="System Status", border_style="white")
+        # Status bar with retro styling
+        status_text = f"[bold cyan]{self.current_status}[/bold cyan]"
+        return Panel(status_text, title="System Status", border_style="white")
