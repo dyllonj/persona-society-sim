@@ -12,7 +12,7 @@ from schemas.agent import AgentState, PersonaCoeffs, SteeringVectorRef
 
 
 class StubRetriever:
-    def summarize(self, goals, current_tick, focus_terms=None):  # noqa: D401 - simple stub
+    def summarize(self, goals, current_tick, focus_terms=None, agent_persona=None):  # noqa: D401 - simple stub
         return ("stub summary", [SimpleNamespace(memory_id="mem-1")])
 
 
