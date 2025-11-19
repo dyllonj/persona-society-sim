@@ -52,8 +52,21 @@ You can now run the simulation using Google's Gemini models via the API. This us
    python3 -m orchestrator.cli configs/run.small.yaml --gemini --env research
    ```
 
-**Note on Steering**: When using the Gemini backend, the "alphas" (trait coefficients) are mapped to natural language system instructions (e.g., "You are highly extraverted...") rather than being injected into model activations. This allows for "black-box" steering of API models.
+**Note on Steering**: When using the Gemini backend, the "alphas" (trait coefficients) are mapped to natural language system instructions (e.g., "You are highly extraverted...") rather than being injected into model activations. This allows for "black-box" steering of API models. - *Note: Costs vary based on population size and event density.*
 
+### ASCII TUI Mode
+For a retro, terminal-based visualization (great for SSH or low-resource environments):
+
+1. **Install dependencies**:
+   ```bash
+   pip install rich
+   ```
+
+2. **Run with `--tui`**:
+   ```bash
+   python3 -m orchestrator.cli configs/run.small.yaml --tui --gemini --env research
+   ```
+   This replaces the web viewer with a split-screen terminal view showing the map and dialogue log.
 
 Set `steering.enabled: false` in your YAML config (or pass `--no-steering`) to skip loading trait vectors and run agents with zeroed persona alphas.
 

@@ -180,6 +180,23 @@ class SimulationRunner:
                             )
                         if probe_assignment:
                             base_context = probe_assignment.inject(base_context)
+                            base_context = probe_assignment.inject(base_context)
+                    
+                    # Broadcast processing status
+                    if self.event_bridge and hasattr(self.event_bridge, "broadcast"):
+                        try:
+                            self.event_bridge.broadcast(
+                                {
+                                    "type": "processing",
+                                    "tick": self.world.tick,
+                                    "agent_id": agent.state.agent_id,
+                                }
+                            )
+                            # Force a small sleep to ensure TUI updates before blocking inference
+                            time.sleep(0.1)
+                        except Exception:
+                            pass
+
                     decision = agent.act(
                         base_context,
                         self.world.tick,

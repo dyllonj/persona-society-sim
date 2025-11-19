@@ -21,7 +21,9 @@ class AsciiViewer:
         self.layout.split(
             Layout(name="map", ratio=2),
             Layout(name="log", ratio=1),
+            Layout(name="status", size=3),
         )
+        self.current_status = "Initializing..."
         self.agents: Dict[str, Dict[str, Any]] = {}
         self.locations: Dict[str, List[str]] = {}  # location_id -> [agent_ids]
         self.log_messages: deque[str] = deque(maxlen=20)
@@ -50,6 +52,8 @@ class AsciiViewer:
             self._handle_chat(event)
         elif evt_type == "action":
             self._handle_action(event)
+        elif evt_type == "processing":
+            self._handle_processing(event)
             
         if self.live:
             self._update_render()
@@ -95,9 +99,14 @@ class AsciiViewer:
         # Optional: Log significant actions if needed, or just keep chat
         pass
 
+    def _handle_processing(self, event: Dict[str, Any]) -> None:
+        agent_id = event.get("agent_id", "?")
+        self.current_status = f"Agent {agent_id} is thinking..."
+
     def _update_render(self) -> None:
         self.layout["map"].update(self._render_map())
         self.layout["log"].update(self._render_log())
+        self.layout["status"].update(self._render_status())
 
     def _render_map(self) -> Panel:
         # Create a grid of rooms
@@ -153,3 +162,6 @@ class AsciiViewer:
     def _render_log(self) -> Panel:
         text = "\n".join(self.log_messages)
         return Panel(text, title="Dialogue Log", border_style="yellow")
+
+    def _render_status(self) -> Panel:
+        return Panel(self.current_status, title="System Status", border_style="white")
