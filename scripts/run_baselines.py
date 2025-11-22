@@ -107,6 +107,7 @@ def _prepare_runner(
         world,
         backend,
         safety,
+        env_choice,
         config_dir=config_path.parent,
         suppress_alphas=not steering_enabled,
     )

@@ -43,6 +43,30 @@ GOAL_LIBRARY = [
     "explore new ideas",
 ]
 
+ROLE_ROSTERS: Dict[str, List[Tuple[str, str]]] = {
+    "research": [
+        ("Principal Investigator", "Defines the research agenda and synthesizes findings."),
+        ("Field Researcher", "Interviews participants and gathers first-hand observations."),
+        ("Citation Librarian", "Tracks sources and validates references."),
+        ("Report Assembler", "Organizes notes into coherent drafts."),
+        ("QA Reviewer", "Checks accuracy, tone, and completeness before submission."),
+    ],
+    "policy": [
+        ("Requirements Lead", "Collects stakeholder needs and clarifies constraints."),
+        ("Field Owner", "Provides domain context and real-world examples."),
+        ("Policy Drafter", "Writes policy language and resolves ambiguities."),
+        ("Compliance Submitter", "Prepares forms and ensures alignment with standards."),
+        ("QA Auditor", "Reviews policies for gaps, risks, and adherence."),
+    ],
+    "nav": [
+        ("Route Planner", "Charts efficient paths between rooms."),
+        ("Room Scout", "Surveys rooms for obstacles or opportunities."),
+        ("Signal Relay", "Passes navigation updates between teammates."),
+        ("Data Logger", "Records positions, events, and timing."),
+        ("Recovery/Support", "Assists stuck agents and coordinates regrouping."),
+    ],
+}
+
 
 def load_config(path: Path) -> Dict:
     return yaml.safe_load(path.read_text())
@@ -95,6 +119,28 @@ def _persona_sampling_jitter(steering_cfg: Dict[str, Any], *, config_dir: Option
         return float(sampling_cfg.get("jitter", 0.2))
     except (TypeError, ValueError):
         return 0.2
+
+
+def _env_roster(env_choice: str) -> List[Tuple[str, str]]:
+    return ROLE_ROSTERS.get(env_choice, ROLE_ROSTERS["research"])
+
+
+def _assign_roles(population: int, roster: List[Tuple[str, str]], rng: random.Random) -> List[Tuple[str, str]]:
+    if not roster:
+        return [("Generalist", "Supports the team across tasks.")] * population
+    if population <= len(roster):
+        return roster[:population]
+    assignments = roster[:]
+    rng.shuffle(assignments)
+    while len(assignments) < population:
+        assignments.append(rng.choice(roster))
+    return assignments[:population]
+
+
+def _role_system_prompt(base_prompt: str, role: str, role_description: Optional[str]) -> str:
+    if role_description:
+        return f"{base_prompt} Role: {role} — {role_description}"
+    return f"{base_prompt} Role: {role}."
 
 
 def _steering_coefficients(steering_cfg: Dict[str, Any]) -> Dict[str, float]:
@@ -279,6 +325,7 @@ def build_agents(
     world: World,
     backend: LanguageBackend,
     safety_governor: SafetyGovernor,
+    env_choice: str,
     *,
     config_dir: Optional[Path] = None,
     suppress_alphas: bool = False,
@@ -296,19 +343,34 @@ def build_agents(
     max_tokens = inference.get("max_new_tokens", 120)
     reflect_every_n = optimization.get("reflect_every_n_ticks", 1)
     locations = list(world.locations.keys())
+    role_roster = _env_roster(env_choice)
+    role_assignments = _assign_roles(population, role_roster, rng)
+    prompt_prefix = {
+        "research": "You are part of a collaborative research sprint.",
+        "policy": "You are collaborating on a policy drafting mission.",
+        "nav": "You are coordinating a navigation and exploration mission.",
+    }.get(env_choice, "You are contributing to the simulation objectives.")
     agents: List[Agent] = []
     for idx in range(population):
         agent_id = f"agent-{idx:03d}"
         display_name = f"Agent {idx:03d}"
         persona = sample_persona(base_persona, rng, jitter=persona_jitter)
         location = rng.choice(locations)
+        role, role_description = role_assignments[idx]
         goals = rng.sample(GOAL_LIBRARY, k=min(2, len(GOAL_LIBRARY)))
+        role_goal = f"Fulfill {role} duties"
+        if role_description:
+            role_goal = f"{role_goal}: {role_description}"
+        goals.insert(0, role_goal)
+        system_prompt = _role_system_prompt(prompt_prefix, role, role_description)
         state = AgentState(
             agent_id=agent_id,
             display_name=display_name,
             persona_coeffs=persona,
             steering_refs=[],
-            system_prompt="Town resident",
+            role=role,
+            role_description=role_description,
+            system_prompt=system_prompt,
             location_id=location,
             goals=goals,
             created_at=datetime.utcnow(),
@@ -483,6 +545,7 @@ def main() -> None:
         world,
         backend,
         safety,
+        args.env,
         config_dir=args.config.parent,
         suppress_alphas=not steering_enabled,
     )
