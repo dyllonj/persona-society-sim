@@ -94,6 +94,7 @@ class ProbeManager:
             "likert": {},
             "behavior": {},
         }
+        self._validate_behavior_affordances()
 
     @classmethod
     def from_config(cls, config: Optional[Dict]) -> Optional["ProbeManager"]:
@@ -230,6 +231,25 @@ class ProbeManager:
                 preferred_outcome=definition.preferred_outcome,
             )
         return None
+
+    def _validate_behavior_affordances(self) -> None:
+        """Ensure each behavior probe maps to a single, stable affordance."""
+
+        affordance_owners: Dict[str, str] = {}
+        for probe in self.behavior_probes:
+            if not probe.affordance:
+                raise ValueError(f"Probe {probe.probe_id} is missing an affordance tag")
+            if not probe.trait:
+                raise ValueError(f"Probe {probe.probe_id} must declare a dominant trait")
+            owner = affordance_owners.setdefault(probe.affordance, probe.trait)
+            if owner != probe.trait:
+                raise ValueError(
+                    f"Affordance {probe.affordance} is shared by multiple traits: {owner} vs {probe.trait}"
+                )
+            if probe.preferred_outcome and probe.preferred_outcome not in probe.outcomes:
+                raise ValueError(
+                    f"Probe {probe.probe_id} preferred_outcome={probe.preferred_outcome} is missing from outcomes"
+                )
 
     @classmethod
     def score_likert_response(cls, response_text: str) -> Tuple[LikertScore, str]:

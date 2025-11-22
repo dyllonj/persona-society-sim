@@ -71,8 +71,35 @@ ROLE_ROSTERS: Dict[str, List[Tuple[str, str]]] = {
 }
 
 
-def load_config(path: Path) -> Dict:
-    return yaml.safe_load(path.read_text())
+def _deep_merge_dicts(base: Dict, override: Dict) -> Dict:
+    merged = dict(base)
+    for key, value in override.items():
+        if isinstance(value, dict) and isinstance(merged.get(key), dict):
+            merged[key] = _deep_merge_dicts(merged[key], value)
+        else:
+            merged[key] = value
+    return merged
+
+
+def load_config(path: Path, *, _seen: Optional[set[Path]] = None) -> Dict:
+    resolved = path.resolve()
+    seen = _seen or set()
+    if resolved in seen:
+        raise ValueError(f"Circular template include detected for {resolved}")
+    seen.add(resolved)
+    payload = yaml.safe_load(resolved.read_text()) or {}
+    if not isinstance(payload, dict):
+        return {}
+    template_ref = payload.pop("template", None)
+    if template_ref:
+        template_path = Path(template_ref)
+        if not template_path.is_absolute():
+            template_path = (resolved.parent / template_path).resolve()
+        if template_path == resolved:
+            raise ValueError(f"Config {resolved} cannot template itself")
+        base = load_config(template_path, _seen=seen)
+        payload = _deep_merge_dicts(base, payload)
+    return payload
 
 
 def _load_metadata_file(path_value: Optional[str], *, config_dir: Optional[Path]) -> Dict[str, Any]:
@@ -528,7 +555,7 @@ def main() -> None:
     parser.add_argument("config", type=Path, help="Path to YAML config")
     parser.add_argument("--mock-model", action="store_true", help="Use mock backend instead of HF model")
     parser.add_argument("--gemini", action="store_true", help="Use Gemini backend")
-    parser.add_argument("--max-events", type=int, default=16, help="Max encounters per tick")
+    parser.add_argument("--max-events", type=int, help="Max encounters per tick (overrides config)")
     parser.add_argument("--vector-dir", type=Path, default=Path("data/vectors"), help="Directory with steering vectors")
     parser.add_argument("--env", choices=["research", "policy", "nav"], default="research", help="Select experiment environment (research, policy, nav)")
     parser.add_argument("--difficulty", type=int, default=3, help="Difficulty parameter (facts, checklist fields, or tokens)")
@@ -571,6 +598,11 @@ def main() -> None:
 
     config = load_config(args.config)
     run_id = config.get("run_id") or f"run-{uuid4().hex[:6]}"
+    max_events = config.get("max_events_per_tick")
+    if args.max_events is not None:
+        max_events = args.max_events
+    if max_events is None:
+        max_events = 16
     steering_cfg = config.get("steering", {})
     steering_mode = args.steering_mode
     if args.no_steering:
@@ -646,7 +678,9 @@ def main() -> None:
         )
     if args.live:
         console_logger.log_info(f"Starting simulation: {run_id}")
-        console_logger.log_info(f"Agents: {len(agents)}, Steps: {config.get('steps', 200)}, Events/tick: {args.max_events}")
+        console_logger.log_info(
+            f"Agents: {len(agents)}, Steps: {config.get('steps', 200)}, Events/tick: {max_events}"
+        )
 
     # Optionally start viewer bridge
     event_bridge = None
@@ -695,7 +729,7 @@ def main() -> None:
             event_bridge=event_bridge,
             meta_orchestrator=meta_orchestrator,
         )
-        runner.run(config.get("steps", 200), max_events_per_tick=args.max_events)
+        runner.run(config.get("steps", 200), max_events_per_tick=max_events)
 
         if not args.live:
             print(f"Run {run_id} completed {config.get('steps', 200)} steps with {len(agents)} agents.")

@@ -21,7 +21,7 @@ behavior:
       scenario: |
         A neighbor explains that they cannot afford medicine at the clinic even though you just bought extra doses.
       instructions: |
-        Answer with SHARE if you would hand over some supplies, or REFUSE if you would decline.
+        This probe isolates generosity. Answer with SHARE if you would hand over some supplies, or REFUSE if you would decline.
       outcomes:
         share:
           keywords: ["share", "give", "hand over", "offer"]
@@ -34,7 +34,7 @@ behavior:
       scenario: |
         You promised to finish an inventory report tonight, but friends invite you to relax at the tavern instead.
       instructions: |
-        Respond with FINISH if you would complete the report before relaxing, or DELAY if you would postpone it.
+        This probe isolates diligence. Respond with FINISH if you would complete the report before relaxing, or DELAY if you would postpone it.
       outcomes:
         finish:
           keywords: ["finish", "submit", "complete", "do it now"]
@@ -47,7 +47,7 @@ behavior:
       scenario: |
         A newcomer quietly sits alone in the square after arriving in town. Do you initiate contact?
       instructions: |
-        Respond with WELCOME if you would walk over to start a conversation, or LEAVE if you would give them space.
+        This probe isolates outreach. Respond with WELCOME if you would walk over to start a conversation, or LEAVE if you would give them space.
       outcomes:
         welcome:
           keywords: ["welcome", "approach", "greet", "introduce"]
@@ -60,7 +60,7 @@ behavior:
       scenario: |
         You can take a well-known path to the market or a longer unfamiliar route past old ruins. Which do you choose?
       instructions: |
-        Respond with EXPLORE if you would take the unfamiliar path, or ROUTINE if you would stick to the usual route.
+        This probe isolates exploration. Respond with EXPLORE if you would take the unfamiliar path, or ROUTINE if you would stick to the usual route.
       outcomes:
         explore:
           keywords: ["explore", "new path", "ruins", "detour"]
@@ -73,7 +73,7 @@ behavior:
       scenario: |
         You observe someone quietly taking food from the community pantry without logging it. Do you report them?
       instructions: |
-        Respond with REPORT if you'd alert the council or IGNORE if you'd let it slide.
+        This probe isolates vigilance. Respond with REPORT if you'd alert the council or IGNORE if you'd let it slide.
       outcomes:
         report:
           keywords: ["report", "alert", "notify"]

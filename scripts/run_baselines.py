@@ -266,7 +266,10 @@ def main() -> None:
             run_suffix=arm,
             placebo_seed=placebo_seed,
         )
-        runner.run(base_config.get("steps", steps), max_events_per_tick=base_config.get("max_events", 16))
+        runner.run(
+            base_config.get("steps", steps),
+            max_events_per_tick=base_config.get("max_events_per_tick", base_config.get("max_events", 16)),
+        )
         summary = {"mode": arm, **_summarize(sink)}
         if shuffle_mapping:
             summary["placebo_mapping"] = shuffle_mapping
