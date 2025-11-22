@@ -91,6 +91,24 @@ class Planner:
                 "utterance": "I'm compiling our findings into a report at the library.",
             },
         }
+        self._role_templates = {
+            "research": {
+                "move": "Heading to the library to keep our research momentum.",
+                "research": "Investigating sources that support our research goals.",
+                "cite": "Recording a citation to back up our findings.",
+                "submit_report": "Submitting a concise research report for the team.",
+            },
+            "policy": {
+                "move": "Relocating to the community center to own the compliance checklist.",
+                "fill_field": "Capturing the next compliance detail in the checklist.",
+                "propose_plan": "Drafting the policy summary before submission.",
+                "submit_plan": "Submitting the compliance plan for approval.",
+            },
+            "navigation": {
+                "move": "Rotating to {destination} to extend our scan coverage.",
+                "scan": "Scanning this room to exhaust the remaining tokens.",
+            },
+        }
         known_locations = {self.default_location}
         for heuristic in self._objective_heuristics.values():
             target = heuristic.get("location")
@@ -120,6 +138,7 @@ class Planner:
         observation_keywords: Optional[List[str]] = None,
         agent_id: Optional[str] = None,
         planning_hints: Optional[List[str]] = None,
+        agent_role: Optional[str] = None,
     ) -> PlanSuggestion:
         location = current_location or self.default_location
 
@@ -144,7 +163,9 @@ class Planner:
             objective_pending = self._objective_pending(active_objective)
             objective_plan = self._plan_for_objective(active_objective, location, tick)
             if objective_plan:
-                return objective_plan
+                return self._enforce_role_alignment(
+                    objective_plan, agent_role, location, tick
+                )
 
         if rule_context:
             rule_plan = self._plan_from_rules(
@@ -154,7 +175,9 @@ class Planner:
                 objective_type=objective_type,
             )
             if rule_plan:
-                return rule_plan
+                return self._enforce_role_alignment(
+                    rule_plan, agent_role, location, tick
+                )
 
         lowered_summary = memory_summary.lower()
         observation_terms = [hint.lower() for hint in (observation_keywords or [])]
@@ -166,9 +189,15 @@ class Planner:
         if last_reflection_tick is not None and not alignment_blocked:
             return self._alignment_plan(location, agent_id)
 
-        keyword_plan = self._plan_from_keywords(observation_terms, location)
+        keyword_plan = self._plan_from_keywords(
+            observation_terms, location, agent_role, tick
+        )
         if keyword_plan:
             return keyword_plan
+
+        role_plan = self._role_bias_plan(agent_role, location, tick)
+        if role_plan:
+            return role_plan
 
         def keyword_score(term: str) -> int:
             normalized = term.lower()
@@ -205,7 +234,12 @@ class Planner:
         else:
             action = "talk"
             params = {"utterance": goal}
-        return PlanSuggestion(action_type=action, params=params, utterance=utterance)
+        return self._enforce_role_alignment(
+            PlanSuggestion(action_type=action, params=params, utterance=utterance),
+            agent_role,
+            location,
+            tick,
+        )
 
     def _plan_for_objective(
         self, objective: Objective, current_location: str, tick: int
@@ -264,7 +298,11 @@ class Planner:
         return PlanSuggestion("talk", params, utterance, alignment=True)
 
     def _plan_from_keywords(
-        self, observation_terms: List[str], location: str
+        self,
+        observation_terms: List[str],
+        location: str,
+        agent_role: Optional[str],
+        tick: int,
     ) -> Optional[PlanSuggestion]:
         if not observation_terms:
             return None
@@ -274,64 +312,226 @@ class Planner:
 
         if has_term("library") or has_term("research"):
             if location != "library":
-                return PlanSuggestion(
+                suggestion = PlanSuggestion(
                     "move",
                     {"destination": "library"},
                     "Heading to the library to dig into the research people flagged.",
                 )
-            return PlanSuggestion(
+                return self._enforce_role_alignment(
+                    suggestion, agent_role, location, tick
+                )
+            suggestion = PlanSuggestion(
                 "research",
                 {"query": "community topics"},
                 "I'll investigate the research leads that just came up.",
             )
+            return self._enforce_role_alignment(
+                suggestion, agent_role, location, tick
+            )
 
         if has_term("cite") or has_term("citation") or has_term("reference"):
             if location != "library":
-                return PlanSuggestion(
+                suggestion = PlanSuggestion(
                     "move",
                     {"destination": "library"},
                     "Heading to the library so I can cite the sources people requested.",
                 )
-            return PlanSuggestion(
+                return self._enforce_role_alignment(
+                    suggestion, agent_role, location, tick
+                )
+            suggestion = PlanSuggestion(
                 "cite",
                 {},
                 "I'll cite a source to back up our discussion.",
             )
+            return self._enforce_role_alignment(
+                suggestion, agent_role, location, tick
+            )
 
         if has_term("report") or has_term("brief"):
             if location != "library":
-                return PlanSuggestion(
+                suggestion = PlanSuggestion(
                     "move",
                     {"destination": "library"},
                     "Heading to the library to wrap up the report folks asked about.",
                 )
-            return PlanSuggestion(
+                return self._enforce_role_alignment(
+                    suggestion, agent_role, location, tick
+                )
+            suggestion = PlanSuggestion(
                 "submit_report",
                 {},
                 "I'll submit a concise report based on our findings.",
             )
+            return self._enforce_role_alignment(
+                suggestion, agent_role, location, tick
+            )
 
         if has_term("wellbeing"):
-            return PlanSuggestion(
+            suggestion = PlanSuggestion(
                 "work",
                 {"task": "wellbeing support"},
                 "I'll cover the wellbeing tasks people just surfaced.",
             )
+            return self._enforce_role_alignment(
+                suggestion, agent_role, location, tick
+            )
 
         if has_term("community"):
             if location != "community_center":
-                return PlanSuggestion(
+                suggestion = PlanSuggestion(
                     "move",
                     {"destination": "community_center"},
                     "Heading to the community center to follow up.",
                 )
-            return PlanSuggestion(
+                return self._enforce_role_alignment(
+                    suggestion, agent_role, location, tick
+                )
+            suggestion = PlanSuggestion(
                 "work",
                 {"task": "community center tasks"},
                 "I'll help with the community center tasks people flagged.",
             )
+            return self._enforce_role_alignment(
+                suggestion, agent_role, location, tick
+            )
 
         return None
+
+    def _role_bias_plan(
+        self, agent_role: Optional[str], location: str, tick: int
+    ) -> Optional[PlanSuggestion]:
+        if not agent_role:
+            return None
+
+        role = agent_role.lower()
+        if role == "research":
+            target_location = "library"
+            if location != target_location:
+                suggestion = PlanSuggestion(
+                    "move",
+                    {"destination": target_location},
+                    self._role_templates["research"]["move"],
+                )
+                return self._apply_role_templates(suggestion, role)
+            step = (tick or 0) % 3
+            if step == 0:
+                suggestion = PlanSuggestion(
+                    "research",
+                    {"query": "priority topic"},
+                    self._role_templates["research"]["research"],
+                )
+            elif step == 1:
+                suggestion = PlanSuggestion(
+                    "cite", {}, self._role_templates["research"]["cite"]
+                )
+            else:
+                suggestion = PlanSuggestion(
+                    "submit_report",
+                    {},
+                    self._role_templates["research"]["submit_report"],
+                )
+            return self._apply_role_templates(suggestion, role)
+
+        if role == "policy":
+            target_location = "community_center"
+            if location != target_location:
+                suggestion = PlanSuggestion(
+                    "move",
+                    {"destination": target_location},
+                    self._role_templates["policy"]["move"],
+                )
+                return self._apply_role_templates(suggestion, role)
+            step = (tick or 0) % 3
+            if step in (0, 1):
+                field_number = (tick or 0) % 4 + 1
+                suggestion = PlanSuggestion(
+                    "fill_field",
+                    {
+                        "field_name": f"policy_field_{field_number}",
+                        "value": f"Ownership note {field_number}",
+                    },
+                    self._role_templates["policy"]["fill_field"],
+                )
+            else:
+                suggestion = PlanSuggestion(
+                    "submit_plan",
+                    {},
+                    self._role_templates["policy"]["submit_plan"],
+                )
+            return self._apply_role_templates(suggestion, role)
+
+        if role == "navigation":
+            if not self._nav_cycle:
+                return None
+            target_index = (tick or 0) % len(self._nav_cycle)
+            target_location = self._nav_cycle[target_index]
+            if location != target_location:
+                suggestion = PlanSuggestion(
+                    "move",
+                    {"destination": target_location},
+                    self._role_templates["navigation"]["move"].format(
+                        destination=target_location.replace("_", " ")
+                    ),
+                )
+                return self._apply_role_templates(suggestion, role)
+            if (tick or 0) % 3 != 2:
+                suggestion = PlanSuggestion(
+                    "scan", {}, self._role_templates["navigation"]["scan"]
+                )
+                return self._apply_role_templates(suggestion, role)
+            next_location = self._nav_cycle[(target_index + 1) % len(self._nav_cycle)]
+            suggestion = PlanSuggestion(
+                "move",
+                {"destination": next_location},
+                "Coverage complete here; rotating rooms to keep scanning.",
+            )
+            return self._apply_role_templates(suggestion, role)
+
+        return None
+
+    def _apply_role_templates(
+        self, suggestion: PlanSuggestion, role: str
+    ) -> PlanSuggestion:
+        templates = self._role_templates.get(role)
+        if not templates:
+            return suggestion
+
+        template = templates.get(suggestion.action_type)
+        if template:
+            try:
+                suggestion.utterance = template.format(
+                    destination=suggestion.params.get("destination", "").replace(
+                        "_", " "
+                    ),
+                    field=suggestion.params.get("field_name", ""),
+                )
+            except Exception:  # pragma: no cover - defensive formatting
+                suggestion.utterance = template
+        return suggestion
+
+    def _enforce_role_alignment(
+        self,
+        suggestion: PlanSuggestion,
+        agent_role: Optional[str],
+        location: str,
+        tick: int,
+    ) -> PlanSuggestion:
+        if not agent_role or not suggestion:
+            return suggestion
+
+        role = agent_role.lower()
+        allowed_actions = {
+            "research": {"move", "research", "cite", "submit_report"},
+            "policy": {"move", "fill_field", "submit_plan", "propose_plan"},
+            "navigation": {"move", "scan"},
+        }
+        allowed = allowed_actions.get(role)
+        if allowed and suggestion.action_type not in allowed:
+            replacement = self._role_bias_plan(agent_role, location, tick)
+            if replacement:
+                return replacement
+        return self._apply_role_templates(suggestion, role)
 
     def _plan_policy_objective(
         self, objective: Objective, current_location: str
