@@ -1,5 +1,4 @@
 """Meta-level coordinator that nudges agents toward shared goals."""
-
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -20,6 +19,14 @@ class AlignmentContext:
     task_hint: Optional[str] = None
 
 
+@dataclass
+class RoleDirectives:
+    """Role-specific nudges the meta-orchestrator can apply."""
+
+    planning_hints: List[str] = field(default_factory=list)
+    reminders: List[str] = field(default_factory=list)
+
+
 class MetaOrchestrator:
     """Tracks run-level goals and issues alignment nudges to agents."""
 
@@ -28,12 +35,19 @@ class MetaOrchestrator:
         global_goals: Optional[List[str]] = None,
         recurring_reminders: Optional[List[str]] = None,
         agent_directives: Optional[Dict[str, List[str]]] = None,
+        role_playbook: Optional[Dict[str, Dict[str, Dict[str, List[str]]]]] = None,
+        environment: Optional[str] = None,
     ) -> None:
         self.global_goals = list(global_goals or [])
         self.recurring_reminders = list(recurring_reminders or [])
         self.agent_directives: Dict[str, List[str]] = agent_directives or {}
         self.last_room_activity: Dict[str, int] = {}
         self.last_broadcast: Optional[str] = None
+        base_playbook = self.default_role_playbook()
+        if role_playbook:
+            base_playbook = self.merge_playbooks(base_playbook, role_playbook)
+        self.role_playbook = self._normalize_playbook(base_playbook)
+        self.environment = environment
 
     def update_global_goals(self, goals: Iterable[str]) -> None:
         """Replace the shared run-level goals the meta agent is pursuing."""
@@ -77,6 +91,8 @@ class MetaOrchestrator:
         agents: Dict[str, object],
         objective_manager=None,
         world_state: Optional[Dict] = None,
+        agent_roles: Optional[Dict[str, str]] = None,
+        environment: Optional[str] = None,
     ) -> Dict[str, AlignmentContext]:
         """Produce per-agent alignment contexts for the current tick."""
 
@@ -103,12 +119,23 @@ class MetaOrchestrator:
                     if tick - last_active > 3:
                         force_collab_rooms.add(room_id)
 
+        env_key = (environment or self.environment or "").lower()
         contexts: Dict[str, AlignmentContext] = {}
         for agent_id in agents.keys():
             reminders: List[str] = []
             priority: Optional[str] = None
             planning_hints = list(self.agent_directives.get(agent_id, []))
             task_hint: Optional[str] = None
+            role = None
+            if agent_roles:
+                role = agent_roles.get(agent_id)
+            if role is None:
+                role = getattr(getattr(agents.get(agent_id), "state", None), "role", None)
+            role_directives = self._role_directives(env_key, role)
+            if role_directives.reminders:
+                reminders.extend(role_directives.reminders)
+            if role_directives.planning_hints:
+                planning_hints.extend(role_directives.planning_hints)
             objective = active_objectives.get(agent_id) if active_objectives else None
             if objective and isinstance(objective, Objective):
                 priority = objective.description
@@ -170,5 +197,192 @@ class MetaOrchestrator:
                 return f"Advance '{key}' ({remaining} remaining)"
         return "Wrap up and report progress"
 
+    @staticmethod
+    def merge_playbooks(
+        base: Dict[str, Dict[str, Dict[str, List[str]]]],
+        overrides: Optional[Dict[str, Dict[str, Dict[str, List[str]]]]],
+    ) -> Dict[str, Dict[str, Dict[str, List[str]]]]:
+        """Shallow merge role directives with override precedence."""
 
-__all__ = ["AlignmentContext", "MetaOrchestrator"]
+        merged: Dict[str, Dict[str, Dict[str, List[str]]]] = {}
+        for env_key, roles in (base or {}).items():
+            if not isinstance(roles, dict):
+                continue
+            merged[env_key] = {
+                role: {
+                    "planning_hints": list((directives or {}).get("planning_hints", [])),
+                    "reminders": list((directives or {}).get("reminders", [])),
+                }
+                for role, directives in roles.items()
+                if isinstance(directives, dict)
+            }
+
+        for env_key, roles in (overrides or {}).items():
+            if not isinstance(roles, dict):
+                continue
+            bucket = merged.setdefault(env_key, {})
+            for role, directives in roles.items():
+                if not isinstance(directives, dict):
+                    continue
+                baseline = bucket.get(role, {"planning_hints": [], "reminders": []})
+                hints = directives.get("planning_hints")
+                reminders = directives.get("reminders")
+                bucket[role] = {
+                    "planning_hints": list(
+                        hints if hints is not None else baseline.get("planning_hints", [])
+                    ),
+                    "reminders": list(
+                        reminders if reminders is not None else baseline.get("reminders", [])
+                    ),
+                }
+        return merged
+
+    @staticmethod
+    def default_role_playbook() -> Dict[str, Dict[str, Dict[str, List[str]]]]:
+        """Built-in role directives keyed by environment and role."""
+
+        return {
+            "research": {
+                "principal investigator": {
+                    "planning_hints": ["synthesize_findings", "delegate_tasks"],
+                    "reminders": [
+                        "Drive the research agenda, delegate blockers, and keep everyone aligned.",
+                        "Narrate key takeaways for the team after each discovery.",
+                    ],
+                },
+                "field researcher": {
+                    "planning_hints": ["collect_interviews", "prioritize_new_rooms"],
+                    "reminders": [
+                        "Keep interviewing participants and capture fresh observations.",
+                        "Visit new rooms to surface untapped information.",
+                    ],
+                },
+                "citation librarian": {
+                    "planning_hints": ["track_citations", "verify_sources"],
+                    "reminders": [
+                        "Ensure every claim is backed by a citation and flag gaps early.",
+                        "Share reference formats and keep a running bibliography for the team.",
+                    ],
+                },
+                "report assembler": {
+                    "planning_hints": ["draft_sections", "organize_notes"],
+                    "reminders": [
+                        "Continuously structure notes into report sections as facts arrive.",
+                        "Call for missing sections before submission time.",
+                    ],
+                },
+                "qa reviewer": {
+                    "planning_hints": ["check_accuracy", "flag_gaps"],
+                    "reminders": [
+                        "Audit facts and tone, and highlight inconsistencies for the drafter.",
+                        "Maintain a final review checklist so the team knows what remains.",
+                    ],
+                },
+            },
+            "policy": {
+                "requirements lead": {
+                    "planning_hints": ["gather_requirements", "clarify_constraints"],
+                    "reminders": [
+                        "Capture stakeholder needs and confirm constraints before drafting.",
+                        "Summarize requirement gaps so the drafter can act quickly.",
+                    ],
+                },
+                "field owner": {
+                    "planning_hints": ["provide_examples", "surface_risks"],
+                    "reminders": [
+                        "Offer domain examples and call out real-world risks or blockers.",
+                        "Keep the team honest about what will or will not work in practice.",
+                    ],
+                },
+                "policy drafter": {
+                    "planning_hints": ["write_policy_language", "resolve_ambiguities"],
+                    "reminders": [
+                        "Transform requirements into clear policy text and close open questions.",
+                        "Coordinate with submitters to keep the policy ready for approval.",
+                    ],
+                },
+                "compliance submitter": {
+                    "planning_hints": ["monitor_submission_readiness", "collect_signoffs"],
+                    "reminders": [
+                        "Track paperwork status and remind teammates about missing approvals.",
+                        "Keep forms, citations, and attestations ready for timely submission.",
+                    ],
+                },
+                "qa auditor": {
+                    "planning_hints": ["audit_gaps", "enforce_adherence"],
+                    "reminders": [
+                        "Review drafts against standards and flag compliance risks early.",
+                        "Report readiness blockers so the submitter can clear them.",
+                    ],
+                },
+            },
+            "nav": {
+                "route planner": {
+                    "planning_hints": ["optimize_paths", "coordinate_routes"],
+                    "reminders": [
+                        "Share efficient routes and reroute teammates around congestion.",
+                        "Keep navigation plans updated as rooms change.",
+                    ],
+                },
+                "room scout": {
+                    "planning_hints": ["prioritize_new_rooms", "spot_obstacles"],
+                    "reminders": [
+                        "Scout unexplored rooms first and report hazards immediately.",
+                        "Surface opportunities that unblock the rest of the team.",
+                    ],
+                },
+                "signal relay": {
+                    "planning_hints": ["broadcast_navigation_updates", "sync_positions"],
+                    "reminders": [
+                        "Keep everyone informed of moves, discoveries, and detours.",
+                        "Confirm positions when the team splits up to avoid confusion.",
+                    ],
+                },
+                "data logger": {
+                    "planning_hints": ["record_positions", "track_timing"],
+                    "reminders": [
+                        "Maintain accurate timestamps and room visit history.",
+                        "Share logs so planners can optimize next routes.",
+                    ],
+                },
+                "recovery/support": {
+                    "planning_hints": ["help_stuck_agents", "coordinate_regroup"],
+                    "reminders": [
+                        "Monitor for stuck teammates and guide them back to productive paths.",
+                        "Organize regroup points when the team drifts apart.",
+                    ],
+                },
+            },
+        }
+
+    def _normalize_playbook(
+        self, playbook: Dict[str, Dict[str, Dict[str, List[str]]]]
+    ) -> Dict[str, Dict[str, RoleDirectives]]:
+        normalized: Dict[str, Dict[str, RoleDirectives]] = {}
+        for env_key, roles in (playbook or {}).items():
+            if not isinstance(roles, dict):
+                continue
+            env_bucket: Dict[str, RoleDirectives] = {}
+            for role, directives in roles.items():
+                if not isinstance(directives, dict):
+                    continue
+                env_bucket[role.lower()] = RoleDirectives(
+                    planning_hints=list(directives.get("planning_hints", [])),
+                    reminders=list(directives.get("reminders", [])),
+                )
+            if env_bucket:
+                normalized[env_key.lower()] = env_bucket
+        return normalized
+
+    def _role_directives(
+        self, environment: Optional[str], role: Optional[str]
+    ) -> RoleDirectives:
+        env_key = (environment or "").lower()
+        role_key = (role or "").lower()
+        env_bundle = self.role_playbook.get(env_key) or self.role_playbook.get("default")
+        if not env_bundle:
+            return RoleDirectives()
+        return env_bundle.get(role_key, RoleDirectives())
+
+
+__all__ = ["AlignmentContext", "MetaOrchestrator", "RoleDirectives"]

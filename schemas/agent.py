@@ -60,6 +60,8 @@ class AgentState(BaseModel):
     persona_coeffs: PersonaCoeffs
     steering_refs: List[SteeringVectorRef]
     active_alpha_overrides: Dict[str, float] = Field(default_factory=dict)
+    role: str = "generalist"
+    role_description: Optional[str] = None
     system_prompt: str
     location_id: str
     status: StatusLiteral = "idle"

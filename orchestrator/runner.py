@@ -141,8 +141,16 @@ class SimulationRunner:
                     agent_id: self.world.agent_location(agent_id)
                     for agent_id in self.agents
                 }
+                agent_roles = {
+                    agent_id: agent.state.role for agent_id, agent in self.agents.items()
+                }
                 alignment_contexts = self.meta_orchestrator.alignment_directives(
-                    self.world.tick, self.agents, self.objective_manager, world_state=world_state
+                    self.world.tick,
+                    self.agents,
+                    self.objective_manager,
+                    world_state=world_state,
+                    agent_roles=agent_roles,
+                    environment=self.world.environment,
                 )
                 if self.meta_orchestrator.last_broadcast:
                     self.console_logger.log_info(

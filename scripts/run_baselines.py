@@ -16,6 +16,7 @@ from orchestrator.cli import (
     TRAIT_KEYS,
     build_agents,
     build_language_backend,
+    build_meta_orchestrator,
     build_objective_manager,
     build_probe_manager,
     load_config,
@@ -107,6 +108,7 @@ def _prepare_runner(
         world,
         backend,
         safety,
+        env_choice,
         config_dir=config_path.parent,
         suppress_alphas=not steering_enabled,
     )
@@ -122,6 +124,9 @@ def _prepare_runner(
     objective_manager = build_objective_manager(config, env_choice, difficulty)
     probe_manager = build_probe_manager(config)
     console_logger = ConsoleLogger(enabled=False, use_colors=False, truncate=True)
+    meta_orchestrator = build_meta_orchestrator(
+        config, env_choice, config_dir=config_path.parent
+    )
 
     runner = SimulationRunner(
         run_id=run_id,
@@ -135,6 +140,7 @@ def _prepare_runner(
         objective_manager=objective_manager,
         probe_manager=probe_manager,
         event_bridge=None,
+        meta_orchestrator=meta_orchestrator,
     )
     steps = int(config.get("steps", 200))
     return runner, log_sink, steps

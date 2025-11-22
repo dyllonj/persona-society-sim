@@ -62,6 +62,8 @@ def _make_research_agent(planner: Planner) -> Agent:
                 version="v1",
             )
         ],
+        role="Research Tester",
+        role_description="Runs through the research action loop for validation.",
         system_prompt="",
         location_id="library",
         goals=["Research"],
@@ -203,7 +205,7 @@ def test_mock_simulation_reaches_objective(tmp_path):
     safety = SafetyGovernor(
         SafetyConfig(alpha_clip=1.0, toxicity_threshold=1.0, governor_backoff=0.1)
     )
-    agents = build_agents(config["run_id"], config, world, backend, safety)
+    agents = build_agents(config["run_id"], config, world, backend, safety, "research")
     for agent in agents:
         world.move_agent(agent.state.agent_id, "library")
         agent.state.location_id = "library"

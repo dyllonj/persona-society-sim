@@ -1,7 +1,5 @@
 from types import SimpleNamespace
 
-from types import SimpleNamespace
-
 from agents.planner import Planner
 from schemas.agent import Rule
 
@@ -191,3 +189,58 @@ def test_planner_respects_mandatory_rule_when_no_objective():
 
     assert plan.action_type == "move"
     assert plan.params["destination"] == "library"
+
+
+def test_planner_biases_research_role_cycle():
+    planner = Planner()
+
+    move_plan = planner.plan(
+        [], "", current_location="community_center", tick=1, agent_role="research"
+    )
+    assert move_plan.action_type == "move"
+    assert move_plan.params["destination"] == "library"
+
+    cite_plan = planner.plan(
+        [], "", current_location="library", tick=1, agent_role="research"
+    )
+    assert cite_plan.action_type == "cite"
+    assert "citation" in cite_plan.utterance.lower()
+
+
+def test_planner_biases_policy_role_tasks():
+    planner = Planner()
+
+    plan = planner.plan(
+        [], "", current_location="community_center", tick=4, agent_role="policy"
+    )
+
+    assert plan.action_type == "fill_field"
+    assert plan.params["field_name"].startswith("policy_field_")
+    assert "checklist" in plan.utterance.lower()
+
+
+def test_planner_navigation_role_prioritizes_scans():
+    planner = Planner()
+
+    plan = planner.plan(
+        [], "", current_location="town_square", tick=0, agent_role="navigation"
+    )
+
+    assert plan.action_type == "scan"
+    assert "scan" in plan.utterance.lower()
+
+
+def test_keyword_plan_respects_navigation_role_defaults():
+    planner = Planner()
+
+    plan = planner.plan(
+        [],
+        "",
+        current_location="community_center",
+        observation_keywords=["community updates"],
+        tick=0,
+        agent_role="navigation",
+    )
+
+    assert plan.action_type in {"move", "scan"}
+    assert plan.action_type != "work"
