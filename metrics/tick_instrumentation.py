@@ -175,14 +175,14 @@ class TickInstrumentation:
     ) -> None:
         peers = [peer for peer in participants if peer != agent_id]
         for peer in peers:
-            edge = Edge(src=agent_id, dst=peer, weight=1.0, kind="message")
+            edge = self._edge_with_metadata(agent_id, peer, "message", trait_key)
             self._append_edge(edge, trait_key)
 
     def _record_gift_edge(
         self, agent_id: str, params: Dict[str, str], trait_key: Optional[str], room_id: str
     ) -> None:
         target = params.get("recipient") or params.get("counterparty") or room_id
-        edge = Edge(src=agent_id, dst=target, weight=1.0, kind="gift")
+        edge = self._edge_with_metadata(agent_id, target, "gift", trait_key)
         self._append_edge(edge, trait_key)
 
     def _record_enforcement(
@@ -191,7 +191,7 @@ class TickInstrumentation:
         target = params.get("target_id") or info.get("target_id") or params.get("recipient")
         if not target:
             return
-        edge = Edge(src=agent_id, dst=target, weight=1.0, kind="sanction")
+        edge = self._edge_with_metadata(agent_id, target, "sanction", trait_key)
         self._append_edge(edge, trait_key)
 
     def _record_cooperation(self, action_type: str, agent_id: str, trait_key: Optional[str]) -> None:
@@ -225,6 +225,25 @@ class TickInstrumentation:
             return 0.0
         duplicates = sum(count - 1 for count in counts.values() if count > 1)
         return duplicates / total
+
+    def _edge_with_metadata(
+        self, src: str, dst: str, kind: str, trait_key: Optional[str]
+    ) -> Edge:
+        return Edge(
+            src=src,
+            dst=dst,
+            weight=1.0,
+            kind=kind,  # type: ignore[arg-type]
+            trait_key=trait_key,
+            trait_band=self._trait_band(trait_key),
+        )
+
+    @staticmethod
+    def _trait_band(trait_key: Optional[str]) -> Optional[str]:
+        if trait_key and ":" in trait_key:
+            _, band = trait_key.split(":", 1)
+            return band
+        return None
 
     def top_prompt_duplication(self) -> Tuple[float, Optional[str]]:
         if self._total_prompts == 0 or not self._prompt_counts:

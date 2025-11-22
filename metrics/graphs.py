@@ -17,7 +17,15 @@ def build_graph(edges: Iterable[Edge]) -> nx.Graph:
         raise ModuleNotFoundError("networkx is required for graph snapshots")
     g = nx.Graph()
     for edge in edges:
-        g.add_edge(edge.src, edge.dst, weight=edge.weight, kind=edge.kind)
+        g.add_edge(
+            edge.src,
+            edge.dst,
+            weight=edge.weight,
+            kind=edge.kind,
+            trait_key=edge.trait_key,
+            trait_band=edge.trait_band,
+            alpha_bucket=edge.alpha_bucket,
+        )
     return g
 
 

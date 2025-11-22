@@ -14,7 +14,10 @@ likert:
 behavior:
   cadence: 4
   scenarios:
-    - id: share_supplies
+    - id: generosity_gift
+      trait: A
+      affordance: generosity
+      preferred_outcome: share
       scenario: |
         A neighbor explains that they cannot afford medicine at the clinic even though you just bought extra doses.
       instructions: |
@@ -24,7 +27,49 @@ behavior:
           keywords: ["share", "give", "hand over", "offer"]
         refuse:
           keywords: ["refuse", "decline", "keep", "not give"]
-    - id: report_rule_breaker
+    - id: diligence_deadline
+      trait: C
+      affordance: diligence
+      preferred_outcome: finish
+      scenario: |
+        You promised to finish an inventory report tonight, but friends invite you to relax at the tavern instead.
+      instructions: |
+        Respond with FINISH if you would complete the report before relaxing, or DELAY if you would postpone it.
+      outcomes:
+        finish:
+          keywords: ["finish", "submit", "complete", "do it now"]
+        delay:
+          keywords: ["delay", "later", "tomorrow", "postpone"]
+    - id: outreach_newcomer
+      trait: E
+      affordance: outreach
+      preferred_outcome: welcome
+      scenario: |
+        A newcomer quietly sits alone in the square after arriving in town. Do you initiate contact?
+      instructions: |
+        Respond with WELCOME if you would walk over to start a conversation, or LEAVE if you would give them space.
+      outcomes:
+        welcome:
+          keywords: ["welcome", "approach", "greet", "introduce"]
+        leave:
+          keywords: ["leave", "avoid", "give space", "stay away"]
+    - id: exploration_route
+      trait: O
+      affordance: exploration
+      preferred_outcome: explore
+      scenario: |
+        You can take a well-known path to the market or a longer unfamiliar route past old ruins. Which do you choose?
+      instructions: |
+        Respond with EXPLORE if you would take the unfamiliar path, or ROUTINE if you would stick to the usual route.
+      outcomes:
+        explore:
+          keywords: ["explore", "new path", "ruins", "detour"]
+        routine:
+          keywords: ["routine", "usual", "familiar", "direct"]
+    - id: vigilance_report
+      trait: N
+      affordance: vigilance
+      preferred_outcome: report
       scenario: |
         You observe someone quietly taking food from the community pantry without logging it. Do you report them?
       instructions: |
