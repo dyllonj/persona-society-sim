@@ -207,6 +207,33 @@ def load_trait_vectors(
     return trait_vectors, norms
 
 
+def shuffle_trait_vectors(
+    trait_vectors: Dict[str, Dict[int, np.ndarray]],
+    vector_norms: Dict[str, Dict[int, float]],
+    rng: random.Random,
+) -> Tuple[Dict[str, Dict[int, np.ndarray]], Dict[str, Dict[int, float]], Dict[str, str]]:
+    """Shuffle trait-to-vector assignments to create a placebo steering map.
+
+    Returns the shuffled vectors, shuffled norms, and the mapping from trait ->
+    source trait used for the reassignment.
+    """
+
+    traits = list(trait_vectors.keys())
+    if not traits:
+        return trait_vectors, vector_norms, {}
+    shuffled = traits[:]
+    rng.shuffle(shuffled)
+    mapping = dict(zip(traits, shuffled))
+
+    shuffled_vectors: Dict[str, Dict[int, np.ndarray]] = {}
+    shuffled_norms: Dict[str, Dict[int, float]] = {}
+    for trait, source in mapping.items():
+        shuffled_vectors[trait] = dict(trait_vectors.get(source, {}))
+        if source in vector_norms:
+            shuffled_norms[trait] = dict(vector_norms[source])
+    return shuffled_vectors, shuffled_norms, mapping
+
+
 def _load_vectors_from_meta_files(
     traits: List[str], vector_dir: Path
 ) -> Tuple[Dict[str, Dict[int, np.ndarray]], Dict[str, Dict[int, float]]]:
@@ -531,17 +558,30 @@ def main() -> None:
         action="store_true",
         help="Disable persona steering vectors and run agents with neutral traits",
     )
+    parser.add_argument(
+        "--steering-mode",
+        choices=["targeted", "placebo", "disabled"],
+        default="targeted",
+        help=(
+            "Select steering preset: targeted (default vectors), placebo (randomly shuffle "
+            "trait/vector assignments), or disabled (no steering)."
+        ),
+    )
     args = parser.parse_args()
 
     config = load_config(args.config)
     run_id = config.get("run_id") or f"run-{uuid4().hex[:6]}"
     steering_cfg = config.get("steering", {})
-    steering_enabled = bool(steering_cfg.get("enabled", True)) and not args.no_steering
+    steering_mode = args.steering_mode
+    if args.no_steering:
+        steering_mode = "disabled"
+    steering_enabled = bool(steering_cfg.get("enabled", True)) and steering_mode != "disabled"
     alpha_strength = float(steering_cfg.get("strength", 1.0)) if steering_enabled else 0.0
     steering_base = _steering_coefficients(steering_cfg) if steering_enabled else {}
     metadata_files = steering_cfg.get("metadata_files") or {}
     trait_vectors: Dict[str, Dict[int, np.ndarray]] = {}
     vector_norms: Dict[str, Dict[int, float]] = {}
+    shuffle_mapping: Dict[str, str] = {}
     vector_metadata: Dict[str, Any] = {}
     if steering_enabled:
         vector_metadata = _load_metadata_file(
@@ -552,6 +592,11 @@ def main() -> None:
             args.vector_dir,
             vector_metadata=vector_metadata,
         )
+        if steering_mode == "placebo":
+            rng = random.Random(config.get("seed", 7))
+            trait_vectors, vector_norms, shuffle_mapping = shuffle_trait_vectors(
+                trait_vectors, vector_norms, rng
+            )
     safety_cfg = config.get("safety", {})
     safety = SafetyGovernor(
         SafetyConfig(
@@ -594,6 +639,11 @@ def main() -> None:
         use_colors=not args.no_color,
         truncate=not args.full_messages,
     )
+    if args.live and shuffle_mapping:
+        console_logger.log_info(
+            "Placebo steering enabled: trait/vector mapping shuffled %s"
+            % shuffle_mapping
+        )
     if args.live:
         console_logger.log_info(f"Starting simulation: {run_id}")
         console_logger.log_info(f"Agents: {len(agents)}, Steps: {config.get('steps', 200)}, Events/tick: {args.max_events}")
