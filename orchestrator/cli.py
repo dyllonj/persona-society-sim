@@ -22,6 +22,7 @@ from agents.planner import Planner
 from agents.retrieval import MemoryRetriever
 from env.world import World
 from orchestrator.console_logger import ConsoleLogger
+from orchestrator.meta_manager import MetaOrchestrator
 from orchestrator.objectives import ObjectiveManager
 from orchestrator.probes import ProbeManager
 from orchestrator.runner import SimulationRunner
@@ -463,6 +464,36 @@ def build_probe_manager(config: Dict) -> Optional[ProbeManager]:
     return ProbeManager.from_config(probes_cfg)
 
 
+def build_meta_orchestrator(
+    config: Dict, env_choice: str, *, config_dir: Optional[Path]
+) -> Optional[MetaOrchestrator]:
+    meta_cfg = config.get("meta_orchestrator")
+    if meta_cfg is None:
+        return None
+    if not isinstance(meta_cfg, dict):
+        return None
+    if meta_cfg.get("enabled", True) is False:
+        return None
+
+    base_playbook = MetaOrchestrator.default_role_playbook()
+    file_overrides = _load_metadata_file(
+        meta_cfg.get("playbook_file"), config_dir=config_dir
+    )
+    inline_overrides = meta_cfg.get("role_playbook")
+    if not isinstance(inline_overrides, dict):
+        inline_overrides = {}
+    role_playbook = MetaOrchestrator.merge_playbooks(base_playbook, file_overrides)
+    role_playbook = MetaOrchestrator.merge_playbooks(role_playbook, inline_overrides)
+
+    return MetaOrchestrator(
+        global_goals=meta_cfg.get("global_goals"),
+        recurring_reminders=meta_cfg.get("recurring_reminders"),
+        agent_directives=meta_cfg.get("agent_directives"),
+        role_playbook=role_playbook,
+        environment=env_choice,
+    )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Persona Society Sim runner")
     parser.add_argument("config", type=Path, help="Path to YAML config")
@@ -589,8 +620,12 @@ def main() -> None:
         event_bridge = AsciiViewer()
         # Disable console logger to avoid interference with TUI
         console_logger = ConsoleLogger(enabled=False)
-        # Also disable standard print output from runner summary if possible, 
+        # Also disable standard print output from runner summary if possible,
         # though runner uses console_logger mostly.
+
+    meta_orchestrator = build_meta_orchestrator(
+        config, args.env, config_dir=args.config.parent
+    )
 
     runner = SimulationRunner(
         run_id=run_id,
@@ -604,6 +639,7 @@ def main() -> None:
         objective_manager=objective_manager,
         probe_manager=probe_manager,
         event_bridge=event_bridge,
+        meta_orchestrator=meta_orchestrator,
     )
     runner.run(config.get("steps", 200), max_events_per_tick=args.max_events)
 

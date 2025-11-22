@@ -25,6 +25,9 @@ scenario: "market_voting_baseline"
 logging:
   db_url: "sqlite:///./storage/sim_fast_test.db"
   parquet_dir: "./storage/dumps/fast_test"
+meta_orchestrator:
+  enabled: true
+  playbook_file: configs/meta.playbook.yaml
 safety:
   alpha_clip: 1.0
   toxicity_threshold: 0.4
