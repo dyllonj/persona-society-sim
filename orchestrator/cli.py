@@ -12,6 +12,7 @@ from uuid import uuid4
 
 import numpy as np
 import torch
+import traceback
 import yaml
 
 from agents.agent import Agent
@@ -599,52 +600,71 @@ def main() -> None:
     # Optionally start viewer bridge
     event_bridge = None
     http_server = None
-    if args.viewer:
-        try:
-            from viewer.ws_bridge import ViewerServer
-            from viewer.http_server import StaticServer
+    
+    try:
+        if args.viewer:
+            try:
+                from viewer.ws_bridge import ViewerServer
+                from viewer.http_server import StaticServer
 
-            event_bridge = ViewerServer()
-            event_bridge.start()
-            http_server = StaticServer()
-            http_server.start()
-            if args.live:
-                console_logger.log_info("Viewer: WebSocket ws://127.0.0.1:8765/ws")
-                console_logger.log_info("Viewer: Open http://127.0.0.1:19123 in your browser")
-        except Exception as e:
-            if args.live:
-                console_logger.log_warning(f"Failed to start viewer: {e}")
+                event_bridge = ViewerServer()
+                event_bridge.start()
+                http_server = StaticServer()
+                http_server.start()
+                if args.live:
+                    console_logger.log_info("Viewer: WebSocket ws://127.0.0.1:8765/ws")
+                    console_logger.log_info("Viewer: Open http://127.0.0.1:19123 in your browser")
+            except Exception as e:
+                if args.live:
+                    console_logger.log_warning(f"Failed to start viewer: {e}")
 
-    if args.tui:
-        from viewer.ascii_tui import AsciiViewer
-        event_bridge = AsciiViewer()
-        # Disable console logger to avoid interference with TUI
-        console_logger = ConsoleLogger(enabled=False)
-        # Also disable standard print output from runner summary if possible,
-        # though runner uses console_logger mostly.
+        if args.tui:
+            from viewer.ascii_tui import AsciiViewer
+            event_bridge = AsciiViewer()
+            # Disable console logger to avoid interference with TUI
+            console_logger = ConsoleLogger(enabled=False)
+            # Also disable standard print output from runner summary if possible,
+            # though runner uses console_logger mostly.
 
-    meta_orchestrator = build_meta_orchestrator(
-        config, args.env, config_dir=args.config.parent
-    )
+        meta_orchestrator = build_meta_orchestrator(
+            config, args.env, config_dir=args.config.parent
+        )
 
-    runner = SimulationRunner(
-        run_id=run_id,
-        world=world,
-        scheduler=scheduler,
-        agents=agents,
-        log_sink=log_sink,
-        temperature=inference.get("temperature", 0.7),
-        top_p=inference.get("top_p", 0.9),
-        console_logger=console_logger,
-        objective_manager=objective_manager,
-        probe_manager=probe_manager,
-        event_bridge=event_bridge,
-        meta_orchestrator=meta_orchestrator,
-    )
-    runner.run(config.get("steps", 200), max_events_per_tick=args.max_events)
+        runner = SimulationRunner(
+            run_id=run_id,
+            world=world,
+            scheduler=scheduler,
+            agents=agents,
+            log_sink=log_sink,
+            temperature=inference.get("temperature", 0.7),
+            top_p=inference.get("top_p", 0.9),
+            console_logger=console_logger,
+            objective_manager=objective_manager,
+            probe_manager=probe_manager,
+            event_bridge=event_bridge,
+            meta_orchestrator=meta_orchestrator,
+        )
+        runner.run(config.get("steps", 200), max_events_per_tick=args.max_events)
 
-    if not args.live:
-        print(f"Run {run_id} completed {config.get('steps', 200)} steps with {len(agents)} agents.")
+        if not args.live:
+            print(f"Run {run_id} completed {config.get('steps', 200)} steps with {len(agents)} agents.")
+
+    except Exception:
+        # Ensure TUI is stopped before printing traceback so it's visible
+        if event_bridge and hasattr(event_bridge, "stop"):
+            try:
+                event_bridge.stop()
+            except Exception:
+                pass
+        traceback.print_exc()
+        sys.exit(1)
+    finally:
+        # Double check cleanup
+        if event_bridge and hasattr(event_bridge, "stop"):
+            try:
+                event_bridge.stop()
+            except Exception:
+                pass
 
 
 if __name__ == "__main__":
