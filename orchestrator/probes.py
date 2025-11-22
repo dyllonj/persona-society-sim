@@ -29,10 +29,13 @@ class LikertProbeDefinition:
 @dataclass
 class BehaviorProbeDefinition:
     probe_id: str
+    trait: Optional[str] = None
+    affordance: Optional[str] = None
     scenario: str
     instructions: str
     outcomes: Dict[str, List[str]]
     cadence: int
+    preferred_outcome: Optional[str] = None
 
 
 @dataclass
@@ -46,6 +49,8 @@ class ProbeAssignment:
     scenario: Optional[str] = None
     outcomes: Dict[str, List[str]] = field(default_factory=dict)
     cooldown: int = 0
+    affordance: Optional[str] = None
+    preferred_outcome: Optional[str] = None
 
     def inject(self, observation: str) -> str:
         prefix = ["[Probe] You have been selected for a research probe.", self.prompt]
@@ -129,10 +134,13 @@ class ProbeManager:
             behavior_defs.append(
                 BehaviorProbeDefinition(
                     probe_id=str(entry.get("id")),
+                    trait=entry.get("trait"),
+                    affordance=entry.get("affordance"),
                     scenario=str(entry.get("scenario", "")),
                     instructions=str(entry.get("instructions", "Describe what you would do.")),
                     outcomes=outcomes,
                     cadence=cadence,
+                    preferred_outcome=entry.get("preferred_outcome"),
                 )
             )
         if not likert_defs and not behavior_defs:
@@ -217,6 +225,9 @@ class ProbeManager:
                 scenario=definition.scenario,
                 outcomes=outcomes,
                 cooldown=definition.cadence,
+                trait=definition.trait,
+                affordance=definition.affordance,
+                preferred_outcome=definition.preferred_outcome,
             )
         return None
 

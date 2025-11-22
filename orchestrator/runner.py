@@ -697,6 +697,7 @@ class SimulationRunner:
     ) -> None:
         if not decision.utterance:
             return
+        trait_meta = self._trait_metadata(agent, decision.steering_snapshot)
         if assignment.kind == "likert":
             score, hint = ProbeManager.score_likert_response(decision.utterance)
             probe_log = ProbeLog(
@@ -721,10 +722,16 @@ class SimulationRunner:
                 tick=self.world.tick,
                 agent_id=agent.state.agent_id,
                 probe_id=assignment.probe_id,
+                trait=assignment.trait,
                 scenario=assignment.scenario or "",
                 prompt_text=assignment.prompt,
                 response_text=decision.utterance,
                 outcome=outcome,
                 parser_hint=hint,
+                trait_key=trait_meta.trait_key,
+                trait_band=trait_meta.trait_band,
+                alpha_bucket=trait_meta.alpha_bucket,
+                affordance=assignment.affordance,
+                preferred_outcome=assignment.preferred_outcome,
             )
             self.log_sink.log_behavior_probe(behavior_log)
