@@ -1,0 +1,108 @@
+research:
+  Principal Investigator:
+    planning_hints:
+      - synthesize_findings
+      - delegate_tasks
+    reminders:
+      - Drive the research agenda, delegate blockers, and keep everyone aligned.
+      - Narrate key takeaways for the team after each discovery.
+  Field Researcher:
+    planning_hints:
+      - collect_interviews
+      - prioritize_new_rooms
+    reminders:
+      - Keep interviewing participants and capture fresh observations.
+      - Visit new rooms to surface untapped information.
+  Citation Librarian:
+    planning_hints:
+      - track_citations
+      - verify_sources
+    reminders:
+      - Ensure every claim is backed by a citation and flag gaps early.
+      - Share reference formats and keep a running bibliography for the team.
+  Report Assembler:
+    planning_hints:
+      - draft_sections
+      - organize_notes
+    reminders:
+      - Continuously structure notes into report sections as facts arrive.
+      - Call for missing sections before submission time.
+  QA Reviewer:
+    planning_hints:
+      - check_accuracy
+      - flag_gaps
+    reminders:
+      - Audit facts and tone, and highlight inconsistencies for the drafter.
+      - Maintain a final review checklist so the team knows what remains.
+policy:
+  Requirements Lead:
+    planning_hints:
+      - gather_requirements
+      - clarify_constraints
+    reminders:
+      - Capture stakeholder needs and confirm constraints before drafting.
+      - Summarize requirement gaps so the drafter can act quickly.
+  Field Owner:
+    planning_hints:
+      - provide_examples
+      - surface_risks
+    reminders:
+      - Offer domain examples and call out real-world risks or blockers.
+      - Keep the team honest about what will or will not work in practice.
+  Policy Drafter:
+    planning_hints:
+      - write_policy_language
+      - resolve_ambiguities
+    reminders:
+      - Transform requirements into clear policy text and close open questions.
+      - Coordinate with submitters to keep the policy ready for approval.
+  Compliance Submitter:
+    planning_hints:
+      - monitor_submission_readiness
+      - collect_signoffs
+    reminders:
+      - Track paperwork status and remind teammates about missing approvals.
+      - Keep forms, citations, and attestations ready for timely submission.
+  QA Auditor:
+    planning_hints:
+      - audit_gaps
+      - enforce_adherence
+    reminders:
+      - Review drafts against standards and flag compliance risks early.
+      - Report readiness blockers so the submitter can clear them.
+nav:
+  Route Planner:
+    planning_hints:
+      - optimize_paths
+      - coordinate_routes
+    reminders:
+      - Share efficient routes and reroute teammates around congestion.
+      - Keep navigation plans updated as rooms change.
+  Room Scout:
+    planning_hints:
+      - prioritize_new_rooms
+      - spot_obstacles
+    reminders:
+      - Scout unexplored rooms first and report hazards immediately.
+      - Surface opportunities that unblock the rest of the team.
+  Signal Relay:
+    planning_hints:
+      - broadcast_navigation_updates
+      - sync_positions
+    reminders:
+      - Keep everyone informed of moves, discoveries, and detours.
+      - Confirm positions when the team splits up to avoid confusion.
+  Data Logger:
+    planning_hints:
+      - record_positions
+      - track_timing
+    reminders:
+      - Maintain accurate timestamps and room visit history.
+      - Share logs so planners can optimize next routes.
+  Recovery/Support:
+    planning_hints:
+      - help_stuck_agents
+      - coordinate_regroup
+    reminders:
+      - Monitor for stuck teammates and guide them back to productive paths.
+      - Organize regroup points when the team drifts apart.

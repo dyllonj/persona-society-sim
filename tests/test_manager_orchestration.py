@@ -47,12 +47,30 @@ class TestManagerOrchestration(unittest.TestCase):
         
         # Forced plan
         suggestion = planner.plan(
-            goals=["explore"], 
-            memory_summary="", 
+            goals=["explore"],
+            memory_summary="",
             planning_hints=["force_collaboration"]
         )
         self.assertEqual(suggestion.action_type, "talk")
         self.assertEqual(suggestion.params.get("topic"), "forced_collab")
+
+    def test_role_playbook_hints_and_reminders(self):
+        orchestrator = MetaOrchestrator(environment="nav")
+
+        agent = MagicMock()
+        agent.state = MagicMock(role="Room Scout")
+        directives = orchestrator.alignment_directives(
+            tick=0,
+            agents={"agent1": agent},
+            agent_roles={"agent1": "Room Scout"},
+        )
+
+        ctx = directives["agent1"]
+        self.assertIn("prioritize_new_rooms", ctx.planning_hints)
+        self.assertTrue(
+            any("Scout unexplored rooms" in note for note in ctx.reminders),
+            "Role reminders should reinforce scouting duties",
+        )
 
 if __name__ == "__main__":
     unittest.main()
