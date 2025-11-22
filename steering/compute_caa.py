@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import json
 from pathlib import Path
 from typing import Dict, Iterable, List, Sequence, Tuple
 
@@ -49,6 +50,83 @@ def _find_answer_token_index(prompt: str, letter: str, offsets: Sequence[Tuple[i
     raise ValueError(f"Unable to locate token index for letter {letter} in prompt")
 
 
+def _validate_answer_token_mask(
+    tokenizer,
+    token_ids: Sequence[int],
+    token_index: int,
+    letter: str,
+    attention_mask: Sequence[int] | None = None,
+) -> None:
+    token_str = tokenizer.convert_ids_to_tokens([token_ids[token_index]])[0]
+    if letter.lower() not in token_str.lower():
+        raise ValueError(
+            f"Answer token {token_str!r} at position {token_index} does not align with letter {letter}"
+        )
+    if attention_mask and attention_mask[token_index] == 0:
+        raise ValueError(
+            f"Answer token for letter {letter} is masked out by the tokenizer attention mask"
+        )
+
+
+def _cosine_similarity(vec_a: np.ndarray, vec_b: np.ndarray) -> float:
+    denom = float(np.linalg.norm(vec_a) * np.linalg.norm(vec_b))
+    if denom == 0.0:
+        return 0.0
+    return float(np.dot(vec_a, vec_b) / denom)
+
+
+def _existing_layer_vectors(
+    vector_root: Path, target_layers: Iterable[int], exclude_id: str
+) -> List[Tuple[str, int, np.ndarray]]:
+    """Load existing vectors from disk for orthogonality checks."""
+
+    store = VectorStore(vector_root)
+    collected: List[Tuple[str, int, np.ndarray]] = []
+    for meta_path in vector_root.glob("*.meta.json"):
+        try:
+            metadata = json.loads(meta_path.read_text())
+        except Exception:
+            continue
+        vector_store_id = metadata.get("vector_store_id") or metadata.get("trait")
+        if not vector_store_id or vector_store_id == exclude_id:
+            continue
+        layers = {entry.get("layer_id") for entry in metadata.get("layers", [])}
+        layers &= set(target_layers)
+        if not layers:
+            continue
+        try:
+            bundle = store.load(vector_store_id, layers=layers)
+        except Exception:
+            continue
+        trait_name = metadata.get("trait") or vector_store_id
+        for layer_id, vec in bundle.vectors.items():
+            collected.append((trait_name, layer_id, vec))
+    return collected
+
+
+def enforce_orthogonality(
+    candidate_vectors: Dict[int, np.ndarray],
+    existing_vectors: Iterable[Tuple[str, int, np.ndarray]],
+    *,
+    threshold: float = 0.2,
+) -> None:
+    """Raise if any layer vector is too aligned with existing traits."""
+
+    violations: List[str] = []
+    for trait_name, layer_id, existing in existing_vectors:
+        if layer_id not in candidate_vectors:
+            continue
+        similarity = abs(_cosine_similarity(candidate_vectors[layer_id], existing))
+        if similarity >= threshold:
+            violations.append(
+                f"layer {layer_id} overlaps with {trait_name} (|cos|={similarity:.3f} >= {threshold})"
+            )
+    if violations:
+        raise ValueError(
+            "Orthogonality check failed: " + "; ".join(sorted(violations))
+        )
+
+
 @torch.no_grad()
 def encode_answer_token(
     model: AutoModelForCausalLM,
@@ -68,6 +146,15 @@ def encode_answer_token(
         raise RuntimeError("Tokenizer must support offset mappings; enable the fast tokenizer variant.")
     offsets = tokens.pop("offset_mapping")[0].tolist()
     token_index = _find_answer_token_index(prompt, letter, offsets)
+    input_ids = tokens["input_ids"][0].tolist()
+    attention_mask = tokens.get("attention_mask")
+    _validate_answer_token_mask(
+        tokenizer,
+        input_ids,
+        token_index,
+        letter,
+        attention_mask[0].tolist() if attention_mask is not None else None,
+    )
     tokens = {k: v.to(model.device) for k, v in tokens.items()}
     outputs = model(
         **tokens,
@@ -140,6 +227,8 @@ def main() -> None:
             "You must provide at least one decoder layer via --layers; the legacy [12, 16, 20] default was removed."
         )
     vectors, norms = compute_trait_vectors(model, tokenizer, prompts, layers)
+    existing = _existing_layer_vectors(args.output_dir, layers, args.vector_store_id or args.trait)
+    enforce_orthogonality(vectors, existing)
 
     store = VectorStore(args.output_dir)
     metadata = store.save_vectors(

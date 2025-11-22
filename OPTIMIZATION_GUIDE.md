@@ -17,7 +17,9 @@ python3 -m orchestrator.cli configs/run.fast.yaml --live
 2. **Sparse reflection**: Every 5 ticks instead of every tick (5x less overhead)
 3. **Single steering layer**: Layer 16 only (vs 3 layers)
 4. **Quantization ready**: 4-bit quantization support
-5. **Reduced events**: 8-16 per tick
+5. **Reduced events**: capped at 12 per tick via `max_events_per_tick`
+
+`configs/run.small.yaml` and `configs/run.medium.yaml` now declare `template: run.fast.yaml` so they inherit the same max events per tick and quantization/offload defaults while overriding only the population, tokens, and steering strength relevant to each arm.
 
 ---
 
