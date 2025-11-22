@@ -32,6 +32,7 @@ class StubPlanner:
         last_alignment_tick=None,
         observation_keywords=None,
         agent_id=None,
+        planning_hints=None,
     ):
         self.calls += 1
         return PlanSuggestion("talk", {"utterance": "sync"}, "sync")
@@ -68,6 +69,8 @@ def _make_agent(
                 version="v1",
             )
         ],
+        role="Planner Tester",
+        role_description="Exercises planning and reflection pathways.",
         system_prompt="",
         location_id="town_square",
         goals=["Collaborate"],
@@ -133,6 +136,7 @@ def test_initial_sync_prompts_unique_reduce_duplication():
             last_alignment_tick=None,
             observation_keywords=None,
             agent_id=None,
+            planning_hints=None,
         ):
             self.calls += 1
             return PlanSuggestion(

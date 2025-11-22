@@ -58,6 +58,8 @@ class TestPersonality(unittest.TestCase):
             display_name="Test Agent",
             persona_coeffs=PersonaCoeffs(E=0.9, N=-0.5), # High Extraversion, Low Neuroticism
             steering_refs=[],
+            role="Verifier",
+            role_description="Checks prompt construction and personality plumbing.",
             system_prompt="You are a test agent.",
             location_id="town_square",
             created_at=datetime.utcnow(),

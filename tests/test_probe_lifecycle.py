@@ -17,6 +17,8 @@ class FakeAgent:
             display_name=agent_id,
             persona_coeffs=PersonaCoeffs(),
             steering_refs=[],
+            role="Probe Responder",
+            role_description="Provides canned responses for probe lifecycle tests.",
             system_prompt="Test agent",
             location_id=location,
             goals=["assist neighbors"],
