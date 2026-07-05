@@ -6,7 +6,7 @@ import json
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional
+from typing import Dict, Iterable, List, Optional, Tuple
 from uuid import uuid4
 
 from agents.agent import ActionDecision, Agent
@@ -31,6 +31,11 @@ from metrics import graphs, social_dynamics
 from metrics.tick_instrumentation import TickInstrumentation
 from metrics.tracker import MetricTracker
 from metrics.persona_bands import trait_band_key
+from orchestrator.decision_pipeline import (
+    DecisionPipeline,
+    DecisionRequest,
+    SerialDecisionPipeline,
+)
 
 
 @dataclass
@@ -63,6 +68,8 @@ class SimulationRunner:
         event_bridge: Optional[object] = None,
         probe_manager: Optional[ProbeManager] = None,
         meta_orchestrator: Optional[MetaOrchestrator] = None,
+        decision_pipeline: Optional[DecisionPipeline] = None,
+        batch_decisions_per_encounter: bool = False,
     ):
         self.run_id = run_id
         self.world = world
@@ -81,6 +88,8 @@ class SimulationRunner:
         self.tick_instrumentation = TickInstrumentation()
         self.probe_manager = probe_manager
         self.meta_orchestrator = meta_orchestrator
+        self.decision_pipeline = decision_pipeline or SerialDecisionPipeline()
+        self.batch_decisions_per_encounter = batch_decisions_per_encounter
 
         if self.objective_manager:
             self.objective_manager.register_reward_callback(self._handle_objective_reward)
@@ -171,55 +180,130 @@ class SimulationRunner:
 
             for encounter in encounters:
                 encounter_transcript: List[RoomUtterance] = list(encounter.transcript)
+                precomputed_decisions: Dict[
+                    str, Tuple[ActionDecision, Optional[ProbeAssignment], str]
+                ] = {}
+                if self.batch_decisions_per_encounter:
+                    decision_requests: List[DecisionRequest] = []
+                    request_meta: Dict[str, Tuple[Optional[ProbeAssignment], str]] = {}
+                    static_transcript = tuple(encounter_transcript)
+                    for batch_agent_id in encounter.participants:
+                        batch_agent = self.agents[batch_agent_id]
+                        batch_location = self.world.agent_location(batch_agent.state.agent_id)
+                        batch_peers_present = any(
+                            peer != batch_agent.state.agent_id
+                            for peer in encounter.participants
+                        )
+                        batch_objective = (
+                            self.objective_manager.current_objective(batch_agent.state.agent_id)
+                            if self.objective_manager
+                            else None
+                        )
+                        batch_context = self.world.sample_context(batch_agent.state.agent_id)
+                        batch_probe_assignment: Optional[ProbeAssignment] = None
+                        if self.probe_manager:
+                            batch_probe_assignment = self.probe_manager.pending_probe(
+                                batch_agent.state.agent_id, self.world.tick
+                            )
+                            if not batch_probe_assignment:
+                                batch_probe_assignment = self.probe_manager.assign_probe(
+                                    batch_agent.state.agent_id, self.world.tick
+                                )
+                            if batch_probe_assignment:
+                                batch_context = batch_probe_assignment.inject(batch_context)
+                                batch_context = batch_probe_assignment.inject(batch_context)
+
+                        if self.event_bridge and hasattr(self.event_bridge, "broadcast"):
+                            try:
+                                self.event_bridge.broadcast(
+                                    {
+                                        "type": "processing",
+                                        "tick": self.world.tick,
+                                        "agent_id": batch_agent.state.agent_id,
+                                    }
+                                )
+                                time.sleep(0.1)
+                            except Exception:
+                                pass
+
+                        decision_requests.append(
+                            DecisionRequest(
+                                agent=batch_agent,
+                                observation=batch_context,
+                                tick=self.world.tick,
+                                current_location=batch_location,
+                                active_objective=batch_objective,
+                                recent_dialogue=static_transcript,
+                                rule_context=tuple(self.world.institutional_guidance()),
+                                peers_present=batch_peers_present,
+                                alignment_context=alignment_contexts.get(batch_agent.state.agent_id),
+                            )
+                        )
+                        request_meta[batch_agent.state.agent_id] = (
+                            batch_probe_assignment,
+                            batch_location,
+                        )
+                    for result in self.decision_pipeline.decide_many(decision_requests):
+                        probe_assignment, batch_location = request_meta[result.agent_id]
+                        precomputed_decisions[result.agent_id] = (
+                            result.decision,
+                            probe_assignment,
+                            batch_location,
+                        )
                 for agent_id in encounter.participants:
                     agent = self.agents[agent_id]
-                    current_location = self.world.agent_location(agent.state.agent_id)
-                    peers_present = any(peer != agent.state.agent_id for peer in encounter.participants)
-                    active_objective = (
-                        self.objective_manager.current_objective(agent.state.agent_id)
-                        if self.objective_manager
-                        else None
-                    )
-
-                    base_context = self.world.sample_context(agent.state.agent_id)
-                    probe_assignment: Optional[ProbeAssignment] = None
-                    if self.probe_manager:
-                        probe_assignment = self.probe_manager.pending_probe(
-                            agent.state.agent_id, self.world.tick
+                    if self.batch_decisions_per_encounter:
+                        decision, probe_assignment, current_location = precomputed_decisions[agent_id]
+                    else:
+                        current_location = self.world.agent_location(agent.state.agent_id)
+                        peers_present = any(peer != agent.state.agent_id for peer in encounter.participants)
+                        active_objective = (
+                            self.objective_manager.current_objective(agent.state.agent_id)
+                            if self.objective_manager
+                            else None
                         )
-                        if not probe_assignment:
-                            probe_assignment = self.probe_manager.assign_probe(
+
+                        base_context = self.world.sample_context(agent.state.agent_id)
+                        probe_assignment: Optional[ProbeAssignment] = None
+                        if self.probe_manager:
+                            probe_assignment = self.probe_manager.pending_probe(
                                 agent.state.agent_id, self.world.tick
                             )
-                        if probe_assignment:
-                            base_context = probe_assignment.inject(base_context)
-                            base_context = probe_assignment.inject(base_context)
-                    
-                    # Broadcast processing status
-                    if self.event_bridge and hasattr(self.event_bridge, "broadcast"):
-                        try:
-                            self.event_bridge.broadcast(
-                                {
-                                    "type": "processing",
-                                    "tick": self.world.tick,
-                                    "agent_id": agent.state.agent_id,
-                                }
-                            )
-                            # Force a small sleep to ensure TUI updates before blocking inference
-                            time.sleep(0.1)
-                        except Exception:
-                            pass
+                            if not probe_assignment:
+                                probe_assignment = self.probe_manager.assign_probe(
+                                    agent.state.agent_id, self.world.tick
+                                )
+                            if probe_assignment:
+                                base_context = probe_assignment.inject(base_context)
+                                base_context = probe_assignment.inject(base_context)
+                        
+                        # Broadcast processing status
+                        if self.event_bridge and hasattr(self.event_bridge, "broadcast"):
+                            try:
+                                self.event_bridge.broadcast(
+                                    {
+                                        "type": "processing",
+                                        "tick": self.world.tick,
+                                        "agent_id": agent.state.agent_id,
+                                    }
+                                )
+                                # Force a small sleep to ensure TUI updates before blocking inference
+                                time.sleep(0.1)
+                            except Exception:
+                                pass
 
-                    decision = agent.act(
-                        base_context,
-                        self.world.tick,
-                        current_location=current_location,
-                        active_objective=active_objective,
-                        recent_dialogue=tuple(encounter_transcript),
-                        rule_context=self.world.institutional_guidance(),
-                        peers_present=peers_present,
-                        alignment_context=alignment_contexts.get(agent.state.agent_id),
-                    )
+                        decision_request = DecisionRequest(
+                            agent=agent,
+                            observation=base_context,
+                            tick=self.world.tick,
+                            current_location=current_location,
+                            active_objective=active_objective,
+                            recent_dialogue=tuple(encounter_transcript),
+                            rule_context=tuple(self.world.institutional_guidance()),
+                            peers_present=peers_present,
+                            alignment_context=alignment_contexts.get(agent.state.agent_id),
+                        )
+                        decision = self.decision_pipeline.decide(decision_request).decision
                     if probe_assignment:
                         decision.probe_id = probe_assignment.probe_id
                         decision.probe_kind = probe_assignment.kind
@@ -497,6 +581,10 @@ class SimulationRunner:
                 self.event_bridge.stop()
             except Exception:
                 pass
+        try:
+            self.decision_pipeline.close()
+        except Exception:
+            pass
 
         return history
 

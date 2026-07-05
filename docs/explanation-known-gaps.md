@@ -1,0 +1,162 @@
+# Known gaps, live bugs, and dead configuration
+
+This document exists because writing accurate reference docs for this
+codebase surfaced a number of things that don't work the way the code
+"reads" at a glance, or the way older docs described. Rather than scatter
+one-line caveats across a dozen files, they're consolidated here — reference
+docs link back to the relevant section instead of repeating the explanation.
+
+None of these were fixed as part of this documentation pass (fixing them is a
+code change, not a docs change) — they're recorded so the next person doesn't
+have to rediscover them by reading source.
+
+## Gemini persona steering silently no-ops
+
+`Agent.persona_alphas()` returns trait alphas keyed by short codes (`E`, `A`,
+`C`, `O`, `N`). `HFBackend`/`SteeringController` consume these correctly. But
+`GeminiBackend.generate()` forwards the same short-code dict into
+`steering.prompt_steering.get_steering_prompt()`, which looks traits up by
+**full capitalized name** (`trait.capitalize()`) against a table keyed
+`"Extraversion"`, `"Agreeableness"`, etc. Capitalizing `"E"` yields `"E"`,
+which is never in that table, so the `if trait_key not in TRAIT_DESCRIPTIONS`
+branch always fires and no persona instruction text is ever injected.
+
+**Practical effect**: running with `--gemini` through the normal simulation
+loop produces personality-neutral agents regardless of configured
+coefficients. `scripts/verify_gemini_steering.py` doesn't catch this because
+it manually constructs full-name alpha dicts (`{"Extraversion": 2.0}`),
+bypassing `Agent.persona_alphas()` entirely — it verifies that
+`prompt_steering.py` works in isolation, not that it's wired up correctly.
+
+**Fix shape** (not applied here): either have `Agent.persona_alphas()` also
+expose full trait names, or have `GeminiBackend`/`prompt_steering.py` accept
+short codes.
+
+## Probe preamble is injected twice
+
+`orchestrator/runner.py` calls `probe_assignment.inject(base_context)` twice
+in a row in both the batched and non-batched decision paths, duplicating the
+entire probe preamble (question/scenario/instructions text) in the observation
+sent to the agent. This is consistent across both code paths, not a one-off
+typo — it doubles token usage and duplicated framing text whenever a probe is
+active for an agent that tick.
+
+## `steering.eval` currently evaluates on training data, not held-out data
+
+`steering/eval.py::_resolve_prompt_path` falls back to the training prompt
+file (with a logged warning) when a `{trait}_eval.jsonl` file doesn't exist.
+No `*_eval.jsonl` files currently exist under `data/prompts/`, so
+`scripts/eval_vectors.sh` always hits this fallback — every accuracy/sign-
+consistency number the harness reports today is measured against the same
+prompts the vector was extracted from, which inflates apparent quality
+relative to a genuine held-out check. Add `<trait>_eval.jsonl` files (same
+schema as the training files, disjoint items) before trusting the harness's
+numbers as a real generalization signal.
+
+## Steering config describes a model that doesn't match the checked-in vectors
+
+`configs/steering.layers.yaml`'s `defaults.model` names a 64-layer
+Qwen2.5-32B-Instruct model with layer indices sized for that architecture
+(e.g. 60). But `defaults.model` is **never read** by any extraction/eval
+code — `scripts/compute_vectors.sh`, `steering/compute_caa.py`, and every run
+config still default to `meta-llama/Llama-3.1-8B-Instruct` (32 layers). The
+vectors actually present in `data/vectors/*.npy`/`*.meta.json` are Llama-3.1-8B
+vectors at different, in-range layers. Running the extraction script today
+against the checked-in YAML without an explicit `MODEL_NAME` override would
+silently target out-of-range layers on the actual model being used. Treat the
+YAML's trait entries as aspirational (a planned Qwen32B migration) until
+vectors are actually regenerated to match.
+
+## `steering.eval`'s trait coverage is narrower than the persona model's
+
+`TRAIT_ALIASES` in `steering/eval.py` (and `--traits`'s default in
+`scripts/eval_vectors.sh`) only cover Extraversion, Agreeableness, and
+Conscientiousness. Openness and Neuroticism are fully supported by
+`PersonaCoeffs`, `prompt_steering.py`, and run-config `steering.coefficients`,
+but there's no way to run `steering.eval`/`eval_vectors.sh` against an O or N
+vector without first extending `TRAIT_ALIASES`.
+
+## `docs/design.md`'s orthogonalization claim doesn't match the code
+
+An earlier version of the design doc stated persona vectors are
+"orthogonalized per trait to reduce entanglement." No orthogonalization step
+(Gram-Schmidt, projection removal, or otherwise) exists anywhere in
+`steering/compute_caa.py`, `steering/vector_store.py`, or `steering/hooks.py`
+— each trait's vector is computed and normalized independently. This has been
+corrected in [explanation-steering.md](explanation-steering.md).
+
+## Objective progress tracking uses strict string equality
+
+`ObjectiveManager.process_action_log` only counts `fill_field`/`scan`
+progress when `action_log.info` carries the exact **string** `"1"` for the
+`unique`/`token_acquired` keys — not the boolean `True` or the int `1`. If the
+action layer's output shape ever changes to use a different type for these
+flags, objective progress for these two requirement types would silently stop
+incrementing, with no error raised anywhere.
+
+## `log_sink.close()` is never called on a successful run
+
+`orchestrator/cli.py`'s `main()` wraps the whole run in `try/except/finally`.
+On the success path, only `event_bridge.stop()` runs in `finally`;
+`log_sink.close()` is called **only** on the exception path. With
+`--queued-runtime`, this means the background log-writer thread is simply
+abandoned as a daemon thread at process exit on a clean run — harmless in
+practice (the process is exiting anyway), but any error during a final
+buffer flush is never surfaced, and `QueueRuntimeStats` (enqueued/dropped/error
+counts) is never inspected or reported to the operator either way.
+
+## Autoresearch: several "guardrails" are prose-only, not enforced
+
+Three separate items surfaced while researching `experiments/autoresearch/`,
+all now called out in that subsystem's own docs directly
+(`experiments/autoresearch/program.md`, `README.md`, `RUNBOOK.md`,
+`autonomy_policy.yaml`) rather than duplicated at length here:
+
+- `program.md` tells the operator not to modify `storage/log_sink.py`, probe
+  scoring, report grading, or objective rules — but none of those files are
+  in `matrix.yaml:boundaries.frozen_files`, so `anti_cheat.py`'s boundary
+  manifest does not actually detect edits to them. This is the most
+  safety-relevant gap of the group: a trial that edits one of those files
+  mid-run will not be flagged invalid by anything automated.
+- `autonomy_policy.yaml` declares `required_candidate_validity`,
+  `required_human_decision_state`, and `max_capability_regression` as if they
+  were enforced guardrails; only `allowed_auto_accept_proposals` and
+  `forbidden_auto_accept_proposals` are actually read by `run_matrix.py`.
+- `run_matrix.py --resume` has no `--no-resume` counterpart and defaults to
+  `True` unconditionally — passing or omitting the flag has identical effect.
+  `--force` is the actual way to force a clean re-run.
+
+## Viewer: port-bind failures are invisible
+
+Both the WebSocket bridge and the static HTTP server bind their sockets
+inside background threads. If the port is already in use, the `OSError`
+happens inside that thread, is not caught by the CLI's `try/except` around
+viewer startup (which only guards thread *creation*, not the bind itself),
+and the run proceeds silently as if the viewer had started — the CLI still
+prints "Viewer: Open http://127.0.0.1:19123" even if the bind failed.
+Similarly, `--viewer` import/init failures are only logged when `--live` is
+also passed; run `--viewer` alone and a missing `websockets` package fails
+with no visible message at all.
+
+## Dead / aspirational configuration fields
+
+Collected in one place since they're easy to trip over when writing a new
+run config:
+
+| Field | File | Status |
+|---|---|---|
+| `steering.vector_norm` | `configs/run.*.yaml` | Never read; actual norms come from vector metadata |
+| `safety.toxicity_threshold` | `configs/run.*.yaml` | Never read; governor is pure substring matching |
+| `optimization.batch_size` | `configs/run.fast.yaml` | Explicitly commented "(future feature)" |
+| `steering.layers.yaml: defaults.model/prompt_masking/extraction/num_hidden_layers` | `configs/steering.layers.yaml` | Documentation-only; not consumed programmatically |
+| `personas.bigfive.yaml: ranges/percentiles/sampling.strategy/sampling.seed` | `configs/personas.bigfive.yaml` | Only `sampling.jitter` is actually read |
+| `autonomy_policy.yaml: enabled_by_default/required_candidate_validity/required_human_decision_state/max_capability_regression` | `experiments/autoresearch/autonomy_policy.yaml` | Not read by `run_matrix.py` |
+| `matrix.yaml: validity.hard_discard` | `experiments/autoresearch/matrix.yaml` | Documentation only; actual hard-discard logic is hardcoded in `score.py`, independently maintained |
+| `matrix.yaml: workflow.*` | `experiments/autoresearch/matrix.yaml` | Copy-paste reference commands only; no code reads this block |
+
+## Related
+
+- [explanation-steering.md](explanation-steering.md)
+- [reference-config.md](reference-config.md)
+- [reference-modules.md](reference-modules.md)
+- [reference-data-schema.md](reference-data-schema.md)
