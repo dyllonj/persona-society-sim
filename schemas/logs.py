@@ -114,6 +114,9 @@ class Edge(BaseModel):
     dst: str
     weight: float
     kind: Literal["message", "gift", "sanction", "group"]
+    trait_key: Optional[str] = None
+    trait_band: Optional[str] = None
+    alpha_bucket: Optional[str] = None
 
 
 class GraphSnapshot(BaseModel):
@@ -202,8 +205,14 @@ class BehaviorProbeLog(BaseModel):
     tick: int
     agent_id: str
     probe_id: str
+    trait: Optional[str] = None
     scenario: str
     prompt_text: str
     response_text: str
     outcome: Optional[str] = None
     parser_hint: Optional[str] = None
+    trait_key: Optional[str] = None
+    trait_band: Optional[str] = None
+    alpha_bucket: Optional[str] = None
+    affordance: Optional[str] = None
+    preferred_outcome: Optional[str] = None

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-traits=(extraversion agreeableness conscientiousness)
+traits=(${TRAITS:-extraversion agreeableness conscientiousness})
 model="${MODEL_NAME:-meta-llama/Llama-3.1-8B-Instruct}"
 vector_metadata="${VECTOR_METADATA:-configs/steering.layers.yaml}"
 vector_root_default="$(VECTOR_METADATA_PATH="$vector_metadata" python3 <<'PY'
@@ -25,8 +25,12 @@ delta_threshold="${DELTA_THRESHOLD:-0.1}"
 sign_threshold="${SIGN_THRESHOLD:-0.55}"
 artifact_dir="${ARTIFACT_DIR:-artifacts/steering_eval}"
 
-printf '[vector-eval] Regenerating steering vectors using %s...\n' "$vector_metadata"
-VECTOR_METADATA="$vector_metadata" VECTOR_ROOT="$vector_root" ./scripts/compute_vectors.sh
+if [ "${SKIP_VECTOR_REGEN:-0}" != "1" ]; then
+  printf '[vector-eval] Regenerating steering vectors using %s...\n' "$vector_metadata"
+  VECTOR_METADATA="$vector_metadata" VECTOR_ROOT="$vector_root" ./scripts/compute_vectors.sh
+else
+  printf '[vector-eval] Skipping vector regeneration (SKIP_VECTOR_REGEN=%s)\n' "${SKIP_VECTOR_REGEN}"
+fi
 
 mkdir -p "$artifact_dir"
 

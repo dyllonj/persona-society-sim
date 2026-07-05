@@ -29,10 +29,13 @@ class LikertProbeDefinition:
 @dataclass
 class BehaviorProbeDefinition:
     probe_id: str
+    trait: Optional[str] = None
+    affordance: Optional[str] = None
     scenario: str
     instructions: str
     outcomes: Dict[str, List[str]]
     cadence: int
+    preferred_outcome: Optional[str] = None
 
 
 @dataclass
@@ -46,6 +49,8 @@ class ProbeAssignment:
     scenario: Optional[str] = None
     outcomes: Dict[str, List[str]] = field(default_factory=dict)
     cooldown: int = 0
+    affordance: Optional[str] = None
+    preferred_outcome: Optional[str] = None
 
     def inject(self, observation: str) -> str:
         prefix = ["[Probe] You have been selected for a research probe.", self.prompt]
@@ -89,6 +94,7 @@ class ProbeManager:
             "likert": {},
             "behavior": {},
         }
+        self._validate_behavior_affordances()
 
     @classmethod
     def from_config(cls, config: Optional[Dict]) -> Optional["ProbeManager"]:
@@ -129,10 +135,13 @@ class ProbeManager:
             behavior_defs.append(
                 BehaviorProbeDefinition(
                     probe_id=str(entry.get("id")),
+                    trait=entry.get("trait"),
+                    affordance=entry.get("affordance"),
                     scenario=str(entry.get("scenario", "")),
                     instructions=str(entry.get("instructions", "Describe what you would do.")),
                     outcomes=outcomes,
                     cadence=cadence,
+                    preferred_outcome=entry.get("preferred_outcome"),
                 )
             )
         if not likert_defs and not behavior_defs:
@@ -217,8 +226,30 @@ class ProbeManager:
                 scenario=definition.scenario,
                 outcomes=outcomes,
                 cooldown=definition.cadence,
+                trait=definition.trait,
+                affordance=definition.affordance,
+                preferred_outcome=definition.preferred_outcome,
             )
         return None
+
+    def _validate_behavior_affordances(self) -> None:
+        """Ensure each behavior probe maps to a single, stable affordance."""
+
+        affordance_owners: Dict[str, str] = {}
+        for probe in self.behavior_probes:
+            if not probe.affordance:
+                raise ValueError(f"Probe {probe.probe_id} is missing an affordance tag")
+            if not probe.trait:
+                raise ValueError(f"Probe {probe.probe_id} must declare a dominant trait")
+            owner = affordance_owners.setdefault(probe.affordance, probe.trait)
+            if owner != probe.trait:
+                raise ValueError(
+                    f"Affordance {probe.affordance} is shared by multiple traits: {owner} vs {probe.trait}"
+                )
+            if probe.preferred_outcome and probe.preferred_outcome not in probe.outcomes:
+                raise ValueError(
+                    f"Probe {probe.probe_id} preferred_outcome={probe.preferred_outcome} is missing from outcomes"
+                )
 
     @classmethod
     def score_likert_response(cls, response_text: str) -> Tuple[LikertScore, str]:

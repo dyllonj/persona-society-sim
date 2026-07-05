@@ -1,43 +1,9 @@
+template: run.fast.yaml
 run_id: "debug32"
-git_commit: "local"
-model_name: "meta-llama/Llama-3.1-8B-Instruct"
-population: 32
-steps: 200
-seed: 7
-steering:
-  enabled: true
-  strength: 1.0  # global alpha multiplier used by steering hooks and eval harness
-  coefficients:
-    E: 0.8
-    A: 0.5
-    C: 0.6
-    O: 0.0
-    N: 0.0
-  vector_norm:
-    E: 1.0
-    A: 1.0
-    C: 1.0
-    O: 1.0
-    N: 1.0
-  metadata_files:
-    personas: configs/personas.bigfive.yaml
-    vectors: configs/steering.layers.yaml  # metadata-aware vector loader
-scenario: "market_voting_baseline"
 logging:
   db_url: "sqlite:///./storage/sim_debug32.db"
   parquet_dir: "./storage/dumps/debug32"
-meta_orchestrator:
-  enabled: true
-  playbook_file: configs/meta.playbook.yaml
-safety:
-  alpha_clip: 1.0
-  toxicity_threshold: 0.4
-  governor_backoff: 0.2
 inference:
-  temperature: 0.7
-  top_p: 0.9
   max_new_tokens: 128
 optimization:
   reflect_every_n_ticks: 10  # Reflect every 10 ticks for better planning
-objectives:
-  enabled: true

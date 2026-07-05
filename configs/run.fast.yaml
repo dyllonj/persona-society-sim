@@ -4,6 +4,7 @@ model_name: "meta-llama/Llama-3.1-8B-Instruct"
 population: 32
 steps: 200
 seed: 7
+max_events_per_tick: 12
 steering:
   strength: 1.0  # global alpha multiplier used by steering hooks and eval harness
   coefficients:

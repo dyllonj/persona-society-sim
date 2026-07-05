@@ -1,12 +1,12 @@
+template: run.fast.yaml
 run_id: "study100"
-git_commit: "local"
 model_name: "meta-llama/Llama-3-70b-instruct"
 population: 100
 steps: 500
 seed: 42
 steering:
   enabled: true
-  strength: 1.0  # global alpha multiplier used by steering hooks and eval harness
+  strength: 1.0
   coefficients:
     E: 0.9
     A: 0.7
@@ -39,5 +39,3 @@ inference:
   max_new_tokens: 160
 optimization:
   reflect_every_n_ticks: 10  # Reflect every 10 ticks for better planning
-objectives:
-  enabled: true
