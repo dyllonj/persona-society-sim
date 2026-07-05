@@ -10,14 +10,11 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from uuid import uuid4
 
-import numpy as np
-import torch
 import sys
 import traceback
 import yaml
 
 from agents.agent import Agent
-from agents.gemini_backend import GeminiBackend
 from agents.language_backend import HFBackend, LanguageBackend, MockBackend
 from agents.memory import MemoryStore
 from agents.planner import Planner
@@ -34,6 +31,18 @@ from schemas.agent import AgentState, PersonaCoeffs
 from schemas.objectives import ObjectiveTemplate, DEFAULT_OBJECTIVE_TEMPLATES
 from steering.vector_store import VectorStore
 from storage.log_sink import LogSink
+from orchestrator.queued_runtime import QueueBackedLogSink, QueuedEventBridge
+from orchestrator.decision_pipeline import QueueDecisionPipeline
+
+try:  # Optional for mock/API smoke runs.
+    import numpy as np
+except ModuleNotFoundError:  # pragma: no cover
+    np = None  # type: ignore
+
+try:  # Optional unless HF backend or vector loading is used.
+    import torch
+except ModuleNotFoundError:  # pragma: no cover
+    torch = None  # type: ignore
 
 TRAIT_KEYS = PersonaCoeffs.TRAITS
 GOAL_LIBRARY = [
@@ -165,6 +174,8 @@ def load_trait_vectors(
     vector_dir: Path,
     vector_metadata: Optional[Dict[str, Any]] = None,
 ) -> Tuple[Dict[str, Dict[int, np.ndarray]], Dict[str, Dict[int, float]]]:
+    if np is None:
+        raise ModuleNotFoundError("numpy is required to load trait vectors")
     metadata_cfg = vector_metadata or {}
     vector_root = Path(metadata_cfg.get("vector_root") or vector_dir)
     defaults = metadata_cfg.get("defaults") or {}
@@ -286,6 +297,8 @@ def build_language_backend(
         )
     
     if use_gemini:
+        from agents.gemini_backend import GeminiBackend
+
         return GeminiBackend(
             model_name="gemini-1.5-flash", # Could be configurable via config
             temperature=temperature,
@@ -531,6 +544,39 @@ def main() -> None:
         action="store_true",
         help="Disable persona steering vectors and run agents with neutral traits",
     )
+    parser.add_argument(
+        "--queued-runtime",
+        action="store_true",
+        help="Use queue-backed log/event adapters as a scale-refactor migration path",
+    )
+    parser.add_argument(
+        "--async-log-flush",
+        action="store_true",
+        help="With --queued-runtime, do not wait for log flush barriers each tick",
+    )
+    parser.add_argument(
+        "--log-queue-size",
+        type=int,
+        default=10000,
+        help="Maximum queued log records when --queued-runtime is enabled",
+    )
+    parser.add_argument(
+        "--event-queue-size",
+        type=int,
+        default=10000,
+        help="Maximum queued viewer/TUI events when --queued-runtime is enabled",
+    )
+    parser.add_argument(
+        "--decision-workers",
+        type=int,
+        default=1,
+        help="Agent decision worker pool size; preserves synchronous barriers in the current runner",
+    )
+    parser.add_argument(
+        "--batch-decisions-per-encounter",
+        action="store_true",
+        help="Compute encounter participant decisions through the batch decision barrier before applying actions",
+    )
     args = parser.parse_args()
 
     config = load_config(args.config)
@@ -583,7 +629,16 @@ def main() -> None:
         suppress_alphas=not steering_enabled,
     )
     logging_cfg = config.get("logging", {})
-    log_sink = LogSink(run_id, logging_cfg.get("db_url"), logging_cfg.get("parquet_dir"))
+    if args.queued_runtime:
+        log_sink = QueueBackedLogSink(
+            run_id,
+            logging_cfg.get("db_url"),
+            logging_cfg.get("parquet_dir"),
+            maxsize=args.log_queue_size,
+            wait_on_flush=not args.async_log_flush,
+        )
+    else:
+        log_sink = LogSink(run_id, logging_cfg.get("db_url"), logging_cfg.get("parquet_dir"))
     inference = config.get("inference", {})
     objective_manager = build_objective_manager(config, args.env, args.difficulty)
     probe_manager = build_probe_manager(config)
@@ -601,6 +656,7 @@ def main() -> None:
     # Optionally start viewer bridge
     event_bridge = None
     http_server = None
+    event_bridge_started = False
     
     try:
         if args.viewer:
@@ -610,6 +666,7 @@ def main() -> None:
 
                 event_bridge = ViewerServer()
                 event_bridge.start()
+                event_bridge_started = True
                 http_server = StaticServer()
                 http_server.start()
                 if args.live:
@@ -626,6 +683,13 @@ def main() -> None:
             console_logger = ConsoleLogger(enabled=False)
             # Also disable standard print output from runner summary if possible,
             # though runner uses console_logger mostly.
+
+        if args.queued_runtime and event_bridge is not None:
+            event_bridge = QueuedEventBridge(
+                event_bridge,
+                maxsize=args.event_queue_size,
+                start_underlying=not event_bridge_started,
+            )
 
         meta_orchestrator = build_meta_orchestrator(
             config, args.env, config_dir=args.config.parent
@@ -644,6 +708,12 @@ def main() -> None:
             probe_manager=probe_manager,
             event_bridge=event_bridge,
             meta_orchestrator=meta_orchestrator,
+            decision_pipeline=(
+                QueueDecisionPipeline(args.decision_workers)
+                if args.decision_workers and args.decision_workers > 1
+                else None
+            ),
+            batch_decisions_per_encounter=args.batch_decisions_per_encounter,
         )
         runner.run(config.get("steps", 200), max_events_per_tick=args.max_events)
 
@@ -655,6 +725,11 @@ def main() -> None:
         if event_bridge and hasattr(event_bridge, "stop"):
             try:
                 event_bridge.stop()
+            except Exception:
+                pass
+        if hasattr(log_sink, "close"):
+            try:
+                log_sink.close()
             except Exception:
                 pass
         traceback.print_exc()

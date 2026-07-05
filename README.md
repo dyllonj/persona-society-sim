@@ -54,6 +54,8 @@ You can now run the simulation using Google's Gemini models via the API. This us
 
 **Note on Steering**: When using the Gemini backend, the "alphas" (trait coefficients) are mapped to natural language system instructions (e.g., "You are highly extraverted...") rather than being injected into model activations. This allows for "black-box" steering of API models. - *Note: Costs vary based on population size and event density.*
 
+> **Known issue**: as currently wired, persona steering silently produces no effect when `--gemini` is driven through the normal simulation loop (a trait-key mismatch between `Agent.persona_alphas()` and `steering/prompt_steering.py`). See [docs/explanation-known-gaps.md](docs/explanation-known-gaps.md#gemini-persona-steering-silently-no-ops) before relying on Gemini runs for a persona-adherence study.
+
 ### ASCII TUI Mode
 For a retro, terminal-based visualization (great for SSH or low-resource environments):
 
@@ -120,7 +122,7 @@ Set `STEERING_ALPHA` before running the script to mirror the `steering.strength`
 
 ### Migration notes
 
-The v2 steering pipeline requires A/B prompt files, metadata-aware vector extraction, and re-running the evaluation harness before you launch new simulations. Follow [`docs/migration.md`](docs/migration.md) for a checklist that covers converting legacy prompt schema files, regenerating vectors, validating them, and updating your run configs.
+The v2 steering pipeline requires A/B prompt files, metadata-aware vector extraction, and re-running the evaluation harness before you launch new simulations. Follow [`docs/howto-migrate-legacy-data.md`](docs/howto-migrate-legacy-data.md) for a checklist that covers converting legacy prompt schema files, regenerating vectors, validating them, and updating your run configs.
 
 For operators upgrading from versions that still logged marketplace activity, run `python scripts/migrate_remove_trade_records.py --sqlite <log.db> --parquet-dir <dump_root>` before restarting simulations. The utility deletes `trade` actions and graph edges from both SQLite tables and Parquet shards so downstream notebooks do not expect market rooms or transactions.
 
@@ -157,7 +159,7 @@ Key scripts:
 - **Probe scheduling**: the ProbeManager (see `configs/probes.yaml`) injects periodic self-report questionnaires and scripted behavioral probes that log the injected prompt bundle plus Likert/rubric scores to the new `probe_log`/`behavior_probe_log` tables, giving direct coverage of RQ1 behavioral adherence.
 - **Structured research telemetry**: research actions emit `ResearchFactLog`, `CitationLog`, and `ReportGradeLog` records instead of opaque JSON strings so fact coverage, citation diversity, and grading drift can be analyzed per persona trait.
 
-See `AGENTS.md` for a deeper dive into the agent loop, probe lifecycle, and how the new telemetry hooks tie into persona steering.
+See `AGENTS.md` for a deeper dive into the agent loop, probe lifecycle, and how the new telemetry hooks tie into persona steering, and [`docs/README.md`](docs/README.md) for the full documentation index (tutorial, how-to guides, reference, and design/rationale docs — including a consolidated list of known gaps and live bugs worth knowing about).
 
 ## Milestones
 1. **M1 — Persona vector library**: implement CAA pipeline, validate dose-response & capability checks.

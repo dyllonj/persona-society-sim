@@ -5,7 +5,7 @@ This document expands on the agent lifecycle, instrumentation hooks, and the new
 ## Cognitive loop
 Agents still follow the perceive → reflect → plan → act loop described in the original paper implementation, but we now persist every intermediate artifact:
 
-1. **Perceive** — `Agent.perceive` stores observations inside `MemoryStore` with recency/importance scores (`agents/memory.py`).
+1. **Perceive** — `Agent.perceive` stores observations inside `MemoryStore` with a length-derived importance score (`agents/memory.py`). Recency isn't stored at this point; it's recomputed fresh from `current_tick - event.tick` whenever memories are scored during retrieval.
 2. **Reflect** — `reflect_and_plan` queries `MemoryRetriever`, produces a natural-language summary plus referenced memory IDs, and caches that bundle on the agent object for later logging (`agents/agent.py`).
 3. **Plan** — `Planner.plan` (and the objective heuristics therein) returns the action type, params, and utterance guidance that will be used for inference (`agents/planner.py`).
 4. **Act** — `_build_prompt` turns the observation + plan into the final prompt, the language backend injects persona steering vectors, and the result is sanitized before the env action executes.
@@ -22,7 +22,7 @@ MetricTracker registers each agent’s persona profile at startup and consumes t
 ## Graph & macro metrics
 During every tick the runner promotes social interactions into edges:
 
-- `talk`/`work`/`research`/`trade`/`gift` actions generate weighted `Edge` records tagged with the interaction kind.
+- `talk`/`work`/`research`/`gift` actions generate weighted `Edge` records tagged with the interaction kind. (`trade` exists as a function in `env/actions.py` but is disabled — it always returns `success=False` and isn't registered in the action router — so it never produces edges in practice.)
 - Persona bands and active steering buckets are stored with each edge to support homophily/polarization studies.
 
 `metrics/graphs.py` turns those edges into `GraphSnapshot` entries (persisted via `LogSink` to SQL/Parquet), and `metrics/social_dynamics.py` composes tick-level macro measurements (cooperation rates, wealth Gini, polarization, enforcement cost) that land in the new `metrics_snapshot` table. These feeds provide the quantitative backbone for RQ2/RQ4 without having to reconstruct graphs from scratch.
@@ -49,3 +49,13 @@ These logs replace the opaque JSON blobs previously embedded inside `ActionLog.i
 - `orchestrator/runner.py` for how decisions turn into env actions, logs, graph edges, and metric snapshots.
 - `metrics/tracker.py`, `metrics/graphs.py`, and `metrics/social_dynamics.py` for persona-aware aggregation logic.
 - `storage/log_sink.py` for the buffering/writing of the new cognitive, graph, metrics, probe, and research logs.
+
+## Full documentation
+
+This file is a supplement focused on the agent/telemetry angle. For complete
+reference and how-to material, see [docs/README.md](docs/README.md) — in
+particular [docs/reference-modules.md](docs/reference-modules.md) (full
+agent/world/viewer public surface) and
+[docs/explanation-known-gaps.md](docs/explanation-known-gaps.md) (a real bug
+where Gemini-backed runs silently lose persona steering, plus other known
+gaps worth knowing about before debugging unexpected behavior).

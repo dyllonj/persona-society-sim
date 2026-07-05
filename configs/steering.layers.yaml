@@ -1,29 +1,36 @@
 vector_root: ../data/vectors
 defaults:
-  layers: [6, 18, 30]
+  layers: [12, 36, 60]
   prompt_dir: ../data/prompts
   prompt_masking: true
   extraction: caa_ab_normalized
+  model: Qwen/Qwen2.5-32B-Instruct
+  num_hidden_layers: 64
   notes: |
-    Steering vectors are normalized residual differences computed from the forced-choice
-    (A/B) prompt schema. Prompt tokens are masked during runtime steering so only the
+    Steering vectors for Qwen/Qwen2.5-32B-Instruct (64 decoder layers). Supersedes
+    the Llama-3.1-8B layer config; 8B vectors do NOT transfer to this model. Layer
+    bands are scaled from the 8B choices as a starting set; run steering/layer_sweep.py
+    to tune them. Recompute vectors with scripts/compute_vectors.sh on the A100 before
+    any CAA trial. The prior 8B config is preserved in git history for cross-model
+    comparisons. Vectors are normalized residual differences from the forced-choice
+    (A/B) prompt schema; prompt tokens are masked during runtime steering so only the
     generated continuation receives residual offsets.
 traits:
   E:
     name: extraversion
-    vector_store_id: E_caa_v2
+    vector_store_id: E_caa_qwen32b_v1
     prompt_file: ../data/prompts/extraversion.jsonl
-    layers: [6, 18, 30]
-    description: Highly weighted early/mid layers to capture affective tone.
+    layers: [12, 36, 60]
+    description: Early/mid layers (scaled from 8B 6/18/30) to capture affective tone.
   A:
     name: agreeableness
-    vector_store_id: A_caa_v2
+    vector_store_id: A_caa_qwen32b_v1
     prompt_file: ../data/prompts/agreeableness.jsonl
-    layers: [8, 20, 28]
-    description: Mid-late layers emphasize conciliatory phrasing without overwhelming base intent.
+    layers: [16, 40, 58]
+    description: Mid-late layers (scaled from 8B 8/20/28) for conciliatory phrasing.
   C:
     name: conscientiousness
-    vector_store_id: C_caa_v2
+    vector_store_id: C_caa_qwen32b_v1
     prompt_file: ../data/prompts/conscientiousness.jsonl
-    layers: [10, 22, 30]
-    description: Later layers highlight procedural focus and planning cues.
+    layers: [20, 44, 60]
+    description: Later layers (scaled from 8B 10/22/30) for procedural focus and planning.

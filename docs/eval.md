@@ -22,10 +22,11 @@
 
 ## Steering vector evaluation harness
 
-- `scripts/eval_vectors.sh` regenerates steering vectors via the metadata-aware loader, runs `steering.eval` on the held-out `_eval.jsonl` prompt sets, and writes both JSON + Markdown summaries to `artifacts/steering_eval/`.
+- `scripts/eval_vectors.sh` regenerates steering vectors via the metadata-aware loader, runs `steering.eval`, and writes both JSON + Markdown summaries to `artifacts/steering_eval/`. It is *intended* to evaluate on held-out `_eval.jsonl` prompt sets, but as of this writing no such files exist under `data/prompts/`, so it currently falls back to evaluating on the training prompts (logged as a warning) — see [explanation-known-gaps.md](explanation-known-gaps.md#steeringeval-currently-evaluates-on-training-data-not-held-out-data). Add real `<trait>_eval.jsonl` files before treating these numbers as a genuine generalization check.
 - The harness reports baseline vs steered accuracy, log-prob deltas, and sign consistency for every prompt so you can catch regressions before running a multi-agent sim.
 - Set `STEERING_ALPHA` to the same value as `steering.strength` in your run config to evaluate the correct dose. Use `DELTA_THRESHOLD` and `SIGN_THRESHOLD` to fail the script when the expected gains disappear.
 - `steering.eval` can also capture transcripts with steering toggled on/off to manually verify tone changes. These transcripts, along with `vector_store_id`, prompt metadata, and evaluation hashes, serve as the reproducibility record for persona experiments.
+- `--traits` currently defaults to only `extraversion agreeableness conscientiousness` — Openness/Neuroticism aren't in `steering/eval.py`'s `TRAIT_ALIASES` table yet. See [howto-compute-steering-vectors.md](howto-compute-steering-vectors.md).
 
 ## Experimental matrix
 | Condition | Population | Steps | Notes |
