@@ -1,0 +1,86 @@
+Loading data from storage/dumps/debug32-targeted...
+  Loaded 1307 actions, 1307 messages, 81 graph snapshots, 263 metrics snapshots
+
+================================================================================
+ACTION DISTRIBUTION
+================================================================================
+
+Total actions: 1307
+
+Action types:
+  research       :   501 ( 38.3%)
+  cite           :   409 ( 31.3%)
+  talk           :   305 ( 23.3%)
+  submit_report  :    73 (  5.6%)
+  move           :    19 (  1.5%)
+
+Outcomes:
+  success        :  1307 (100.0%)
+
+================================================================================
+AGENT ACTIVITY
+================================================================================
+
+Total agents: 32
+
+Most active agents (by actions):
+  agent-001: 45 actions, 45 messages
+  agent-020: 44 actions, 44 messages
+  agent-003: 44 actions, 44 messages
+  agent-005: 44 actions, 44 messages
+  agent-028: 43 actions, 43 messages
+
+Least active agents:
+  agent-009: 39 actions, 39 messages
+  agent-026: 39 actions, 39 messages
+  agent-018: 39 actions, 39 messages
+  agent-006: 38 actions, 38 messages
+  agent-011: 35 actions, 35 messages
+
+================================================================================
+TOKEN USAGE
+================================================================================
+
+Total messages: 1307
+Total input tokens:  1,496,202
+Total output tokens: 156,066
+Total tokens:        1,652,268
+
+Average per message:
+  Input:  1144.8 tokens
+  Output: 119.4 tokens
+
+================================================================================
+STEERING ANALYSIS
+================================================================================
+
+Agents with steering: 32
+
+Sample agent profiles:
+  agent-000: A:+0.32, C:+0.74, E:+0.99, N:-0.14, O:-0.08
+  agent-001: A:+0.53, C:+0.41, E:+0.76, N:-0.12, O:+0.03
+  agent-002: A:+0.30, C:+0.44, E:+0.57, N:-0.03, O:+0.07
+  agent-003: A:+0.44, C:+0.50, E:+0.97, N:+0.11, O:-0.13
+  agent-004: A:+0.65, C:+0.69, E:+0.81, N:+0.19, O:-0.08
+
+================================================================================
+TEMPORAL DYNAMICS
+================================================================================
+
+Tick range: 0 to 44 (45 ticks)
+Actions per tick: 29.0 avg
+Messages per tick: 29.0 avg
+
+Additional datasets available:
+  Graph snapshots:  81 records
+  Metrics snapshots: 263 records
+
+✓ Saved: storage/analysis/action_distribution.png
+✓ Saved: storage/analysis/steering_heatmap.png
+✓ Saved: storage/analysis/activity_over_time.png
+
+✓ All visualizations saved to: storage/analysis
+
+================================================================================
+ANALYSIS COMPLETE
+================================================================================
