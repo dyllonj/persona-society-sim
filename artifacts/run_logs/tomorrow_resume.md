@@ -17,7 +17,8 @@
 - Partial targeted dump: `storage/dumps/debug32-targeted`
 - Analysis text: `artifacts/run_logs/targeted_partial_analysis.txt`
 - Analysis plots: `storage/analysis/action_distribution.png`, `storage/analysis/steering_heatmap.png`, `storage/analysis/activity_over_time.png`
-- Local SQLite DB: `storage/sim_debug32-debug32-targeted.db` (ignored by git; parquet dump is committed instead)
+- SQLite DBs pushed for migration: `storage/sim_debug32.db`, `storage/sim_debug32-debug32-targeted.db`, `storage/sim_debug32-live3.db`, small baseline diagnostic DBs, and two `storage/sim_debug32.db.bak-*` snapshots.
+- Parquet dumps pushed for migration: `storage/dumps/debug32`, `storage/dumps/debug32-targeted`, and nested baseline diagnostic dumps.
 - Run log: `artifacts/run_logs/full_workflow_20260706T051505Z.log`
 
 ## Partial Targeted Counts
