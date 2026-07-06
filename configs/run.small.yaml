@@ -1,5 +1,8 @@
 template: run.fast.yaml
 run_id: "debug32"
+model_name: "Qwen/Qwen2.5-32B-Instruct"
+steering:
+  strength: 2.0
 logging:
   db_url: "sqlite:///./storage/sim_debug32.db"
   parquet_dir: "./storage/dumps/debug32"
@@ -7,3 +10,6 @@ inference:
   max_new_tokens: 128
 optimization:
   reflect_every_n_ticks: 10  # Reflect every 10 ticks for better planning
+  use_quantization: false
+  max_gpu_memory_gb: 78
+  max_cpu_memory_gb: 64
