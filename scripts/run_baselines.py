@@ -300,6 +300,15 @@ def main() -> None:
     parser.add_argument("--difficulty", type=int, default=3, help="Environment difficulty setting")
     parser.add_argument("--steps", type=int, help="Override simulation steps for all runs")
     parser.add_argument(
+        "--max-events",
+        type=int,
+        help="Override max events per tick for all runs",
+    )
+    parser.add_argument(
+        "--run-tag",
+        help="Append a tag to the configured run_id to keep artifacts isolated",
+    )
+    parser.add_argument(
         "--vector-dir",
         type=Path,
         default=Path("data/vectors"),
@@ -331,8 +340,13 @@ def main() -> None:
     args = parser.parse_args()
 
     base_config = load_config(args.config)
+    if args.run_tag:
+        run_root = base_config.get("run_id") or "run"
+        base_config["run_id"] = f"{run_root}-{args.run_tag}"
     if args.steps is not None:
         base_config["steps"] = int(args.steps)
+    if args.max_events is not None:
+        base_config["max_events_per_tick"] = int(args.max_events)
 
     arms = args.arms or ["targeted", "placebo", "disabled"]
     results: Dict[str, Dict[str, Any]] = {}
