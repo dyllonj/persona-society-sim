@@ -1,12 +1,21 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+python_bin="${PYTHON_BIN:-${PYTHON:-}}"
+if [ -z "$python_bin" ]; then
+  if [ -x ".venv/bin/python" ]; then
+    python_bin=".venv/bin/python"
+  else
+    python_bin="python3"
+  fi
+fi
+
 config_file="${VECTOR_METADATA:-configs/steering.layers.yaml}"
 model_override="${MODEL_NAME:-}"
 vector_root_override="${VECTOR_ROOT:-}"
 selected_traits="${TRAITS:-}"
 
-python3 - "$config_file" "$model_override" "$vector_root_override" "$selected_traits" <<'PY'
+"$python_bin" - "$config_file" "$model_override" "$vector_root_override" "$selected_traits" <<'PY'
 import subprocess
 import sys
 from pathlib import Path

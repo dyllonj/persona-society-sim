@@ -1,7 +1,7 @@
 {
   "model": "Qwen/Qwen2.5-32B-Instruct",
-  "alpha": 1.0,
-  "generated_at": "2026-07-06T04:18:59+00:00",
+  "alpha": 2.0,
+  "generated_at": "2026-07-06T04:48:03+00:00",
   "traits": [
     {
       "trait_name": "extraversion",
@@ -17,13 +17,13 @@
       },
       "logprob_gap": {
         "baseline": 18.205833123571388,
-        "steered": 18.182696587125868,
-        "delta": -0.02313653644552005
+        "steered": 18.25549286602871,
+        "delta": 0.04965974245732241
       },
       "sign_consistency": 1.0,
-      "directional_improvement": 0.0,
-      "anti_steerable_fraction": 1.0,
-      "per_sample_variance": 5.935357730004763e-05,
+      "directional_improvement": 0.5,
+      "anti_steerable_fraction": 0.5,
+      "per_sample_variance": 0.008215586734526088,
       "per_prompt": [
         {
           "prompt_id": "E01",
@@ -33,8 +33,8 @@
           "high_option": "A",
           "baseline_high_logprob": -16.544261141322046,
           "baseline_low_logprob": -36.51151605730246,
-          "steered_high_logprob": -16.544272572521415,
-          "steered_low_logprob": -36.496095079346276,
+          "steered_high_logprob": -16.544151175452363,
+          "steered_low_logprob": -36.47042596002365,
           "baseline_correct": true,
           "steered_correct": true
         },
@@ -46,8 +46,8 @@
           "high_option": "A",
           "baseline_high_logprob": -16.032477560598352,
           "baseline_low_logprob": -32.476888891760716,
-          "steered_high_logprob": -16.03248852974474,
-          "steered_low_logprob": -32.446059197171614,
+          "steered_high_logprob": -16.032485658972007,
+          "steered_low_logprob": -32.617196606458144,
           "baseline_correct": true,
           "steered_correct": true
         }
@@ -67,13 +67,13 @@
       },
       "logprob_gap": {
         "baseline": 22.065145144892973,
-        "steered": 22.103103664414597,
-        "delta": 0.03795851952162366
+        "steered": 22.155945861594013,
+        "delta": 0.09080071670103962
       },
       "sign_consistency": 1.0,
       "directional_improvement": 1.0,
       "anti_steerable_fraction": 0.0,
-      "per_sample_variance": 0.0011884794259640103,
+      "per_sample_variance": 0.004856681657819325,
       "per_prompt": [
         {
           "prompt_id": "A01",
@@ -83,8 +83,8 @@
           "high_option": "A",
           "baseline_high_logprob": -16.66179887343864,
           "baseline_low_logprob": -36.88695257873382,
-          "steered_high_logprob": -16.66170955225502,
-          "steered_low_logprob": -36.95929610702853,
+          "steered_high_logprob": -16.66162022753528,
+          "steered_low_logprob": -37.04726454591411,
           "baseline_correct": true,
           "steered_correct": true
         },
@@ -96,8 +96,8 @@
           "high_option": "A",
           "baseline_high_logprob": -16.904612484848542,
           "baseline_low_logprob": -40.80974906933931,
-          "steered_high_logprob": -16.904613914570575,
-          "steered_low_logprob": -40.81323468862626,
+          "steered_high_logprob": -16.904622494357966,
+          "steered_low_logprob": -40.83086989916716,
           "baseline_correct": true,
           "steered_correct": true
         }
@@ -117,13 +117,13 @@
       },
       "logprob_gap": {
         "baseline": 22.526584151027862,
-        "steered": 22.581741360720912,
-        "delta": 0.055157209693049936
+        "steered": 22.691154457223092,
+        "delta": 0.1645703061952304
       },
       "sign_consistency": 1.0,
       "directional_improvement": 1.0,
       "anti_steerable_fraction": 0.0,
-      "per_sample_variance": 5.915219034807295e-05,
+      "per_sample_variance": 5.491486090728358e-05,
       "per_prompt": [
         {
           "prompt_id": "C01",
@@ -133,8 +133,8 @@
           "high_option": "A",
           "baseline_high_logprob": -16.08446315133125,
           "baseline_low_logprob": -41.00498713688779,
-          "steered_high_logprob": -16.08439375996869,
-          "steered_low_logprob": -41.05238390910296,
+          "steered_high_logprob": -16.08419317514864,
+          "steered_low_logprob": -41.17669792308794,
           "baseline_correct": true,
           "steered_correct": true
         },
@@ -146,8 +146,8 @@
           "high_option": "A",
           "baseline_high_logprob": -17.03830342704896,
           "baseline_low_logprob": -37.17094774354814,
-          "steered_high_logprob": -17.037859336283418,
-          "steered_low_logprob": -37.233351908590976,
+          "steered_high_logprob": -17.037451489470413,
+          "steered_low_logprob": -37.3272556559773,
           "baseline_correct": true,
           "steered_correct": true
         }
@@ -207,10 +207,9 @@
         }
       ],
       "preferred_layers": [
-        12,
-        36,
-        60
+        36
       ],
+      "polarity": -1.0,
       "layer_sweep": {
         "evaluated_at": "2026-07-06T04:17:47Z",
         "model_name": "Qwen/Qwen2.5-32B-Instruct",
@@ -235,6 +234,28 @@
             "total": 2.0
           }
         ]
+      },
+      "intervention_sweep": {
+        "artifact": "artifacts/steering_eval/e_intervention_layer_sweep.json",
+        "evaluated_at": "2026-07-06T04:40:54Z",
+        "best_by_gap_delta": {
+          "layers": [
+            12,
+            36
+          ],
+          "alpha": -2.0,
+          "logprob_gap_delta": 0.09214336611330509,
+          "anti_steerable_fraction": 0.5
+        },
+        "selected_for_runtime": {
+          "layers": [
+            36
+          ],
+          "polarity": -1.0,
+          "alpha": 3.0,
+          "logprob_gap_delta": 0.08857226371765137,
+          "anti_steerable_fraction": 0.0
+        }
       },
       "created_at": "2026-07-06T04:15:00Z"
     },
@@ -394,13 +415,13 @@
           },
           "logprob_gap": {
             "baseline": 18.205833123571388,
-            "steered": 18.1903410108011,
-            "delta": -0.015492112770289168
+            "steered": 18.186128624261762,
+            "delta": -0.01970449930962559
           },
           "sign_consistency": 1.0,
           "directional_improvement": 0.0,
           "anti_steerable_fraction": 1.0,
-          "per_sample_variance": 5.8929199607196926e-05,
+          "per_sample_variance": 1.6598678277234145e-05,
           "per_prompt": [
             {
               "prompt_id": "E01",
@@ -410,8 +431,8 @@
               "high_option": "A",
               "baseline_high_logprob": -16.544261141322046,
               "baseline_low_logprob": -36.51151605730246,
-              "steered_high_logprob": -16.544249844205503,
-              "steered_low_logprob": -36.48833611176423,
+              "steered_high_logprob": -16.544214612591624,
+              "steered_low_logprob": -36.48769088171019,
               "baseline_correct": true,
               "steered_correct": true
             },
@@ -423,8 +444,8 @@
               "high_option": "A",
               "baseline_high_logprob": -16.032477560598352,
               "baseline_low_logprob": -32.476888891760716,
-              "steered_high_logprob": -16.032477679836745,
-              "steered_low_logprob": -32.46907343388022,
+              "steered_high_logprob": -16.032481255067694,
+              "steered_low_logprob": -32.46126223447265,
               "baseline_correct": true,
               "steered_correct": true
             }
@@ -549,13 +570,13 @@
           },
           "logprob_gap": {
             "baseline": 18.205833123571388,
-            "steered": 18.18270993011226,
-            "delta": -0.023123193459127833
+            "steered": 18.18590578940144,
+            "delta": -0.019927334169949518
           },
           "sign_consistency": 1.0,
           "directional_improvement": 0.0,
           "anti_steerable_fraction": 1.0,
-          "per_sample_variance": 0.00024704309684612423,
+          "per_sample_variance": 0.00039545767502472887,
           "per_prompt": [
             {
               "prompt_id": "E01",
@@ -565,8 +586,8 @@
               "high_option": "A",
               "baseline_high_logprob": -16.544261141322046,
               "baseline_low_logprob": -36.51151605730246,
-              "steered_high_logprob": -16.544264479561186,
-              "steered_low_logprob": -36.504113806761495,
+              "steered_high_logprob": -16.54419830766583,
+              "steered_low_logprob": -36.47163977183044,
               "baseline_correct": true,
               "steered_correct": true
             },
@@ -578,8 +599,8 @@
               "high_option": "A",
               "baseline_high_logprob": -16.032477560598352,
               "baseline_low_logprob": -32.476888891760716,
-              "steered_high_logprob": -16.032489121047263,
-              "steered_low_logprob": -32.43805965407147,
+              "steered_high_logprob": -16.032481493951934,
+              "steered_low_logprob": -32.4768516085902,
               "baseline_correct": true,
               "steered_correct": true
             }
@@ -704,13 +725,13 @@
           },
           "logprob_gap": {
             "baseline": 18.205833123571388,
-            "steered": 18.186657341324697,
-            "delta": -0.019175782246691142
+            "steered": 18.21293117804192,
+            "delta": 0.0070980544705321336
           },
           "sign_consistency": 1.0,
           "directional_improvement": 0.5,
           "anti_steerable_fraction": 0.5,
-          "per_sample_variance": 0.000752986679121357,
+          "per_sample_variance": 0.001013059414589895,
           "per_prompt": [
             {
               "prompt_id": "E01",
@@ -720,8 +741,8 @@
               "high_option": "A",
               "baseline_high_logprob": -16.544261141322046,
               "baseline_low_logprob": -36.51151605730246,
-              "steered_high_logprob": -16.54423448180669,
-              "steered_low_logprob": -36.51975421828746,
+              "steered_high_logprob": -16.544200810186204,
+              "steered_low_logprob": -36.48672518634538,
               "baseline_correct": true,
               "steered_correct": true
             },
@@ -733,8 +754,8 @@
               "high_option": "A",
               "baseline_high_logprob": -16.032477560598352,
               "baseline_low_logprob": -32.476888891760716,
-              "steered_high_logprob": -16.032473040657067,
-              "steered_low_logprob": -32.43026798682569,
+              "steered_high_logprob": -16.032453256484303,
+              "steered_low_logprob": -32.515791236408965,
               "baseline_correct": true,
               "steered_correct": true
             }
@@ -859,13 +880,13 @@
           },
           "logprob_gap": {
             "baseline": 18.205833123571388,
-            "steered": 18.182696587125868,
-            "delta": -0.02313653644552005
+            "steered": 18.205047233004855,
+            "delta": -0.0007858905665329985
           },
           "sign_consistency": 1.0,
-          "directional_improvement": 0.0,
-          "anti_steerable_fraction": 1.0,
-          "per_sample_variance": 5.935357730004763e-05,
+          "directional_improvement": 0.5,
+          "anti_steerable_fraction": 0.5,
+          "per_sample_variance": 0.0030493165824505464,
           "per_prompt": [
             {
               "prompt_id": "E01",
@@ -875,8 +896,8 @@
               "high_option": "A",
               "baseline_high_logprob": -16.544261141322046,
               "baseline_low_logprob": -36.51151605730246,
-              "steered_high_logprob": -16.544272572521415,
-              "steered_low_logprob": -36.496095079346276,
+              "steered_high_logprob": -16.54420937979635,
+              "steered_low_logprob": -36.455457787842704,
               "baseline_correct": true,
               "steered_correct": true
             },
@@ -888,8 +909,8 @@
               "high_option": "A",
               "baseline_high_logprob": -16.032477560598352,
               "baseline_low_logprob": -32.476888891760716,
-              "steered_high_logprob": -16.03248852974474,
-              "steered_low_logprob": -32.446059197171614,
+              "steered_high_logprob": -16.032469575118455,
+              "steered_low_logprob": -32.53131563308181,
               "baseline_correct": true,
               "steered_correct": true
             }
@@ -1014,13 +1035,13 @@
           },
           "logprob_gap": {
             "baseline": 18.205833123571388,
-            "steered": 18.14839339632659,
-            "delta": -0.05743972724479818
+            "steered": 18.21272247842115,
+            "delta": 0.0068893548497612755
           },
           "sign_consistency": 1.0,
-          "directional_improvement": 0.0,
-          "anti_steerable_fraction": 1.0,
-          "per_sample_variance": 0.0012676006989917501,
+          "directional_improvement": 0.5,
+          "anti_steerable_fraction": 0.5,
+          "per_sample_variance": 0.0015909417823556007,
           "per_prompt": [
             {
               "prompt_id": "E01",
@@ -1030,8 +1051,8 @@
               "high_option": "A",
               "baseline_high_logprob": -16.544261141322046,
               "baseline_low_logprob": -36.51151605730246,
-              "steered_high_logprob": -16.54427412241794,
-              "steered_low_logprob": -36.48969269159687,
+              "steered_high_logprob": -16.544174979649917,
+              "steered_low_logprob": -36.47843263891235,
               "baseline_correct": true,
               "steered_correct": true
             },
@@ -1043,8 +1064,8 @@
               "high_option": "A",
               "baseline_high_logprob": -16.032477560598352,
               "baseline_low_logprob": -32.476888891760716,
-              "steered_high_logprob": -16.03248709609005,
-              "steered_low_logprob": -32.3838553195643,
+              "steered_high_logprob": -16.03247148697818,
+              "steered_low_logprob": -32.523658784558044,
               "baseline_correct": true,
               "steered_correct": true
             }
@@ -1169,13 +1190,13 @@
           },
           "logprob_gap": {
             "baseline": 18.205833123571388,
-            "steered": 18.130072488976005,
-            "delta": -0.07576063459538318
+            "steered": 18.25549286602871,
+            "delta": 0.04965974245732241
           },
           "sign_consistency": 1.0,
-          "directional_improvement": 0.0,
-          "anti_steerable_fraction": 1.0,
-          "per_sample_variance": 0.0031311149287867163,
+          "directional_improvement": 0.5,
+          "anti_steerable_fraction": 0.5,
+          "per_sample_variance": 0.008215586734526088,
           "per_prompt": [
             {
               "prompt_id": "E01",
@@ -1185,8 +1206,8 @@
               "high_option": "A",
               "baseline_high_logprob": -16.544261141322046,
               "baseline_low_logprob": -36.51151605730246,
-              "steered_high_logprob": -16.54430114039142,
-              "steered_low_logprob": -36.491751788070076,
+              "steered_high_logprob": -16.544151175452363,
+              "steered_low_logprob": -36.47042596002365,
               "baseline_correct": true,
               "steered_correct": true
             },
@@ -1198,8 +1219,8 @@
               "high_option": "A",
               "baseline_high_logprob": -16.032477560598352,
               "baseline_low_logprob": -32.476888891760716,
-              "steered_high_logprob": -16.03248960006721,
-              "steered_low_logprob": -32.34518393034056,
+              "steered_high_logprob": -16.032485658972007,
+              "steered_low_logprob": -32.617196606458144,
               "baseline_correct": true,
               "steered_correct": true
             }
@@ -1324,13 +1345,13 @@
           },
           "logprob_gap": {
             "baseline": 18.205833123571388,
-            "steered": 18.135195158487342,
-            "delta": -0.07063796508404607
+            "steered": 18.27067159393591,
+            "delta": 0.06483847036452062
           },
           "sign_consistency": 1.0,
           "directional_improvement": 0.5,
           "anti_steerable_fraction": 0.5,
-          "per_sample_variance": 0.008462722952992715,
+          "per_sample_variance": 0.023573018047142107,
           "per_prompt": [
             {
               "prompt_id": "E01",
@@ -1340,8 +1361,8 @@
               "high_option": "A",
               "baseline_high_logprob": -16.544261141322046,
               "baseline_low_logprob": -36.51151605730246,
-              "steered_high_logprob": -16.544342073460633,
-              "steered_low_logprob": -36.53295208362232,
+              "steered_high_logprob": -16.544095359210452,
+              "steered_low_logprob": -36.42265367448971,
               "baseline_correct": true,
               "steered_correct": true
             },
@@ -1353,8 +1374,8 @@
               "high_option": "A",
               "baseline_high_logprob": -16.032477560598352,
               "baseline_low_logprob": -32.476888891760716,
-              "steered_high_logprob": -16.03251688496647,
-              "steered_low_logprob": -32.31429719177947,
+              "steered_high_logprob": -16.032475769024643,
+              "steered_low_logprob": -32.6952606416172,
               "baseline_correct": true,
               "steered_correct": true
             }
@@ -1465,25 +1486,20 @@
   ],
   "bleed_matrix": {
     "extraversion": {
-      "extraversion": -0.02313653644552005,
-      "agreeableness": 0.012947098345620134,
-      "conscientiousness": 0.04961266702645162
+      "extraversion": 0.04965974245732241,
+      "agreeableness": 0.03852424260028897,
+      "conscientiousness": -0.0654059714661912
     },
     "agreeableness": {
-      "extraversion": -0.01496027496654051,
-      "agreeableness": 0.03795851952162366,
-      "conscientiousness": 0.04445159794983056
+      "extraversion": -0.030072354923177613,
+      "agreeableness": 0.09080071670103962,
+      "conscientiousness": 0.11234755325295964
     },
     "conscientiousness": {
-      "extraversion": 0.05977186210077434,
-      "agreeableness": 0.0634660323443228,
-      "conscientiousness": 0.055157209693049936
+      "extraversion": 0.08889486766179289,
+      "agreeableness": 0.10811293583020642,
+      "conscientiousness": 0.1645703061952304
     }
   },
-  "failures": [
-    "extraversion delta 0.000 < 0.100",
-    "extraversion anti-steerable 1.000 > 0.500",
-    "agreeableness delta 0.000 < 0.100",
-    "conscientiousness delta 0.000 < 0.100"
-  ]
+  "failures": []
 }

@@ -6,6 +6,9 @@ defaults:
   extraction: caa_ab_normalized
   model: Qwen/Qwen2.5-32B-Instruct
   num_hidden_layers: 64
+  eval_alpha: 2.0
+  ci_strengths: [2.0]
+  ci_directional_threshold: 0.5
   notes: |
     Steering vectors for Qwen/Qwen2.5-32B-Instruct (64 decoder layers). Supersedes
     the Llama-3.1-8B layer config; 8B vectors do NOT transfer to this model. Layer
@@ -20,8 +23,9 @@ traits:
     name: extraversion
     vector_store_id: E_caa_qwen32b_v1
     prompt_file: ../data/prompts/extraversion_train.jsonl
-    layers: [12, 36, 60]
-    description: Early/mid layers (scaled from 8B 6/18/30) to capture affective tone.
+    layers: [36]
+    polarity: -1.0
+    description: Layer 36 with inverted runtime polarity from the Qwen32B intervention sweep; positive alphas increase held-out extraversion logprob gap.
   A:
     name: agreeableness
     vector_store_id: A_caa_qwen32b_v1

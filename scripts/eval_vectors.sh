@@ -1,9 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+python_bin="${PYTHON_BIN:-${PYTHON:-}}"
+if [ -z "$python_bin" ]; then
+  if [ -x ".venv/bin/python" ]; then
+    python_bin=".venv/bin/python"
+  else
+    python_bin="python3"
+  fi
+fi
+
 traits=(${TRAITS:-extraversion agreeableness conscientiousness})
 vector_metadata="${VECTOR_METADATA:-configs/steering.layers.yaml}"
-model_default="$(VECTOR_METADATA_PATH="$vector_metadata" python3 <<'PY'
+model_default="$(VECTOR_METADATA_PATH="$vector_metadata" "$python_bin" <<'PY'
 from pathlib import Path
 import os
 import yaml
@@ -14,7 +23,7 @@ print((config.get("defaults") or {}).get("model") or "meta-llama/Llama-3.1-8B-In
 PY
 )"
 model="${MODEL_NAME:-$model_default}"
-vector_root_default="$(VECTOR_METADATA_PATH="$vector_metadata" python3 <<'PY'
+vector_root_default="$(VECTOR_METADATA_PATH="$vector_metadata" "$python_bin" <<'PY'
 from pathlib import Path
 import os
 import yaml
@@ -30,7 +39,17 @@ PY
 )"
 vector_root="${VECTOR_ROOT:-$vector_root_default}"
 prompt_dir="${PROMPT_DIR:-data/prompts}"
-alpha="${STEERING_ALPHA:-1.0}"
+alpha_default="$(VECTOR_METADATA_PATH="$vector_metadata" "$python_bin" <<'PY'
+from pathlib import Path
+import os
+import yaml
+
+config_path = Path(os.environ["VECTOR_METADATA_PATH"])
+config = yaml.safe_load(config_path.read_text()) or {}
+print((config.get("defaults") or {}).get("eval_alpha") or 1.0)
+PY
+)"
+alpha="${STEERING_ALPHA:-$alpha_default}"
 alpha_grid="${ALPHA_GRID:-}"
 delta_threshold="${DELTA_THRESHOLD:-0.1}"
 sign_threshold="${SIGN_THRESHOLD:-0.55}"
@@ -48,7 +67,7 @@ mkdir -p "$artifact_dir"
 
 if [ "${BASELINE_BFI:-0}" = "1" ]; then
   printf '[vector-eval] Writing baseline BFI prompt skeleton to %s\n' "$artifact_dir/baseline_bfi_prompt.txt"
-  python3 -m steering.baseline_bfi prompt > "$artifact_dir/baseline_bfi_prompt.txt"
+  "$python_bin" -m steering.baseline_bfi prompt > "$artifact_dir/baseline_bfi_prompt.txt"
 fi
 
 printf '[vector-eval] Evaluating traits %s with model %s\n' "${traits[*]}" "$model"
@@ -74,4 +93,4 @@ if [ "${MEASURE_BLEED:-0}" = "1" ]; then
   eval_args+=(--measure-bleed)
 fi
 
-python3 -m steering.eval "${eval_args[@]}"
+"$python_bin" -m steering.eval "${eval_args[@]}"

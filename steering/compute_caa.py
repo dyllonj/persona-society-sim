@@ -15,7 +15,7 @@ import yaml
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from data.prompts.schema import PromptItem, load_prompt_items
-from steering.vector_store import VectorStore
+from steering.vector_store import VectorStore, coerce_polarity
 
 DEFAULT_LAYERS: Tuple[int, ...] = ()
 DEFAULT_MODEL = "meta-llama/Llama-3.1-8B-Instruct"
@@ -39,6 +39,7 @@ class ResolvedCAAConfig:
     vector_store_id: str | None
     config_path: Path | None = None
     expected_num_hidden_layers: int | None = None
+    polarity: float = 1.0
 
 
 def _resolve_relative_path(value: str | Path, base_dir: Path) -> Path:
@@ -171,6 +172,7 @@ def resolve_caa_config(
     resolved_vector_store_id = vector_store_id or trait_cfg.get("vector_store_id")
     if resolved_vector_store_id is not None:
         resolved_vector_store_id = str(resolved_vector_store_id)
+    resolved_polarity = coerce_polarity(trait_cfg.get("polarity", 1.0))
 
     return ResolvedCAAConfig(
         trait=trait,
@@ -181,6 +183,7 @@ def resolve_caa_config(
         vector_store_id=resolved_vector_store_id,
         config_path=config_path.resolve() if config_path is not None else None,
         expected_num_hidden_layers=expected_num_hidden_layers,
+        polarity=resolved_polarity,
     )
 
 
@@ -522,6 +525,7 @@ def _cli(argv: Sequence[str] | None = None) -> int:
         num_train_prompts=len(prompts),
         vector_store_id=resolved.vector_store_id,
         layer_diagnostics=diagnostics,
+        polarity=resolved.polarity,
     )
     print(
         f"Saved steering vectors for trait {resolved.trait} with vector_store_id={metadata['vector_store_id']}"

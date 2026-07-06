@@ -33,12 +33,13 @@ def run_curve(
         selected_layers = bundle.preferred_layers
     else:
         selected_layers = sorted(bundle.vectors.keys())
-    missing_layers = [layer for layer in selected_layers if layer not in bundle.vectors]
+    calibrated_vectors = bundle.calibrated_vectors()
+    missing_layers = [layer for layer in selected_layers if layer not in calibrated_vectors]
     if missing_layers:
         raise ValueError(
             f"Vector store id {vector_store_id} missing requested layers {missing_layers}"
         )
-    vectors = {layer: bundle.vectors[layer] for layer in selected_layers}
+    vectors = {layer: calibrated_vectors[layer] for layer in selected_layers}
     controller = SteeringController(
         model,
         {

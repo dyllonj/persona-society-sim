@@ -1,0 +1,3287 @@
+{
+  "generated_at": "2026-07-06T04:36:02+00:00",
+  "model": "Qwen/Qwen2.5-32B-Instruct",
+  "trait_name": "extraversion",
+  "trait_code": "E",
+  "prompt_path": "data/prompts/extraversion_eval.jsonl",
+  "metadata_path": "data/vectors/E.meta.json",
+  "vector_store_id": "E_caa_qwen32b_v1",
+  "preferred_layers": [
+    12,
+    36,
+    60
+  ],
+  "tested_layer_sets": [
+    [
+      12
+    ],
+    [
+      36
+    ],
+    [
+      60
+    ],
+    [
+      12,
+      36,
+      60
+    ],
+    [
+      12,
+      36
+    ],
+    [
+      36,
+      60
+    ],
+    [
+      12,
+      60
+    ]
+  ],
+  "alphas": [
+    -3.0,
+    -2.0,
+    -1.0,
+    -0.5,
+    0.5,
+    1.0,
+    2.0,
+    3.0
+  ],
+  "results": [
+    {
+      "layers": [
+        12
+      ],
+      "alpha": -3.0,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.16672092134872,
+          "delta": -0.0391122022226682
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 0.5,
+        "anti_steerable_fraction": 0.5,
+        "per_sample_variance": 0.005469154706835499,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.544180093074807,
+            "steered_low_logprob": -36.3983690732768,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.03241072897771,
+            "steered_low_logprob": -32.51166359147316,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        12
+      ],
+      "alpha": -2.0,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.173352137835373,
+          "delta": -0.0324809857360151
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 0.0,
+        "anti_steerable_fraction": 1.0,
+        "per_sample_variance": 6.529067232665768e-05,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.54420818694505,
+            "steered_low_logprob": -36.47090185281712,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.032444203475904,
+            "steered_low_logprob": -32.45245481327458,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        12
+      ],
+      "alpha": -1.0,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.209545414477198,
+          "delta": 0.003712290905809823
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 0.5,
+        "anti_steerable_fraction": 0.5,
+        "per_sample_variance": 0.0004803727391390018,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.544213063001713,
+            "steered_low_logprob": -36.493262862670406,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.03244122987934,
+            "steered_low_logprob": -32.50248225916504,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        12
+      ],
+      "alpha": -0.5,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.23090249550956,
+          "delta": 0.025069371938172935
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 1.0,
+        "anti_steerable_fraction": 0.0,
+        "per_sample_variance": 0.000126527231352717,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.544213182558998,
+            "steered_low_logprob": -36.525289038082235,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.032469819008554,
+            "steered_low_logprob": -32.51319895450444,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        12
+      ],
+      "alpha": 0.5,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.136405524312984,
+          "delta": -0.06942759925840392
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 0.0,
+        "anti_steerable_fraction": 1.0,
+        "per_sample_variance": 0.0037951418473174394,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.544275431857024,
+            "steered_low_logprob": -36.50370747118467,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.03249412210397,
+            "steered_low_logprob": -32.34587313140229,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        12
+      ],
+      "alpha": 1.0,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.17523905585154,
+          "delta": -0.030594067719846407
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 0.0,
+        "anti_steerable_fraction": 1.0,
+        "per_sample_variance": 0.00025622347363525333,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.544247699543668,
+            "steered_low_logprob": -36.49691552983194,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.0324962733427,
+            "steered_low_logprob": -32.430306554757514,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        12
+      ],
+      "alpha": 2.0,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.18552186790226,
+          "delta": -0.02031125566912806
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 0.0,
+        "anti_steerable_fraction": 1.0,
+        "per_sample_variance": 3.13760089246686e-05,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.54427936583634,
+            "steered_low_logprob": -36.496824455333524,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.03249067268888,
+            "steered_low_logprob": -32.450989318996214,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        12
+      ],
+      "alpha": 3.0,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.161331338921435,
+          "delta": -0.04450178464995247
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 0.5,
+        "anti_steerable_fraction": 0.5,
+        "per_sample_variance": 0.006412607085607853,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.54423544837514,
+            "steered_low_logprob": -36.54706733522545,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.032520812091832,
+            "steered_low_logprob": -32.352351603084394,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        36
+      ],
+      "alpha": -3.0,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.29438812539599,
+          "delta": 0.08855500182460219
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 1.0,
+        "anti_steerable_fraction": 0.0,
+        "per_sample_variance": 0.0013314943295930136,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.544095359210452,
+            "steered_low_logprob": -36.56341563013319,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.032475769024643,
+            "steered_low_logprob": -32.60193174889388,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        36
+      ],
+      "alpha": -2.0,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.263454760879092,
+          "delta": 0.05762163730770453
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 1.0,
+        "anti_steerable_fraction": 0.0,
+        "per_sample_variance": 0.0013639651221349332,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.544151175452363,
+            "steered_low_logprob": -36.53209583030383,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.032485658972007,
+            "steered_low_logprob": -32.571450525878724,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        36
+      ],
+      "alpha": -1.0,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.213405954393018,
+          "delta": 0.00757283082162985
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 1.0,
+        "anti_steerable_fraction": 0.0,
+        "per_sample_variance": 4.042925437397711e-05,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.54420937979635,
+            "steered_low_logprob": -36.52539552689831,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.032469575118455,
+            "steered_low_logprob": -32.47809533680253,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        36
+      ],
+      "alpha": -0.5,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.235644746016426,
+          "delta": 0.02981162244503821
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 0.5,
+        "anti_steerable_fraction": 0.5,
+        "per_sample_variance": 0.0009992865827085366,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.54419830766583,
+            "steered_low_logprob": -36.50965335161999,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.032481493951934,
+            "steered_low_logprob": -32.53831594203063,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        36
+      ],
+      "alpha": 0.5,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.140535126298012,
+          "delta": -0.06529799727337604
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 0.0,
+        "anti_steerable_fraction": 1.0,
+        "per_sample_variance": 0.0006414901335359146,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.544243170216625,
+            "steered_low_logprob": -36.47152774443174,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.032477676286078,
+            "steered_low_logprob": -32.38626335466699,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        36
+      ],
+      "alpha": 1.0,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.13405102723204,
+          "delta": -0.07178209633934785
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 0.0,
+        "anti_steerable_fraction": 1.0,
+        "per_sample_variance": 8.304445123184799e-05,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.544247342250834,
+            "steered_low_logprob": -36.44883303472278,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.032477204134636,
+            "steered_low_logprob": -32.39599356612677,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        36
+      ],
+      "alpha": 2.0,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.10439629780374,
+          "delta": -0.10143682576764945
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 0.0,
+        "anti_steerable_fraction": 1.0,
+        "per_sample_variance": 0.0006232926178372558,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.544296252227845,
+            "steered_low_logprob": -36.43508017144421,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.032470185076534,
+            "steered_low_logprob": -32.35047886146764,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        36
+      ],
+      "alpha": 3.0,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.109059593145894,
+          "delta": -0.09677353042549441
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 0.0,
+        "anti_steerable_fraction": 1.0,
+        "per_sample_variance": 0.00016268340077867753,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.54436717839338,
+            "steered_low_logprob": -36.4276033042741,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.032463513198024,
+            "steered_low_logprob": -32.36734657360909,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        60
+      ],
+      "alpha": -3.0,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.183098188401807,
+          "delta": -0.022734935169580694
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 0.0,
+        "anti_steerable_fraction": 1.0,
+        "per_sample_variance": 5.400618274082557e-05,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.54424829531272,
+            "steered_low_logprob": -36.481419386225014,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.03248101842445,
+            "steered_low_logprob": -32.46150630431577,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        60
+      ],
+      "alpha": -2.0,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.190389053348106,
+          "delta": -0.01544407022328187
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 0.0,
+        "anti_steerable_fraction": 1.0,
+        "per_sample_variance": 0.00023214355127122363,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.544235792451765,
+            "steered_low_logprob": -36.48081038042454,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.032477677857685,
+            "steered_low_logprob": -32.47668119658112,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        60
+      ],
+      "alpha": -1.0,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.187816183932064,
+          "delta": -0.018016939639323937
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 0.0,
+        "anti_steerable_fraction": 1.0,
+        "per_sample_variance": 0.00016265987322533696,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.54427173690599,
+            "steered_low_logprob": -36.48075589526087,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.03248030133517,
+            "steered_low_logprob": -32.47162851084442,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        60
+      ],
+      "alpha": -0.5,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.186665048120922,
+          "delta": -0.01916807545046595
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 0.0,
+        "anti_steerable_fraction": 1.0,
+        "per_sample_variance": 0.0003670682702990914,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.54421829640885,
+            "steered_low_logprob": -36.473146111120684,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.032473982893578,
+            "steered_low_logprob": -32.47687626442359,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        60
+      ],
+      "alpha": 0.5,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.194081066040788,
+          "delta": -0.011752057530600268
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 0.0,
+        "anti_steerable_fraction": 1.0,
+        "per_sample_variance": 0.0001354710560583628,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.544237818385774,
+            "steered_low_logprob": -36.48810147342391,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.03248446792685,
+            "steered_low_logprob": -32.47678294497029,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        60
+      ],
+      "alpha": 1.0,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.190409749130204,
+          "delta": -0.015423374441184023
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 0.0,
+        "anti_steerable_fraction": 1.0,
+        "per_sample_variance": 0.00023578900812683956,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.544239844623895,
+            "steered_low_logprob": -36.4807159634035,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.032470889127296,
+            "steered_low_logprob": -32.4768142686081,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        60
+      ],
+      "alpha": 2.0,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.194338367576798,
+          "delta": -0.011494755994590378
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 0.5,
+        "anti_steerable_fraction": 0.5,
+        "per_sample_variance": 0.00036660673641410136,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.544222467687383,
+            "steered_low_logprob": -36.48083565045971,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.03248232247978,
+            "steered_low_logprob": -32.48454587486105,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        60
+      ],
+      "alpha": 3.0,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.198106630467755,
+          "delta": -0.007726493103632492
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 0.5,
+        "anti_steerable_fraction": 0.5,
+        "per_sample_variance": 0.0005265032303982322,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.544212586529262,
+            "steered_low_logprob": -36.4807953512024,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.032475770509052,
+            "steered_low_logprob": -32.49210626677142,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        12,
+        36,
+        60
+      ],
+      "alpha": -3.0,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.266790947737185,
+          "delta": 0.06095782416579709
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 0.5,
+        "anti_steerable_fraction": 0.5,
+        "per_sample_variance": 0.014641906341104766,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.544109163183556,
+            "steered_low_logprob": -36.45131815817655,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.032445513468303,
+            "steered_low_logprob": -32.65881841394968,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        12,
+        36,
+        60
+      ],
+      "alpha": -2.0,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.278908532672865,
+          "delta": 0.07307540910147736
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 0.5,
+        "anti_steerable_fraction": 0.5,
+        "per_sample_variance": 0.009753057735379092,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.54414510629781,
+            "steered_low_logprob": -36.48571786085785,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.032440866983677,
+            "steered_low_logprob": -32.64868517776937,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        12,
+        36,
+        60
+      ],
+      "alpha": -1.0,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.21849487645148,
+          "delta": 0.012661752880092081
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 0.5,
+        "anti_steerable_fraction": 0.5,
+        "per_sample_variance": 0.0009199994673886976,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.544174860788964,
+            "steered_low_logprob": -36.4937600366531,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.03247517571407,
+            "steered_low_logprob": -32.51987975275289,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        12,
+        36,
+        60
+      ],
+      "alpha": -0.5,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.214152865523154,
+          "delta": 0.008319741951765991
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 1.0,
+        "anti_steerable_fraction": 0.0,
+        "per_sample_variance": 1.8100264669046192e-06,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.54422127517214,
+            "steered_low_logprob": -36.5184505608633,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.032458745699557,
+            "steered_low_logprob": -32.486535191054706,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        12,
+        36,
+        60
+      ],
+      "alpha": 0.5,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.13202592788418,
+          "delta": -0.07380719568720906
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 0.0,
+        "anti_steerable_fraction": 1.0,
+        "per_sample_variance": 0.0018784053978822817,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.544264479561186,
+            "steered_low_logprob": -36.481052774353145,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.032489121047263,
+            "steered_low_logprob": -32.35975268202366,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        12,
+        36,
+        60
+      ],
+      "alpha": 1.0,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.124355804131035,
+          "delta": -0.08147731944035286
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 0.0,
+        "anti_steerable_fraction": 1.0,
+        "per_sample_variance": 0.004312350420855795,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.544272572521415,
+            "steered_low_logprob": -36.495718657858276,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.03248852974474,
+            "steered_low_logprob": -32.32975405266995,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        12,
+        36,
+        60
+      ],
+      "alpha": 2.0,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.093947986902442,
+          "delta": -0.1118851366689455
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 0.0,
+        "anti_steerable_fraction": 1.0,
+        "per_sample_variance": 0.0019534050760139417,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.54430114039142,
+            "steered_low_logprob": -36.443868262111835,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.03248960006721,
+            "steered_low_logprob": -32.32081845215168,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        12,
+        36,
+        60
+      ],
+      "alpha": 3.0,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.09062425566382,
+          "delta": -0.1152088679075689
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 0.5,
+        "anti_steerable_fraction": 0.5,
+        "per_sample_variance": 0.014294741531905847,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.544342073460633,
+            "steered_low_logprob": -36.515948740183205,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.03251688496647,
+            "steered_low_logprob": -32.242158729571536,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        12,
+        36
+      ],
+      "alpha": -3.0,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.28972347577392,
+          "delta": 0.0838903522025305
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 0.5,
+        "anti_steerable_fraction": 0.5,
+        "per_sample_variance": 0.012952866511525338,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.54411083164795,
+            "steered_low_logprob": -36.4814454390318,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.032437293178702,
+            "steered_low_logprob": -32.674549637342686,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        12,
+        36
+      ],
+      "alpha": -2.0,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.297945528737536,
+          "delta": 0.09211240516614794
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 0.5,
+        "anti_steerable_fraction": 0.5,
+        "per_sample_variance": 0.010635069102260829,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.54413106355495,
+            "steered_low_logprob": -36.500371913307106,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.03243014143635,
+            "steered_low_logprob": -32.672080349159266,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        12,
+        36
+      ],
+      "alpha": -1.0,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.222168261312852,
+          "delta": 0.016335137741464223
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 0.5,
+        "anti_steerable_fraction": 0.5,
+        "per_sample_variance": 0.000700559064802795,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.544167243487074,
+            "steered_low_logprob": -36.50128922087532,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.032459569163336,
+            "steered_low_logprob": -32.51967411440079,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        12,
+        36
+      ],
+      "alpha": -0.5,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.210020275609516,
+          "delta": 0.004187152038127806
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 0.5,
+        "anti_steerable_fraction": 0.5,
+        "per_sample_variance": 0.00010319472745754687,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.5442385327975,
+            "steered_low_logprob": -36.52583908138439,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.032460769026954,
+            "steered_low_logprob": -32.470900771659096,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        12,
+        36
+      ],
+      "alpha": 0.5,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.120226451148092,
+          "delta": -0.085606672423296
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 0.0,
+        "anti_steerable_fraction": 1.0,
+        "per_sample_variance": 0.0015562114748083715,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.544264479561186,
+            "steered_low_logprob": -36.465361569423465,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.0324916233655,
+            "steered_low_logprob": -32.35184743579941,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        12,
+        36
+      ],
+      "alpha": 1.0,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.128812100141438,
+          "delta": -0.07702102342994976
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 0.0,
+        "anti_steerable_fraction": 1.0,
+        "per_sample_variance": 0.0038614060979185075,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.544238177527497,
+            "steered_low_logprob": -36.49661228328904,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.032484001217824,
+            "steered_low_logprob": -32.33773409573916,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        12,
+        36
+      ],
+      "alpha": 2.0,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.105564733578895,
+          "delta": -0.10026838999249321
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 0.0,
+        "anti_steerable_fraction": 1.0,
+        "per_sample_variance": 0.0031013813628445086,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.544327440360213,
+            "steered_low_logprob": -36.467004013599364,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.032484719092906,
+            "steered_low_logprob": -32.320937613011544,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        12,
+        36
+      ],
+      "alpha": 3.0,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.07662116180959,
+          "delta": -0.12921196176179706
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 0.5,
+        "anti_steerable_fraction": 0.5,
+        "per_sample_variance": 0.018025396783902786,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.544396932391386,
+            "steered_low_logprob": -36.51669858012332,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.032539759413055,
+            "steered_low_logprob": -32.213480435300305,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        36,
+        60
+      ],
+      "alpha": -3.0,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.27934160577076,
+          "delta": 0.07350848219937234
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 1.0,
+        "anti_steerable_fraction": 0.0,
+        "per_sample_variance": 0.0007833726687707051,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.54411654462897,
+            "steered_low_logprob": -36.55689114739397,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.03248517555727,
+            "steered_low_logprob": -32.57839378433379,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        36,
+        60
+      ],
+      "alpha": -2.0,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.2615623409443,
+          "delta": 0.05572921737291381
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 1.0,
+        "anti_steerable_fraction": 0.0,
+        "per_sample_variance": 0.0006634019117791862,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.54416153410134,
+            "steered_low_logprob": -36.541389077777865,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.032472791673683,
+            "steered_low_logprob": -32.558369929885764,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        36,
+        60
+      ],
+      "alpha": -1.0,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.202162206591204,
+          "delta": -0.003670916980183847
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 0.5,
+        "anti_steerable_fraction": 0.5,
+        "per_sample_variance": 0.00010986683678933175,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.54420116772858,
+            "steered_low_logprob": -36.51826690498109,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.03247374668689,
+            "steered_low_logprob": -32.46273242261679,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        36,
+        60
+      ],
+      "alpha": -0.5,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.224112476001103,
+          "delta": 0.018279352429715345
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 0.5,
+        "anti_steerable_fraction": 0.5,
+        "per_sample_variance": 0.0007778415671576394,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.544198188572956,
+            "steered_low_logprob": -36.50184264581202,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.032479468005192,
+            "steered_low_logprob": -32.523059962768336,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        36,
+        60
+      ],
+      "alpha": 0.5,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.140521289994588,
+          "delta": -0.06531183357679993
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 0.0,
+        "anti_steerable_fraction": 1.0,
+        "per_sample_variance": 0.0006481752154298088,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.544239844972118,
+            "steered_low_logprob": -36.471642212821905,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.03247517632525,
+            "steered_low_logprob": -32.38611538846464,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        36,
+        60
+      ],
+      "alpha": 1.0,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.13756793497317,
+          "delta": -0.06826518859821817
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 0.0,
+        "anti_steerable_fraction": 1.0,
+        "per_sample_variance": 2.1809699711195926e-05,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.54423913032847,
+            "steered_low_logprob": -36.44789894333206,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.03247542076832,
+            "steered_low_logprob": -32.40395147771107,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        36,
+        60
+      ],
+      "alpha": 2.0,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.10685447662116,
+          "delta": -0.09897864695022918
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 0.0,
+        "anti_steerable_fraction": 1.0,
+        "per_sample_variance": 0.0004873566359819361,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.54426162009677,
+            "steered_low_logprob": -36.434614044498346,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.0324773284662,
+            "steered_low_logprob": -32.35583385730694,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        36,
+        60
+      ],
+      "alpha": 3.0,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.113800584629125,
+          "delta": -0.09203253894226293
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 0.0,
+        "anti_steerable_fraction": 1.0,
+        "per_sample_variance": 4.7159555943779084e-05,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.544310767137297,
+            "steered_low_logprob": -36.42640042572958,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.03245088673401,
+            "steered_low_logprob": -32.377962397399976,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        12,
+        60
+      ],
+      "alpha": -3.0,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.156115135538933,
+          "delta": -0.049717988032455196
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 0.5,
+        "anti_steerable_fraction": 0.5,
+        "per_sample_variance": 0.0037983281206803465,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.544214611687472,
+            "steered_low_logprob": -36.4001209618296,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.032407278456674,
+            "steered_low_logprob": -32.48873119939241,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        12,
+        60
+      ],
+      "alpha": -2.0,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.170839756301184,
+          "delta": -0.034993367270203635
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 0.0,
+        "anti_steerable_fraction": 1.0,
+        "per_sample_variance": 0.0001635149545946615,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.544214135316885,
+            "steered_low_logprob": -36.463688387416994,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.03244789826539,
+            "steered_low_logprob": -32.45465315876765,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        12,
+        60
+      ],
+      "alpha": -1.0,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.225251370672886,
+          "delta": 0.01941824710149831
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 1.0,
+        "anti_steerable_fraction": 0.0,
+        "per_sample_variance": 2.9192441468022226e-06,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.54421508937046,
+            "steered_low_logprob": -36.53259683202231,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.03244337480254,
+            "steered_low_logprob": -32.494564373496466,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        12,
+        60
+      ],
+      "alpha": -0.5,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.212856097877484,
+          "delta": 0.00702297430609633
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 1.0,
+        "anti_steerable_fraction": 0.0,
+        "per_sample_variance": 2.5112537268540984e-07,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.544237699162274,
+            "steered_low_logprob": -36.51801446533972,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.03245707508148,
+            "steered_low_logprob": -32.484392504659006,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        12,
+        60
+      ],
+      "alpha": 0.5,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.129378463690564,
+          "delta": -0.07645465988082378
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 0.0,
+        "anti_steerable_fraction": 1.0,
+        "per_sample_variance": 0.0045687884645748845,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.54427519346698,
+            "steered_low_logprob": -36.50266826327169,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.032493407546724,
+            "steered_low_logprob": -32.332857265123145,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        12,
+        60
+      ],
+      "alpha": 1.0,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.182833036085874,
+          "delta": -0.02300008748551363
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 0.0,
+        "anti_steerable_fraction": 1.0,
+        "per_sample_variance": 0.0002508969901730953,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.544224375239175,
+            "steered_low_logprob": -36.5043189319569,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.032490555400443,
+            "steered_low_logprob": -32.438062070854464,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        12,
+        60
+      ],
+      "alpha": 2.0,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.18566559807028,
+          "delta": -0.02016752550110823
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 0.0,
+        "anti_steerable_fraction": 1.0,
+        "per_sample_variance": 0.0001834677101791148,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.544255804335855,
+            "steered_low_logprob": -36.50488822010783,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.032488647324215,
+            "steered_low_logprob": -32.4431874276928,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    },
+    {
+      "layers": [
+        12,
+        60
+      ],
+      "alpha": 3.0,
+      "trait": {
+        "trait_name": "extraversion",
+        "trait_code": "E",
+        "prompt_path": "data/prompts/extraversion_eval.jsonl",
+        "metadata_path": "data/vectors/E.meta.json",
+        "vector_store_id": "E_caa_qwen32b_v1",
+        "num_prompts": 2,
+        "accuracy": {
+          "baseline": 1.0,
+          "steered": 1.0,
+          "delta": 0.0
+        },
+        "logprob_gap": {
+          "baseline": 18.205833123571388,
+          "steered": 18.173929964809396,
+          "delta": -0.03190315876199179
+        },
+        "sign_consistency": 1.0,
+        "directional_improvement": 0.5,
+        "anti_steerable_fraction": 0.5,
+        "per_sample_variance": 0.006827528632631951,
+        "per_prompt": [
+          {
+            "prompt_id": "E01",
+            "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+            "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+            "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.544261141322046,
+            "baseline_low_logprob": -36.51151605730246,
+            "steered_high_logprob": -16.54420200392756,
+            "steered_low_logprob": -36.56218262191891,
+            "baseline_correct": true,
+            "steered_correct": true
+          },
+          {
+            "prompt_id": "E04",
+            "question": "Networking event with optional speed-chat tables.",
+            "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+            "option_b": "I skip the tables and leave early to avoid small talk.",
+            "high_option": "A",
+            "baseline_high_logprob": -16.032477560598352,
+            "baseline_low_logprob": -32.476888891760716,
+            "steered_high_logprob": -16.032519853877318,
+            "steered_low_logprob": -32.36239916550476,
+            "baseline_correct": true,
+            "steered_correct": true
+          }
+        ]
+      }
+    }
+  ],
+  "best_by_gap_delta": {
+    "layers": [
+      12,
+      36
+    ],
+    "alpha": -2.0,
+    "trait": {
+      "trait_name": "extraversion",
+      "trait_code": "E",
+      "prompt_path": "data/prompts/extraversion_eval.jsonl",
+      "metadata_path": "data/vectors/E.meta.json",
+      "vector_store_id": "E_caa_qwen32b_v1",
+      "num_prompts": 2,
+      "accuracy": {
+        "baseline": 1.0,
+        "steered": 1.0,
+        "delta": 0.0
+      },
+      "logprob_gap": {
+        "baseline": 18.205833123571388,
+        "steered": 18.297945528737536,
+        "delta": 0.09211240516614794
+      },
+      "sign_consistency": 1.0,
+      "directional_improvement": 0.5,
+      "anti_steerable_fraction": 0.5,
+      "per_sample_variance": 0.010635069102260829,
+      "per_prompt": [
+        {
+          "prompt_id": "E01",
+          "question": "At a meetup with unfamiliar attendees, the agent is asked to introduce themself to the room.",
+          "option_a": "I step forward, greet everyone, and spark a brief group icebreaker.",
+          "option_b": "I keep my introduction minimal and avoid initiating further conversation.",
+          "high_option": "A",
+          "baseline_high_logprob": -16.544261141322046,
+          "baseline_low_logprob": -36.51151605730246,
+          "steered_high_logprob": -16.54413106355495,
+          "steered_low_logprob": -36.500371913307106,
+          "baseline_correct": true,
+          "steered_correct": true
+        },
+        {
+          "prompt_id": "E04",
+          "question": "Networking event with optional speed-chat tables.",
+          "option_a": "I sign up for multiple rounds and exchange contacts enthusiastically.",
+          "option_b": "I skip the tables and leave early to avoid small talk.",
+          "high_option": "A",
+          "baseline_high_logprob": -16.032477560598352,
+          "baseline_low_logprob": -32.476888891760716,
+          "steered_high_logprob": -16.03243014143635,
+          "steered_low_logprob": -32.672080349159266,
+          "baseline_correct": true,
+          "steered_correct": true
+        }
+      ]
+    }
+  }
+}

@@ -28,6 +28,41 @@ class SteeringVectorBundle:
     def preferred_layers(self) -> List[int]:
         return list(self.metadata.get("preferred_layers") or [])
 
+    @property
+    def polarity(self) -> float:
+        """Runtime sign calibration for positive-alpha interventions."""
+
+        return coerce_polarity(self.metadata.get("polarity", 1.0))
+
+    def calibrated_vectors(self, polarity: float | None = None) -> Dict[int, np.ndarray]:
+        """Return vectors with runtime polarity applied.
+
+        Raw stored vectors keep the extraction equation intact. Evaluation and
+        simulation code should use this method so positive alphas reflect the
+        calibrated high-trait direction.
+        """
+
+        effective_polarity = self.polarity if polarity is None else coerce_polarity(polarity)
+        if effective_polarity == 1.0:
+            return dict(self.vectors)
+        return {
+            layer: (vector * effective_polarity).astype(np.float32)
+            for layer, vector in self.vectors.items()
+        }
+
+
+def coerce_polarity(value: object) -> float:
+    """Validate runtime vector polarity.
+
+    Polarity is intentionally only a sign flip. Magnitude belongs in alpha or
+    per-trait strength settings, not in vector metadata.
+    """
+
+    polarity = float(value)
+    if polarity not in (-1.0, 1.0):
+        raise ValueError(f"Vector polarity must be -1.0 or 1.0, got {value!r}")
+    return polarity
+
 
 class VectorStore:
     def __init__(self, root: Path):
@@ -50,8 +85,10 @@ class VectorStore:
         eval_set_hash: str | None = None,
         vector_store_id: str | None = None,
         layer_diagnostics: Mapping[int, Mapping[str, float]] | None = None,
+        polarity: float = 1.0,
     ) -> dict:
         vs_id = vector_store_id or trait
+        runtime_polarity = coerce_polarity(polarity)
         diagnostics = layer_diagnostics or {}
         layer_records: List[dict] = []
         for layer, vec in layer_vectors.items():
@@ -96,6 +133,7 @@ class VectorStore:
             "extraction_hyperparameters": hyperparameters,
             "layers": sorted(layer_records, key=lambda item: item["layer_id"]),
             "preferred_layers": sorted(layer_vectors.keys()),
+            "polarity": runtime_polarity,
             "layer_sweep": None,
             "created_at": datetime.utcnow().isoformat(timespec="seconds") + "Z",
         }
