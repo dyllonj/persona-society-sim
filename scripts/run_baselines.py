@@ -178,6 +178,20 @@ def _aggregate_macro_metrics(metrics: Iterable[MetricsSnapshot]) -> Dict[str, Di
     return aggregates
 
 
+def _action_type_variance(actions: List[ActionLog]) -> float:
+    if not actions:
+        return 0.0
+    counts: Dict[str, int] = {}
+    for action in actions:
+        counts[action.action_type] = counts.get(action.action_type, 0) + 1
+    total = len(actions)
+    proportions = [count / total for count in counts.values()]
+    if not proportions:
+        return 0.0
+    mean = sum(proportions) / len(proportions)
+    return sum((p - mean) ** 2 for p in proportions) / len(proportions)
+
+
 def _summarize(log_sink: CollectingLogSink) -> Dict[str, Any]:
     global_metrics = [m for m in log_sink.metrics_snapshots if m.trait_key is None]
     collab_ratio = global_metrics[-1].cooperation_rate if global_metrics else 0.0
@@ -192,11 +206,12 @@ def _summarize(log_sink: CollectingLogSink) -> Dict[str, Any]:
         "prompt_duplication": round(prompt_dup_rate, 3),
         "task_completions": task_completions,
         "macro_metrics": _aggregate_macro_metrics(log_sink.metrics_snapshots),
+        "action_type_variance": round(_action_type_variance(log_sink.actions), 6),
     }
 
 
 def _print_table(rows: List[Dict[str, Any]]) -> None:
-    headers = ["mode", "collab_ratio", "prompt_duplication", "task_completions"]
+    headers = ["mode", "collab_ratio", "prompt_duplication", "task_completions", "action_type_variance"]
     widths = [max(len(h), max(len(str(row.get(h, ""))) for row in rows)) for h in headers]
 
     def _fmt(row: Dict[str, Any]) -> str:
@@ -308,6 +323,11 @@ def main() -> None:
             "matched": placebo_matches,
         },
         "targeted_vs_neutral_trait_deltas": trait_deltas,
+        "behavioral_variance_comparison": {
+            arm: results[arm].get("action_type_variance", 0.0)
+            for arm in arms
+            if arm in results
+        },
         "placebo_mapping": shuffle_maps,
     }
 
@@ -317,6 +337,11 @@ def main() -> None:
 
     print("\nTargeted vs neutral cooperation deltas by dominant trait cohort:")
     print(json.dumps(trait_deltas, indent=2))
+
+    print("\nBehavioral variance comparison (action-type variance):")
+    for arm in arms:
+        if arm in results:
+            print(f"  {arm}: {results[arm].get('action_type_variance', 0.0)}")
 
     if args.output:
         args.output.write_text(json.dumps(summary_payload, indent=2))

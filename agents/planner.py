@@ -268,7 +268,6 @@ class Planner:
             )
             return PlanSuggestion("move", move_params, move_utterance)
 
-        action_type = heuristic["action"]
         # Special handling for research-style objectives: schedule research → cite → submit
         if obj_type in {"research", "research_facts"}:
             step = tick % 4

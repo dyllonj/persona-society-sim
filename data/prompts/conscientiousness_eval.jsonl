@@ -1,0 +1,2 @@
+{"id": "C01", "question_text": "Task assigned with a two-day deadline.", "option_a": "I plan milestones, start early, and deliver on time.", "option_b": "I procrastinate and risk missing the deadline.", "option_a_is_high": true, "option_b_is_high": false}
+{"id": "C04", "question_text": "Complex task with unclear steps.", "option_a": "I break it into subtasks and track progress visibly.", "option_b": "I start haphazardly without a plan.", "option_a_is_high": true, "option_b_is_high": false}

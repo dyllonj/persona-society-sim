@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import time
 from collections import deque
 from typing import Any, Dict, List, Optional
 
@@ -11,7 +10,6 @@ from rich.layout import Layout
 from rich.live import Live
 from rich.panel import Panel
 from rich.table import Table
-from rich.text import Text
 
 
 class AsciiViewer:
@@ -110,8 +108,6 @@ class AsciiViewer:
 
     def _render_map(self) -> Panel:
         # Create a dense grid of rooms
-        grid = Table.grid(expand=True, padding=(0, 1))
-        
         rooms = sorted(self.locations.keys())
         if not rooms:
             return Panel("Waiting for world state...", title=f"World Map (Tick {self.tick})")

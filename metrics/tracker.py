@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import json
+import math
+from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import DefaultDict, Dict, Mapping
-from collections import defaultdict
+from typing import DefaultDict, Dict, Iterable, Mapping
 
 try:  # Optional dependency used when available for columnar exports
     import pyarrow as pa
@@ -19,7 +20,14 @@ except Exception:  # pragma: no cover - defensive optional dependency import
 from metrics.persona_bands import BAND_METADATA, BAND_THRESHOLDS, TRAIT_ORDER
 from metrics.research import ResearchMetricAggregator
 from schemas.agent import PersonaCoeffs
-from schemas.logs import ActionLog, MsgLog, CitationLog, ReportGradeLog, ResearchFactLog
+from schemas.logs import (
+    ActionLog,
+    MsgLog,
+    CitationLog,
+    PersonaStabilityLog,
+    ReportGradeLog,
+    ResearchFactLog,
+)
 
 
 GOALFUL_ACTIONS = {"research", "cite", "submit_report", "fill_field", "propose_plan", "submit_plan", "scan", "ping"}
@@ -35,6 +43,15 @@ class AgentMetrics:
     first_action_tick: int | None = None
     collab_actions: int = 0
     trait_bands: Dict[str, str] = field(default_factory=dict)
+    action_counts: Dict[str, int] = field(default_factory=dict)
+
+    def action_distribution(self) -> Dict[str, float]:
+        if not self.total_actions:
+            return {}
+        return {
+            action_type: count / self.total_actions
+            for action_type, count in sorted(self.action_counts.items())
+        }
 
     def to_dict(self) -> Dict[str, object]:
         eff = (self.goalful_actions / self.total_actions) if self.total_actions else 0.0
@@ -52,6 +69,8 @@ class AgentMetrics:
             "submit_tick": self.submit_tick,
             "time_to_submit": duration,
             "trait_bands": dict(self.trait_bands),
+            "action_counts": dict(sorted(self.action_counts.items())),
+            "action_distribution": self.action_distribution(),
         }
 
 
@@ -81,6 +100,8 @@ class MetricTracker:
         self.alpha_magnitude_totals: DefaultDict[str, float] = defaultdict(float)
         self.alpha_magnitude_counts: DefaultDict[str, int] = defaultdict(int)
         self.research_metrics = ResearchMetricAggregator()
+        self.persona_stability_records: list[PersonaStabilityLog] = []
+        self.mind_wander_injections: int = 0
         if agent_personas:
             self.register_personas(agent_personas)
 
@@ -116,6 +137,7 @@ class MetricTracker:
     def on_action(self, log: ActionLog, occupants: int | None = None) -> None:
         m = self._ensure_agent_registration(log.agent_id)
         m.total_actions += 1
+        m.action_counts[log.action_type] = m.action_counts.get(log.action_type, 0) + 1
         if log.action_type in GOALFUL_ACTIONS:
             m.goalful_actions += 1
         if occupants is not None and log.action_type in {"talk", "work", "research", "scan"}:
@@ -162,12 +184,21 @@ class MetricTracker:
     def on_report_grade(self, log: ReportGradeLog) -> None:
         self.research_metrics.observe_grade(log)
 
+    def on_persona_stability(self, log: PersonaStabilityLog | Mapping[str, object]) -> None:
+        record = log if isinstance(log, PersonaStabilityLog) else PersonaStabilityLog(**dict(log))
+        self._ensure_agent_registration(record.agent_id)
+        self.persona_stability_records.append(record)
+
+    def on_mind_wander(self, count: int = 1) -> None:
+        self.mind_wander_injections += count
+
     def flush(self) -> None:
         for agent_id in self.agent_trait_bands:
             self._ensure_agent_registration(agent_id)
         trait_aggregates = self._trait_band_aggregates()
         alpha_summary = self._alpha_bucket_summary()
         research_summary = self.research_metrics.summary()
+        passive_validity = self._passive_validity_summary()
         path = self.out_dir / f"run_{self.run_id}.jsonl"
         with path.open("w", encoding="utf-8") as f:
             summary = {
@@ -178,6 +209,7 @@ class MetricTracker:
                 "alpha_buckets": alpha_summary,
                 "alpha_bucket_labels": self._alpha_bucket_metadata(),
                 "research": research_summary,
+                "passive_validity": passive_validity,
             }
             f.write(json.dumps({"summary": summary}) + "\n")
             agent_rows = []
@@ -238,6 +270,267 @@ class MetricTracker:
             }
         return summary
 
+    def population_trait_variance(self) -> Dict[str, float]:
+        """Population variance of per-agent mean probe scores for each trait."""
+
+        return {
+            trait: self._round_metric(self._population_variance(agent_means.values()))
+            for trait, agent_means in sorted(self._trait_agent_means().items())
+        }
+
+    def behavioral_variance(self) -> Dict[str, object]:
+        """Variance of action-type proportions across agent action distributions."""
+
+        distributions = self._agent_action_distributions()
+        action_types = sorted(
+            {
+                action_type
+                for distribution in distributions.values()
+                for action_type in distribution
+            }
+        )
+        by_action: Dict[str, float] = {}
+        ratios: Dict[str, float] = {}
+        for action_type in action_types:
+            values = [
+                distribution.get(action_type, 0.0)
+                for distribution in distributions.values()
+            ]
+            by_action[action_type] = self._round_metric(self._population_variance(values))
+            ratios[action_type] = self.variance_vs_mean_ratio(values)
+        overall = (
+            self._round_metric(sum(by_action.values()) / len(by_action))
+            if by_action
+            else 0.0
+        )
+        return {
+            "agent_count": len(distributions),
+            "action_distributions": distributions,
+            "by_action": by_action,
+            "overall": overall,
+            "variance_vs_mean_ratio": ratios,
+        }
+
+    @staticmethod
+    def variance_vs_mean_ratio(values: Iterable[float]) -> float:
+        numbers = MetricTracker._finite_numbers(values)
+        if not numbers:
+            return 0.0
+        mean = sum(numbers) / len(numbers)
+        if math.isclose(mean, 0.0, abs_tol=1e-12):
+            return 0.0
+        return MetricTracker._round_metric(
+            MetricTracker._population_variance(numbers) / abs(mean)
+        )
+
+    def cronbachs_alpha(self) -> Dict[str, float | None]:
+        """Cronbach's alpha by trait using probe text as the item dimension."""
+
+        output: Dict[str, float | None] = {}
+        for trait, (items, rows) in sorted(self._trait_item_matrices().items()):
+            alpha = self._cronbach_alpha_matrix(items, rows)
+            output[trait] = self._round_metric(alpha) if alpha is not None else None
+        return output
+
+    def test_retest_stability(self) -> Dict[str, float | None]:
+        """Correlation of first vs latest repeated probe scores by trait."""
+
+        grouped: DefaultDict[str, DefaultDict[tuple[str, str], list[tuple[int, float]]]]
+        grouped = defaultdict(lambda: defaultdict(list))
+        for record in self.persona_stability_records:
+            for trait, score in self._finite_trait_scores(record).items():
+                grouped[trait][(record.agent_id, record.probe_text)].append((record.tick, score))
+
+        output: Dict[str, float | None] = {}
+        for trait, probe_groups in sorted(grouped.items()):
+            first_scores: list[float] = []
+            latest_scores: list[float] = []
+            for observations in probe_groups.values():
+                if len(observations) < 2:
+                    continue
+                observations.sort(key=lambda item: item[0])
+                first_scores.append(observations[0][1])
+                latest_scores.append(observations[-1][1])
+            if not first_scores:
+                output[trait] = None
+                continue
+            if len(first_scores) == 1:
+                output[trait] = 1.0 if math.isclose(first_scores[0], latest_scores[0]) else 0.0
+                continue
+            correlation = self._pearson(first_scores, latest_scores)
+            if correlation is None and all(
+                math.isclose(first, latest)
+                for first, latest in zip(first_scores, latest_scores)
+            ):
+                correlation = 1.0
+            output[trait] = self._round_metric(correlation) if correlation is not None else None
+        return output
+
+    # ---- passive validity helpers ----
+
+    def _passive_validity_summary(self) -> Dict[str, object]:
+        behavioral = self.behavioral_variance()
+        return {
+            "samples": len(self.persona_stability_records),
+            "population_trait_variance": self.population_trait_variance(),
+            "behavioral_variance": behavioral,
+            "variance_vs_mean_ratio": {
+                "traits": self._trait_variance_vs_mean_ratio(),
+                "actions": behavioral.get("variance_vs_mean_ratio", {}),
+            },
+            "cronbachs_alpha": self.cronbachs_alpha(),
+            "test_retest_stability": self.test_retest_stability(),
+            "embedding_distance_from_baseline": self._embedding_distance_summary(),
+            "mind_wander_injections": self.mind_wander_injections,
+        }
+
+    def _agent_action_distributions(self) -> Dict[str, Dict[str, float]]:
+        return {
+            agent_id: metrics.action_distribution()
+            for agent_id, metrics in sorted(self.agent.items())
+        }
+
+    def _trait_agent_means(self) -> Dict[str, Dict[str, float]]:
+        values: DefaultDict[str, DefaultDict[str, list[float]]] = defaultdict(
+            lambda: defaultdict(list)
+        )
+        for record in self.persona_stability_records:
+            for trait, score in self._finite_trait_scores(record).items():
+                values[trait][record.agent_id].append(score)
+        return {
+            trait: {
+                agent_id: sum(scores) / len(scores)
+                for agent_id, scores in sorted(agent_values.items())
+                if scores
+            }
+            for trait, agent_values in sorted(values.items())
+        }
+
+    def _trait_variance_vs_mean_ratio(self) -> Dict[str, float]:
+        return {
+            trait: self.variance_vs_mean_ratio(agent_means.values())
+            for trait, agent_means in sorted(self._trait_agent_means().items())
+        }
+
+    def _trait_item_matrices(
+        self,
+    ) -> Dict[str, tuple[list[str], list[list[float]]]]:
+        values: DefaultDict[
+            str,
+            DefaultDict[str, DefaultDict[str, list[float]]],
+        ] = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+        for record in self.persona_stability_records:
+            for trait, score in self._finite_trait_scores(record).items():
+                values[trait][record.agent_id][record.probe_text].append(score)
+
+        matrices: Dict[str, tuple[list[str], list[list[float]]]] = {}
+        for trait, by_agent in sorted(values.items()):
+            items = sorted(
+                {probe_text for item_values in by_agent.values() for probe_text in item_values}
+            )
+            rows: list[list[float]] = []
+            if items:
+                for item_values in by_agent.values():
+                    if all(item in item_values for item in items):
+                        rows.append(
+                            [
+                                sum(item_values[item]) / len(item_values[item])
+                                for item in items
+                            ]
+                        )
+            matrices[trait] = (items, rows)
+        return matrices
+
+    @staticmethod
+    def _cronbach_alpha_matrix(items: list[str], rows: list[list[float]]) -> float | None:
+        item_count = len(items)
+        if item_count < 2 or len(rows) < 2:
+            return None
+        item_variances = [
+            MetricTracker._sample_variance(row[column] for row in rows)
+            for column in range(item_count)
+        ]
+        total_scores = [sum(row) for row in rows]
+        total_variance = MetricTracker._sample_variance(total_scores)
+        if math.isclose(total_variance, 0.0, abs_tol=1e-12):
+            return None
+        return (item_count / (item_count - 1)) * (
+            1.0 - (sum(item_variances) / total_variance)
+        )
+
+    def _embedding_distance_summary(self) -> Dict[str, float | int | None]:
+        distances = self._finite_numbers(
+            record.embedding_distance_from_baseline
+            for record in self.persona_stability_records
+        )
+        if not distances:
+            return {"count": 0, "mean": None, "min": None, "max": None}
+        return {
+            "count": len(distances),
+            "mean": self._round_metric(sum(distances) / len(distances)),
+            "min": self._round_metric(min(distances)),
+            "max": self._round_metric(max(distances)),
+        }
+
+    @staticmethod
+    def _finite_trait_scores(record: PersonaStabilityLog) -> Dict[str, float]:
+        scores: Dict[str, float] = {}
+        for trait, value in (record.trait_scores or {}).items():
+            try:
+                score = float(value)
+            except (TypeError, ValueError):
+                continue
+            if math.isfinite(score):
+                scores[trait] = score
+        return scores
+
+    @staticmethod
+    def _finite_numbers(values: Iterable[float]) -> list[float]:
+        numbers: list[float] = []
+        for value in values:
+            try:
+                number = float(value)
+            except (TypeError, ValueError):
+                continue
+            if math.isfinite(number):
+                numbers.append(number)
+        return numbers
+
+    @staticmethod
+    def _population_variance(values: Iterable[float]) -> float:
+        numbers = MetricTracker._finite_numbers(values)
+        if not numbers:
+            return 0.0
+        mean = sum(numbers) / len(numbers)
+        return sum((value - mean) ** 2 for value in numbers) / len(numbers)
+
+    @staticmethod
+    def _sample_variance(values: Iterable[float]) -> float:
+        numbers = MetricTracker._finite_numbers(values)
+        if len(numbers) < 2:
+            return 0.0
+        mean = sum(numbers) / len(numbers)
+        return sum((value - mean) ** 2 for value in numbers) / (len(numbers) - 1)
+
+    @staticmethod
+    def _pearson(xs: list[float], ys: list[float]) -> float | None:
+        if len(xs) != len(ys) or len(xs) < 2:
+            return None
+        mean_x = sum(xs) / len(xs)
+        mean_y = sum(ys) / len(ys)
+        numerator = sum((x - mean_x) * (y - mean_y) for x, y in zip(xs, ys))
+        denom_x = sum((x - mean_x) ** 2 for x in xs)
+        denom_y = sum((y - mean_y) ** 2 for y in ys)
+        denominator = math.sqrt(denom_x * denom_y)
+        if math.isclose(denominator, 0.0, abs_tol=1e-12):
+            return None
+        return numerator / denominator
+
+    @staticmethod
+    def _round_metric(value: float) -> float:
+        rounded = round(float(value), 6)
+        return 0.0 if math.isclose(rounded, 0.0, abs_tol=1e-12) else rounded
+
     def _trait_band_aggregates(self) -> Dict[str, Dict[str, object]]:
         aggregates: Dict[str, Dict[str, object]] = {}
         for agent_id, metrics in self.agent.items():
@@ -270,8 +563,8 @@ class MetricTracker:
                     }
                 bucket = aggregates[key]
                 bucket["agent_ids"].add(agent_id)
-                for field, value in contributions.items():
-                    bucket[field] += value
+                for metric_name, value in contributions.items():
+                    bucket[metric_name] += value
         output: Dict[str, Dict[str, object]] = {}
         for key, bucket in aggregates.items():
             agent_count = len(bucket.pop("agent_ids"))
@@ -300,4 +593,3 @@ class MetricTracker:
             pass
 
 __all__ = ["MetricTracker"]
-

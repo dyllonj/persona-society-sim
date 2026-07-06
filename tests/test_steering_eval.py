@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from steering import eval as steering_eval
+from steering.llm_judge import StaticJudgeClient
 
 
 class FakeScorer(steering_eval.OptionScorer):
@@ -43,6 +44,8 @@ def test_evaluate_trait_dataset_computes_metrics():
     assert result.accuracy_steered == 1.0
     assert result.accuracy_delta == 0.5
     assert result.sign_consistency == 0.5
+    assert result.anti_steerable_fraction == 0.0
+    assert result.per_sample_variance > 0.0
     assert len(result.prompt_results) == 2
     assert result.prompt_results[1].high_option == "B"
 
@@ -81,3 +84,73 @@ def test_build_markdown_includes_failures():
     markdown = steering_eval._build_markdown(report)
     assert "extraversion (E)" in markdown
     assert "extraversion delta 0.1 < 0.2" in markdown
+
+
+def test_coherence_score_penalizes_repetition():
+    coherent = steering_eval.coherence_score("I will organize the notes and share them.")
+    repetitive = steering_eval.coherence_score("yes yes yes yes")
+
+    assert coherent > repetitive
+
+
+def test_generation_eval_scorer_scores_trait_delta():
+    scorer = FakeScorer([])
+    judge = StaticJudgeClient(['{"E": 2}', '{"E": 5}'])
+    generation = steering_eval.GenerationEvalScorer(
+        scorer,
+        judge,
+        judge_model="gpt-4o-mini",
+        target_model="meta-llama/Llama-3.1-8B-Instruct",
+    )
+    prompt = steering_eval.TranscriptPrompt(
+        prompt_id="p1",
+        prompt="Say hello",
+        trait_name="extraversion",
+    )
+
+    result = generation.evaluate_prompt(
+        prompt,
+        trait_name="extraversion",
+        trait_code="E",
+        alpha=1.0,
+        max_new_tokens=8,
+        temperature=0.1,
+        top_p=0.9,
+    )
+
+    assert result.trait_expression_delta == 3.0
+    assert len(judge.requests) == 2
+
+
+def test_parse_alpha_grid_parses_comma_list():
+    assert steering_eval.parse_alpha_grid("0.25, 0.5,1.0") == [0.25, 0.5, 1.0]
+
+
+def test_measure_cross_trait_bleed_returns_source_target_matrix():
+    prompts = {
+        "extraversion": [
+            steering_eval.PromptRecord(
+                prompt_id="p1",
+                question="Question",
+                option_a="High",
+                option_b="Low",
+                option_a_is_high=True,
+                option_b_is_high=False,
+            )
+        ]
+    }
+    scorer = FakeScorer(
+        [
+            [0.0, 0.0],
+            [0.5, 0.0],
+        ]
+    )
+
+    matrix = steering_eval.measure_cross_trait_bleed(
+        [("extraversion", "E")],
+        prompts,
+        scorer,
+        alpha=1.0,
+    )
+
+    assert matrix == {"extraversion": {"extraversion": 0.5}}

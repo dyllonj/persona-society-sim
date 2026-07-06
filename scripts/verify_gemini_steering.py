@@ -2,7 +2,6 @@
 Verification script for Gemini Backend and Prompt Steering.
 """
 
-import os
 import sys
 from pathlib import Path
 

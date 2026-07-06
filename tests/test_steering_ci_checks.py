@@ -5,6 +5,9 @@ from steering.ci_checks import (
     TraitDirectionality,
     cosine_similarity,
     validate_cosine_stability,
+    validate_anti_steerable_fraction,
+    validate_bleed_matrix,
+    validate_directional_agreement_metadata,
     validate_directionality,
     validate_monotonic_logprobs,
 )
@@ -60,3 +63,37 @@ def test_monotonic_logprob_validation_detects_regression():
     failures = validate_monotonic_logprobs(curve, tolerance=1e-6)
     assert failures
     assert "0.2000->0.1000" in failures[0]
+
+
+def test_validate_anti_steerable_fraction_flags_high_values():
+    failures = validate_anti_steerable_fraction(
+        [{"trait_name": "extraversion", "anti_steerable_fraction": 0.75}],
+        threshold=0.5,
+    )
+
+    assert failures
+    assert "extraversion" in failures[0]
+
+
+def test_validate_directional_agreement_metadata_flags_weak_layers():
+    failures = validate_directional_agreement_metadata(
+        {
+            "trait": "E",
+            "layers": [
+                {"layer_id": 12, "directional_agreement": 0.2},
+                {"layer_id": 36, "directional_agreement": 0.8},
+            ],
+        },
+        threshold=0.3,
+    )
+
+    assert failures == ["E layer=12 directional_agreement=0.200 < 0.300"]
+
+
+def test_validate_bleed_matrix_flags_off_diagonal_bleed():
+    failures = validate_bleed_matrix(
+        {"E": {"E": 3.0, "A": 2.5}, "A": {"E": 0.5, "A": 1.0}},
+        threshold=2.0,
+    )
+
+    assert failures == ["bleed E->A=2.500 > 2.000"]

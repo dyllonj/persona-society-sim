@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from datetime import datetime
-from datetime import datetime
 from typing import Dict, List, Literal, Optional
 
 from utils.pydantic_compat import BaseModel, Field
@@ -21,7 +20,8 @@ class MemoryEvent(BaseModel):
     text: str
     importance: float = 0.0
     recency_decay: float = 1.0
-    recency_decay: float = 1.0
+    speaker: Optional[str] = None
+    self_authored: bool = False
     embedding_id: Optional[str] = None
     source_msg_id: Optional[str] = None
     traits: Dict[str, float] = Field(default_factory=dict)

@@ -6,9 +6,11 @@ codebase surfaced a number of things that don't work the way the code
 one-line caveats across a dozen files, they're consolidated here — reference
 docs link back to the relevant section instead of repeating the explanation.
 
-None of these were fixed as part of this documentation pass (fixing them is a
-code change, not a docs change) — they're recorded so the next person doesn't
-have to rediscover them by reading source.
+Issues marked **Status: RESOLVED** have been fixed in code; the section text
+is retained for historical context and to explain what was changed. Issues
+marked **Status: PARTIALLY RESOLVED** have had partial fixes applied but
+residual concerns remain. Issues marked **Status: N/A** reference files not
+present in the current checkout.
 
 ## Gemini persona steering silently no-ops
 
@@ -34,12 +36,12 @@ short codes.
 
 ## Probe preamble is injected twice
 
-`orchestrator/runner.py` calls `probe_assignment.inject(base_context)` twice
-in a row in both the batched and non-batched decision paths, duplicating the
-entire probe preamble (question/scenario/instructions text) in the observation
-sent to the agent. This is consistent across both code paths, not a one-off
-typo — it doubles token usage and duplicated framing text whenever a probe is
-active for an agent that tick.
+**Status: RESOLVED.** `orchestrator/runner.py` previously called
+`probe_assignment.inject(base_context)` twice in a row in both the batched
+and non-batched decision paths, duplicating the entire probe preamble
+(question/scenario/instructions text) in the observation sent to the agent.
+The duplicate `.inject()` call has been removed from both code paths; each
+path now calls `.inject()` exactly once.
 
 ## `steering.eval` currently evaluates on training data, not held-out data
 
@@ -78,39 +80,49 @@ vector without first extending `TRAIT_ALIASES`.
 
 ## `docs/design.md`'s orthogonalization claim doesn't match the code
 
-An earlier version of the design doc stated persona vectors are
-"orthogonalized per trait to reduce entanglement." No orthogonalization step
-(Gram-Schmidt, projection removal, or otherwise) exists anywhere in
-`steering/compute_caa.py`, `steering/vector_store.py`, or `steering/hooks.py`
-— each trait's vector is computed and normalized independently. This has been
-corrected in [explanation-steering.md](explanation-steering.md).
+**Status: PARTIALLY RESOLVED.** An earlier version of the design doc stated
+persona vectors are "orthogonalized per trait to reduce entanglement." The
+original gap was that no orthogonalization step existed anywhere in the
+steering pipeline. The design doc has since been corrected, and
+`steering/compute_caa.py` now contains an `enforce_orthogonality()` function
+that checks cross-trait cosine similarity (threshold 0.2) and **raises** if
+candidate vectors are too aligned with existing traits' vectors. This is a
+rejection-based orthogonality gate, not a projection-removal transform (it
+doesn't modify vectors to make them orthogonal; it refuses to save vectors
+that are too correlated). The explanation doc has been updated to reflect
+this in [explanation-steering.md](explanation-steering.md). Note that prior
+work (Bhandari et al. 2026) shows hard orthonormalization does NOT eliminate
+behavioral cross-trait bleed even when geometric orthogonality is enforced,
+so this gate is a necessary but not sufficient safeguard against trait
+entanglement.
 
 ## Objective progress tracking uses strict string equality
 
-`ObjectiveManager.process_action_log` only counts `fill_field`/`scan`
-progress when `action_log.info` carries the exact **string** `"1"` for the
-`unique`/`token_acquired` keys — not the boolean `True` or the int `1`. If the
-action layer's output shape ever changes to use a different type for these
-flags, objective progress for these two requirement types would silently stop
-incrementing, with no error raised anywhere.
+**Status: RESOLVED.** `ObjectiveManager.process_action_log` previously only
+counted `fill_field`/`scan` progress when `action_log.info` carried the exact
+**string** `"1"` for the `unique`/`token_acquired` keys. A type-tolerant
+`_is_flag_set()` helper has been added that accepts string `"1"`, int `1`,
+and boolean `True` as truthy success markers, so objective progress now
+increments correctly regardless of which type the action layer emits.
 
 ## `log_sink.close()` is never called on a successful run
 
-`orchestrator/cli.py`'s `main()` wraps the whole run in `try/except/finally`.
-On the success path, only `event_bridge.stop()` runs in `finally`;
-`log_sink.close()` is called **only** on the exception path. With
-`--queued-runtime`, this means the background log-writer thread is simply
-abandoned as a daemon thread at process exit on a clean run — harmless in
-practice (the process is exiting anyway), but any error during a final
-buffer flush is never surfaced, and `QueueRuntimeStats` (enqueued/dropped/error
-counts) is never inspected or reported to the operator either way.
+**Status: RESOLVED.** `orchestrator/cli.py`'s `main()` previously called
+`log_sink.close()` only on the exception path; the `finally` block ran only
+`event_bridge.stop()`. `log_sink.close()` has been moved into the `finally`
+block so it now runs on both success and failure paths, and the redundant
+cleanup calls have been removed from the `except` block. Final buffer flush
+errors are now surfaced, and `QueueRuntimeStats` (enqueued/dropped/error
+counts) is inspected on every run exit path.
 
 ## Autoresearch: several "guardrails" are prose-only, not enforced
 
-Three separate items surfaced while researching `experiments/autoresearch/`,
-all now called out in that subsystem's own docs directly
-(`experiments/autoresearch/program.md`, `README.md`, `RUNBOOK.md`,
-`autonomy_policy.yaml`) rather than duplicated at length here:
+**Status: N/A — files absent.** The `experiments/autoresearch/` directory
+does not contain the referenced files (`matrix.yaml`,
+`autonomy_policy.yaml`, `run_matrix.py`, `anti_cheat.py`, `score.py`,
+`program.md`, `README.md`, `RUNBOOK.md`) in the current checkout, and they
+have no git history. The original findings are preserved below for reference
+in case the autoresearch subsystem is re-introduced:
 
 - `program.md` tells the operator not to modify `storage/log_sink.py`, probe
   scoring, report grading, or objective rules — but none of those files are
@@ -150,9 +162,9 @@ run config:
 | `optimization.batch_size` | `configs/run.fast.yaml` | Explicitly commented "(future feature)" |
 | `steering.layers.yaml: defaults.model/prompt_masking/extraction/num_hidden_layers` | `configs/steering.layers.yaml` | Documentation-only; not consumed programmatically |
 | `personas.bigfive.yaml: ranges/percentiles/sampling.strategy/sampling.seed` | `configs/personas.bigfive.yaml` | Only `sampling.jitter` is actually read |
-| `autonomy_policy.yaml: enabled_by_default/required_candidate_validity/required_human_decision_state/max_capability_regression` | `experiments/autoresearch/autonomy_policy.yaml` | Not read by `run_matrix.py` |
-| `matrix.yaml: validity.hard_discard` | `experiments/autoresearch/matrix.yaml` | Documentation only; actual hard-discard logic is hardcoded in `score.py`, independently maintained |
-| `matrix.yaml: workflow.*` | `experiments/autoresearch/matrix.yaml` | Copy-paste reference commands only; no code reads this block |
+| `autonomy_policy.yaml: enabled_by_default/required_candidate_validity/required_human_decision_state/max_capability_regression` | `experiments/autoresearch/autonomy_policy.yaml` | N/A — file not present in current checkout |
+| `matrix.yaml: validity.hard_discard` | `experiments/autoresearch/matrix.yaml` | N/A — file not present in current checkout |
+| `matrix.yaml: workflow.*` | `experiments/autoresearch/matrix.yaml` | N/A — file not present in current checkout |
 
 ## Related
 

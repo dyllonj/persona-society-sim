@@ -11,7 +11,6 @@ sys.path.append(".")
 from agents.memory import MemoryStore
 from agents.agent import Agent
 from schemas.agent import AgentState, PersonaCoeffs
-from schemas.memory import MemoryEvent
 
 class TestPersonality(unittest.TestCase):
     def test_memory_tagging(self):
@@ -43,12 +42,14 @@ class TestPersonality(unittest.TestCase):
         events_e = store.relevant_events("party reading", current_tick=10, agent_persona=extravert_persona)
         # Expect party to be ranked higher (or at least present with high score)
         # Since relevant_events sorts by score, let's check the top result
+        assert events_e
         
         # Introvert Persona
         introvert_persona = {"Extraversion": -1.0}
         events_i = store.relevant_events("party reading", current_tick=10, agent_persona=introvert_persona)
+        assert events_i
         
-        print(f"Retrieval Verified.")
+        print("Retrieval Verified.")
 
     def test_agent_prompt_construction(self):
         """Test that the prompt includes the personality override instruction."""

@@ -19,18 +19,18 @@ traits:
   E:
     name: extraversion
     vector_store_id: E_caa_qwen32b_v1
-    prompt_file: ../data/prompts/extraversion.jsonl
+    prompt_file: ../data/prompts/extraversion_train.jsonl
     layers: [12, 36, 60]
     description: Early/mid layers (scaled from 8B 6/18/30) to capture affective tone.
   A:
     name: agreeableness
     vector_store_id: A_caa_qwen32b_v1
-    prompt_file: ../data/prompts/agreeableness.jsonl
+    prompt_file: ../data/prompts/agreeableness_train.jsonl
     layers: [16, 40, 58]
     description: Mid-late layers (scaled from 8B 8/20/28) for conciliatory phrasing.
   C:
     name: conscientiousness
     vector_store_id: C_caa_qwen32b_v1
-    prompt_file: ../data/prompts/conscientiousness.jsonl
+    prompt_file: ../data/prompts/conscientiousness_train.jsonl
     layers: [20, 44, 60]
     description: Later layers (scaled from 8B 10/22/30) for procedural focus and planning.

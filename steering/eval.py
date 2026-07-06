@@ -14,6 +14,7 @@ import logging
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
+from statistics import pvariance
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 try:  # Optional heavy dependencies are only needed for the HF harness.
@@ -26,6 +27,7 @@ except ModuleNotFoundError:  # pragma: no cover - exercised in tests via fakes
 
 from data.prompts.schema import load_prompt_items
 from steering.hooks import SteeringController
+from steering.llm_judge import JudgeClient, JudgeResult, StaticJudgeClient, score_text_with_judge
 
 LOGGER = logging.getLogger(__name__)
 
@@ -36,6 +38,10 @@ TRAIT_ALIASES: Dict[str, Tuple[str, str]] = {
     "agreeableness": ("agreeableness", "A"),
     "c": ("conscientiousness", "C"),
     "conscientiousness": ("conscientiousness", "C"),
+    "o": ("openness", "O"),
+    "openness": ("openness", "O"),
+    "n": ("neuroticism", "N"),
+    "neuroticism": ("neuroticism", "N"),
 }
 
 
@@ -89,6 +95,8 @@ class TraitEvaluation:
     sign_consistency: float
     directional_improvement: float
     prompt_results: List[PromptEvaluation]
+    anti_steerable_fraction: float = 0.0
+    per_sample_variance: float = 0.0
 
     @property
     def accuracy_delta(self) -> float:
@@ -286,6 +294,8 @@ def evaluate_trait_dataset(
     steered_correct = 0
     baseline_gaps: List[float] = []
     steered_gaps: List[float] = []
+    gap_deltas: List[float] = []
+    anti_steerable = 0
     sign_matches = 0
     directional_improvements = 0
 
@@ -310,6 +320,10 @@ def evaluate_trait_dataset(
         steered_gap = steered_scores[high_idx] - steered_scores[low_idx]
         baseline_gaps.append(baseline_gap)
         steered_gaps.append(steered_gap)
+        gap_delta = steered_gap - baseline_gap
+        gap_deltas.append(gap_delta)
+        if gap_delta < 0:
+            anti_steerable += 1
 
         baseline_choice = 0 if baseline_scores[0] >= baseline_scores[1] else 1
         steered_choice = 0 if steered_scores[0] >= steered_scores[1] else 1
@@ -359,6 +373,8 @@ def evaluate_trait_dataset(
         sign_consistency=sign_matches / total,
         directional_improvement=directional_improvements / total,
         prompt_results=prompt_results,
+        anti_steerable_fraction=anti_steerable / total,
+        per_sample_variance=pvariance(gap_deltas) if len(gap_deltas) > 1 else 0.0,
     )
     return evaluation
 
@@ -414,6 +430,158 @@ class TranscriptPrompt:
     prompt_id: str
     prompt: str
     trait_name: Optional[str]
+
+
+@dataclass
+class CoherenceMetrics:
+    score: float
+    unique_token_ratio: float
+    repeated_bigram_fraction: float
+    degenerate_token_fraction: float
+
+
+@dataclass
+class GenerationEvaluation:
+    prompt_id: str
+    trait_name: str
+    trait_code: str
+    prompt: str
+    baseline: str
+    steered: str
+    baseline_scores: Dict[str, int]
+    steered_scores: Dict[str, int]
+    trait_expression_delta: float
+    baseline_coherence: CoherenceMetrics
+    steered_coherence: CoherenceMetrics
+
+
+def coherence_metrics(text: str) -> CoherenceMetrics:
+    """Return lightweight degeneration/coherence signals for generated text."""
+
+    tokens = [token for token in text.lower().split() if token]
+    if not tokens:
+        return CoherenceMetrics(
+            score=0.0,
+            unique_token_ratio=0.0,
+            repeated_bigram_fraction=1.0,
+            degenerate_token_fraction=1.0,
+        )
+
+    unique_token_ratio = len(set(tokens)) / len(tokens)
+    degenerate = 0
+    for previous, current in zip(tokens, tokens[1:]):
+        if previous == current:
+            degenerate += 1
+    degenerate_fraction = degenerate / max(1, len(tokens) - 1)
+
+    bigrams = list(zip(tokens, tokens[1:]))
+    if bigrams:
+        repeated_bigram_fraction = 1.0 - (len(set(bigrams)) / len(bigrams))
+    else:
+        repeated_bigram_fraction = 0.0
+
+    score = max(
+        0.0,
+        min(
+            1.0,
+            (
+                unique_token_ratio
+                + (1.0 - repeated_bigram_fraction)
+                + (1.0 - degenerate_fraction)
+            )
+            / 3.0,
+        ),
+    )
+    return CoherenceMetrics(
+        score=score,
+        unique_token_ratio=unique_token_ratio,
+        repeated_bigram_fraction=repeated_bigram_fraction,
+        degenerate_token_fraction=degenerate_fraction,
+    )
+
+
+def coherence_score(text: str) -> float:
+    """Scalar convenience wrapper for coherence gate checks."""
+
+    return coherence_metrics(text).score
+
+
+class GenerationEvalScorer:
+    """Generate baseline/steered text and score it with a judge client."""
+
+    def __init__(
+        self,
+        scorer: OptionScorer,
+        judge_client: JudgeClient,
+        *,
+        judge_model: str,
+        target_model: str,
+        allow_same_family: bool = False,
+    ) -> None:
+        self.scorer = scorer
+        self.judge_client = judge_client
+        self.judge_model = judge_model
+        self.target_model = target_model
+        self.allow_same_family = allow_same_family
+
+    def _judge(self, text: str, traits: Sequence[str]) -> JudgeResult:
+        target_model = None if self.allow_same_family else self.target_model
+        if self.allow_same_family:
+            LOGGER.warning(
+                "allow_same_family=True disables judge/target model-family enforcement"
+            )
+        return score_text_with_judge(
+            self.judge_client,
+            text,
+            judge_model=self.judge_model,
+            target_model=target_model,
+            traits=traits,
+        )
+
+    def evaluate_prompt(
+        self,
+        prompt: TranscriptPrompt,
+        *,
+        trait_name: str,
+        trait_code: str,
+        alpha: float,
+        max_new_tokens: int,
+        temperature: float,
+        top_p: float,
+    ) -> GenerationEvaluation:
+        baseline = self.scorer.generate_text(
+            prompt.prompt,
+            trait_code=None,
+            alpha=0.0,
+            max_new_tokens=max_new_tokens,
+            temperature=temperature,
+            top_p=top_p,
+        )
+        steered = self.scorer.generate_text(
+            prompt.prompt,
+            trait_code=trait_code,
+            alpha=alpha,
+            max_new_tokens=max_new_tokens,
+            temperature=temperature,
+            top_p=top_p,
+        )
+        baseline_result = self._judge(baseline, [trait_code])
+        steered_result = self._judge(steered, [trait_code])
+        baseline_score = baseline_result.scores.get(trait_code, 0)
+        steered_score = steered_result.scores.get(trait_code, 0)
+        return GenerationEvaluation(
+            prompt_id=prompt.prompt_id,
+            trait_name=trait_name,
+            trait_code=trait_code,
+            prompt=prompt.prompt,
+            baseline=baseline,
+            steered=steered,
+            baseline_scores=dict(baseline_result.scores),
+            steered_scores=dict(steered_result.scores),
+            trait_expression_delta=float(steered_score - baseline_score),
+            baseline_coherence=coherence_metrics(baseline),
+            steered_coherence=coherence_metrics(steered),
+        )
 
 
 def _load_transcript_prompts(path: Path) -> List[TranscriptPrompt]:
@@ -499,6 +667,90 @@ def _collect_transcripts(
     return transcripts
 
 
+def parse_alpha_grid(value: Optional[str]) -> List[float]:
+    if not value:
+        return []
+    alphas: List[float] = []
+    for item in value.split(","):
+        stripped = item.strip()
+        if not stripped:
+            continue
+        alphas.append(float(stripped))
+    if not alphas:
+        raise ValueError("--alpha-grid did not contain any numeric alpha values")
+    return alphas
+
+
+def summarize_generation_evals(evaluations: Sequence[GenerationEvaluation]) -> dict:
+    if not evaluations:
+        return {
+            "count": 0,
+            "trait_expression_delta": 0.0,
+            "coherence": {"baseline": 0.0, "steered": 0.0},
+            "items": [],
+        }
+    count = len(evaluations)
+    return {
+        "count": count,
+        "trait_expression_delta": sum(
+            item.trait_expression_delta for item in evaluations
+        )
+        / count,
+        "coherence": {
+            "baseline": sum(item.baseline_coherence.score for item in evaluations)
+            / count,
+            "steered": sum(item.steered_coherence.score for item in evaluations)
+            / count,
+        },
+        "items": [
+            {
+                **asdict(item),
+                "baseline_coherence": asdict(item.baseline_coherence),
+                "steered_coherence": asdict(item.steered_coherence),
+            }
+            for item in evaluations
+        ],
+    }
+
+
+def measure_cross_trait_bleed(
+    traits: Sequence[Tuple[str, str]],
+    prompt_records: Dict[str, List[PromptRecord]],
+    scorer: OptionScorer,
+    *,
+    alpha: float,
+) -> Dict[str, Dict[str, float]]:
+    """Measure each source trait vector's logprob-gap effect on all trait prompts."""
+
+    matrix: Dict[str, Dict[str, float]] = {}
+    for source_name, source_code in traits:
+        row: Dict[str, float] = {}
+        for target_name, _target_code in traits:
+            deltas: List[float] = []
+            for record in prompt_records.get(target_name, []):
+                prompt_text = _prompt_template(record)
+                baseline_scores = scorer.score_options(
+                    prompt_text,
+                    [record.option_a, record.option_b],
+                    trait_code=source_code,
+                    alpha=0.0,
+                )
+                steered_scores = scorer.score_options(
+                    prompt_text,
+                    [record.option_a, record.option_b],
+                    trait_code=source_code,
+                    alpha=alpha,
+                )
+                high_idx = record.high_option_index
+                low_idx = record.low_option_index
+                baseline_gap = baseline_scores[high_idx] - baseline_scores[low_idx]
+                steered_gap = steered_scores[high_idx] - steered_scores[low_idx]
+                deltas.append(float(steered_gap - baseline_gap))
+            row[target_name] = sum(deltas) / len(deltas) if deltas else 0.0
+        matrix[source_name] = row
+    return matrix
+
+
 def _build_markdown(report: dict) -> str:
     lines = ["# Steering Vector Evaluation", ""]
     lines.append(f"*Model*: {report['model']}")
@@ -506,12 +758,12 @@ def _build_markdown(report: dict) -> str:
     lines.append(f"*Timestamp*: {report['generated_at']}")
     lines.append("")
     lines.append(
-        "| Trait | Prompts | Baseline Acc. | Steered Acc. | Δ Acc. | Sign Consistency |"
+        "| Trait | Prompts | Baseline Acc. | Steered Acc. | Delta Acc. | Sign Consistency | Anti-Steerable |"
     )
-    lines.append("| --- | --- | --- | --- | --- | --- |")
+    lines.append("| --- | --- | --- | --- | --- | --- | --- |")
     for trait in report.get("traits", []):
         lines.append(
-            "| {name} ({code}) | {count} | {base:.3f} | {steered:.3f} | {delta:.3f} | {sign:.3f} |".format(
+            "| {name} ({code}) | {count} | {base:.3f} | {steered:.3f} | {delta:.3f} | {sign:.3f} | {anti:.3f} |".format(
                 name=trait["trait_name"],
                 code=trait["trait_code"],
                 count=trait["num_prompts"],
@@ -519,6 +771,7 @@ def _build_markdown(report: dict) -> str:
                 steered=trait["accuracy"]["steered"],
                 delta=trait["accuracy"]["delta"],
                 sign=trait["sign_consistency"],
+                anti=trait.get("anti_steerable_fraction", 0.0),
             )
         )
     lines.append("")
@@ -543,6 +796,49 @@ def _build_markdown(report: dict) -> str:
             lines.append("- Baseline: " + entry["baseline"].strip())
             lines.append("- Steered: " + entry["steered"].strip())
             lines.append("")
+    generation_eval = report.get("generation_eval") or {}
+    if generation_eval.get("count"):
+        lines.append("## Generation eval")
+        lines.append(
+            "- Trait expression delta: {delta:.3f}".format(
+                delta=generation_eval.get("trait_expression_delta", 0.0)
+            )
+        )
+        coherence = generation_eval.get("coherence") or {}
+        lines.append(
+            "- Coherence baseline/steered: {base:.3f}/{steered:.3f}".format(
+                base=coherence.get("baseline", 0.0),
+                steered=coherence.get("steered", 0.0),
+            )
+        )
+        lines.append("")
+    if report.get("alpha_grid"):
+        lines.append("## Alpha grid")
+        lines.append("| Alpha | Trait | Delta Acc. | Logprob Delta | Anti-Steerable |")
+        lines.append("| --- | --- | --- | --- | --- |")
+        for row in report["alpha_grid"]:
+            for trait in row.get("traits", []):
+                lines.append(
+                    "| {alpha:.3f} | {trait} | {acc:.3f} | {gap:.3f} | {anti:.3f} |".format(
+                        alpha=row["alpha"],
+                        trait=f"{trait['trait_name']} ({trait['trait_code']})",
+                        acc=trait["accuracy"]["delta"],
+                        gap=trait["logprob_gap"]["delta"],
+                        anti=trait.get("anti_steerable_fraction", 0.0),
+                    )
+                )
+        lines.append("")
+    if report.get("bleed_matrix"):
+        lines.append("## Cross-trait bleed")
+        traits = sorted(report["bleed_matrix"])
+        header = "| Source \\ Target | " + " | ".join(traits) + " |"
+        lines.append(header)
+        lines.append("| --- | " + " | ".join("---" for _ in traits) + " |")
+        for source in traits:
+            row = report["bleed_matrix"].get(source, {})
+            values = " | ".join(f"{row.get(target, 0.0):.3f}" for target in traits)
+            lines.append(f"| {source} | {values} |")
+        lines.append("")
     if report.get("failures"):
         lines.append("## Failing conditions")
         for failure in report["failures"]:
@@ -570,6 +866,8 @@ def _trait_to_dict(evaluation: TraitEvaluation) -> dict:
         },
         "sign_consistency": evaluation.sign_consistency,
         "directional_improvement": evaluation.directional_improvement,
+        "anti_steerable_fraction": evaluation.anti_steerable_fraction,
+        "per_sample_variance": evaluation.per_sample_variance,
         "per_prompt": [asdict(item) for item in evaluation.prompt_results],
     }
 
@@ -583,6 +881,9 @@ def build_report(
     transcripts: Sequence[dict],
     grading_prompts: Dict[str, Optional[str]],
     thresholds: Dict[str, float],
+    generation_evals: Sequence[GenerationEvaluation] = (),
+    alpha_grid_results: Sequence[dict] = (),
+    bleed_matrix: Optional[Dict[str, Dict[str, float]]] = None,
 ) -> dict:
     report = {
         "model": model_name,
@@ -593,6 +894,9 @@ def build_report(
         "manual_transcripts": list(transcripts),
         "grading_prompts": grading_prompts,
         "thresholds": thresholds,
+        "generation_eval": summarize_generation_evals(generation_evals),
+        "alpha_grid": list(alpha_grid_results),
+        "bleed_matrix": bleed_matrix or {},
     }
     return report
 
@@ -601,6 +905,7 @@ def _summarize_failures(
     traits: Sequence[TraitEvaluation],
     delta_threshold: Optional[float],
     sign_threshold: Optional[float],
+    anti_steerable_threshold: Optional[float] = None,
 ) -> List[str]:
     failures: List[str] = []
     for trait in traits:
@@ -611,6 +916,14 @@ def _summarize_failures(
         if sign_threshold is not None and trait.sign_consistency < sign_threshold:
             failures.append(
                 f"{trait.trait_name} sign {trait.sign_consistency:.3f} < {sign_threshold:.3f}"
+            )
+        if (
+            anti_steerable_threshold is not None
+            and trait.anti_steerable_fraction > anti_steerable_threshold
+        ):
+            failures.append(
+                f"{trait.trait_name} anti-steerable {trait.anti_steerable_fraction:.3f} > "
+                f"{anti_steerable_threshold:.3f}"
             )
     return failures
 
@@ -635,8 +948,10 @@ def _cli(argv: Optional[Sequence[str]] = None) -> int:
     parser.add_argument("--prompt-override", action="append", dest="prompt_overrides")
     parser.add_argument("--eval-suffix", default="_eval")
     parser.add_argument("--alpha", type=float, default=1.0)
+    parser.add_argument("--alpha-grid", help="Comma-separated alpha values for dose-response eval")
     parser.add_argument("--delta-threshold", type=float)
     parser.add_argument("--sign-threshold", type=float)
+    parser.add_argument("--anti-steerable-threshold", type=float)
     parser.add_argument("--json-output", type=Path)
     parser.add_argument("--markdown-output", type=Path)
     parser.add_argument("--transcript-prompts", type=Path)
@@ -644,6 +959,11 @@ def _cli(argv: Optional[Sequence[str]] = None) -> int:
     parser.add_argument("--max-new-tokens", type=int, default=80)
     parser.add_argument("--temperature", type=float, default=0.7)
     parser.add_argument("--top-p", type=float, default=0.9)
+    parser.add_argument("--generation-eval", action="store_true")
+    parser.add_argument("--judge-model")
+    parser.add_argument("--judge-static-output", action="append")
+    parser.add_argument("--allow-same-family", action="store_true")
+    parser.add_argument("--measure-bleed", action="store_true")
     parser.add_argument("--gpt4-prompt")
     parser.add_argument("--claude-prompt")
     parser.add_argument("--verbose", action="store_true")
@@ -666,23 +986,35 @@ def _cli(argv: Optional[Sequence[str]] = None) -> int:
     vectors, metadata_map = _load_trait_vectors(args.metadata_root, trait_specs)
     scorer = HFContrastScorer(args.model, vectors)
 
-    evaluations: List[TraitEvaluation] = []
-    for trait_name, trait_code in trait_specs:
-        prompts = prompt_records.get(trait_name, [])
-        meta_path = args.metadata_root / f"{trait_code}.meta.json"
-        metadata = metadata_map.get(trait_code, {})
-        vector_store_id = metadata.get("vector_store_id") or trait_code
-        evaluation = evaluate_trait_dataset(
-            trait_name,
-            trait_code,
-            prompt_paths[trait_name],
-            prompts,
-            scorer,
-            alpha=args.alpha,
-            vector_store_id=vector_store_id,
-            metadata_path=meta_path,
+    def evaluate_all(alpha_value: float) -> List[TraitEvaluation]:
+        rows: List[TraitEvaluation] = []
+        for trait_name, trait_code in trait_specs:
+            prompts = prompt_records.get(trait_name, [])
+            meta_path = args.metadata_root / f"{trait_code}.meta.json"
+            metadata = metadata_map.get(trait_code, {})
+            vector_store_id = metadata.get("vector_store_id") or trait_code
+            evaluation = evaluate_trait_dataset(
+                trait_name,
+                trait_code,
+                prompt_paths[trait_name],
+                prompts,
+                scorer,
+                alpha=alpha_value,
+                vector_store_id=vector_store_id,
+                metadata_path=meta_path,
+            )
+            rows.append(evaluation)
+        return rows
+
+    evaluations = evaluate_all(args.alpha)
+    alpha_grid_results: List[dict] = []
+    for alpha_value in parse_alpha_grid(args.alpha_grid):
+        alpha_grid_results.append(
+            {
+                "alpha": alpha_value,
+                "traits": [_trait_to_dict(row) for row in evaluate_all(alpha_value)],
+            }
         )
-        evaluations.append(evaluation)
 
     manual_transcripts: List[dict] = []
     if args.transcript_prompts:
@@ -698,6 +1030,58 @@ def _cli(argv: Optional[Sequence[str]] = None) -> int:
             top_p=args.top_p,
         )
 
+    generation_evals: List[GenerationEvaluation] = []
+    if args.generation_eval:
+        if not args.transcript_prompts:
+            raise ValueError("--generation-eval requires --transcript-prompts")
+        if not args.judge_model:
+            raise ValueError("--generation-eval requires --judge-model")
+        if not args.judge_static_output:
+            raise ValueError(
+                "--generation-eval currently requires --judge-static-output for a "
+                "mockable JudgeClient; provider clients can implement JudgeClient."
+            )
+        manual_prompts = _load_transcript_prompts(args.transcript_prompts)
+        judge_client = StaticJudgeClient(args.judge_static_output)
+        generation_scorer = GenerationEvalScorer(
+            scorer,
+            judge_client,
+            judge_model=args.judge_model,
+            target_model=args.model,
+            allow_same_family=args.allow_same_family,
+        )
+        for prompt in manual_prompts:
+            target_traits: Iterable[Tuple[str, str]]
+            if prompt.trait_name:
+                target_traits = [canonicalize_trait(prompt.trait_name)]
+            else:
+                target_traits = trait_specs
+            for trait_name, trait_code in target_traits:
+                if args.max_transcripts is not None and len(generation_evals) >= args.max_transcripts:
+                    break
+                generation_evals.append(
+                    generation_scorer.evaluate_prompt(
+                        prompt,
+                        trait_name=trait_name,
+                        trait_code=trait_code,
+                        alpha=args.alpha,
+                        max_new_tokens=args.max_new_tokens,
+                        temperature=args.temperature,
+                        top_p=args.top_p,
+                    )
+                )
+
+    bleed_matrix = (
+        measure_cross_trait_bleed(
+            trait_specs,
+            prompt_records,
+            scorer,
+            alpha=args.alpha,
+        )
+        if args.measure_bleed
+        else {}
+    )
+
     scorer.close()
 
     thresholds = {
@@ -705,6 +1089,7 @@ def _cli(argv: Optional[Sequence[str]] = None) -> int:
         for key, value in {
             "delta_threshold": args.delta_threshold,
             "sign_threshold": args.sign_threshold,
+            "anti_steerable_threshold": args.anti_steerable_threshold,
         }.items()
         if value is not None
     }
@@ -719,10 +1104,16 @@ def _cli(argv: Optional[Sequence[str]] = None) -> int:
         transcripts=manual_transcripts,
         grading_prompts=grading_prompts,
         thresholds=thresholds,
+        generation_evals=generation_evals,
+        alpha_grid_results=alpha_grid_results,
+        bleed_matrix=bleed_matrix,
     )
 
     failures = _summarize_failures(
-        evaluations, args.delta_threshold, args.sign_threshold
+        evaluations,
+        args.delta_threshold,
+        args.sign_threshold,
+        args.anti_steerable_threshold,
     )
     report["failures"] = failures
 

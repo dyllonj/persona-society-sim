@@ -77,11 +77,21 @@ of what it's being asked to do. Steering is meant to bias how the model
 ## What this design does not do
 
 An earlier draft of this document claimed persona vectors were
-"orthogonalized per trait to reduce entanglement." That's not implemented —
-each trait's vector is computed and normalized independently, with no
-cross-trait projection-removal step. If two traits' vectors happen to be
-correlated in activation space, steering one will have some effect on the
-other; nothing in this codebase currently corrects for that. See
+"orthogonalized per trait to reduce entanglement." That's not implemented as
+a projection-removal transform — each trait's vector is computed and
+normalized independently, with no cross-trait Gram-Schmidt or projection
+step. However, `steering/compute_caa.py::enforce_orthogonality()` does
+perform a **rejection-based orthogonality check**: before saving a new
+trait's vectors, it computes the absolute cosine similarity between the
+candidate vectors and every existing trait's vectors at the same layers, and
+**raises** if any pair exceeds a 0.2 threshold. This prevents highly
+correlated trait vectors from being saved, but it does not modify vectors to
+make them orthogonal — it is a gate, not a transform. If two traits' vectors
+pass the gate but are still moderately correlated in activation space,
+steering one will have some effect on the other; nothing in this codebase
+currently corrects for that. Prior work (Bhandari et al. 2026) shows that
+even hard orthonormalization does not eliminate behavioral cross-trait bleed,
+so this gate is a necessary but not sufficient safeguard. See
 [explanation-known-gaps.md](explanation-known-gaps.md) for this and other
 gaps between what the docs used to claim and what the code does.
 

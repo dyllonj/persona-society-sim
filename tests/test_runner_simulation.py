@@ -1,15 +1,14 @@
 import json
+import uuid
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
 import importlib.util
-import json
 from datetime import datetime, timezone
-from pathlib import Path
 from types import SimpleNamespace
 
-import pytest
 
 from agents.agent import Agent
 from agents.language_backend import GenerationResult, LanguageBackend
@@ -189,6 +188,14 @@ def _message_snapshot(logs):
     ]
 
 
+_uuid_counter = [0]
+
+
+def _mock_uuid4():
+    _uuid_counter[0] += 1
+    return uuid.UUID(f"00000000-0000-0000-0000-{_uuid_counter[0]:012d}")
+
+
 @pytest.mark.skipif(bool(MISSING_DEPENDENCIES), reason=MISSING_DEP_REASON)
 def test_mock_simulation_reaches_objective(tmp_path):
     from orchestrator.cli import build_agents, build_language_backend, build_objective_manager
@@ -197,6 +204,7 @@ def test_mock_simulation_reaches_objective(tmp_path):
     from orchestrator.scheduler import Scheduler
     from env.world import World
 
+    _uuid_counter[0] = 0
     config = _build_test_config()
     world = World(data_dir="tests/data")
     world.configure_environment("research", difficulty=1)
@@ -205,33 +213,36 @@ def test_mock_simulation_reaches_objective(tmp_path):
     safety = SafetyGovernor(
         SafetyConfig(alpha_clip=1.0, toxicity_threshold=1.0, governor_backoff=0.1)
     )
-    agents = build_agents(config["run_id"], config, world, backend, safety, "research")
-    for agent in agents:
-        world.move_agent(agent.state.agent_id, "library")
-        agent.state.location_id = "library"
-    objective_manager = build_objective_manager(config, "research", difficulty=1)
-    spy_sink = SpyLogSink(config["run_id"])
-    runner = SimulationRunner(
-        run_id=config["run_id"],
-        world=world,
-        scheduler=scheduler,
-        agents=agents,
-        log_sink=spy_sink,
-        temperature=config["inference"]["temperature"],
-        top_p=config["inference"]["top_p"],
-        console_logger=ConsoleLogger(enabled=False),
-        objective_manager=objective_manager,
-    )
-    completed = []
+    with patch("agents.memory.uuid4", side_effect=_mock_uuid4), \
+         patch("orchestrator.runner.uuid4", side_effect=_mock_uuid4), \
+         patch("orchestrator.cli.uuid4", side_effect=_mock_uuid4), \
+         patch("orchestrator.objectives.uuid4", side_effect=_mock_uuid4):
+        agents = build_agents(config["run_id"], config, world, backend, safety, "research")
+        for agent in agents:
+            world.move_agent(agent.state.agent_id, "library")
+            agent.state.location_id = "library"
+        objective_manager = build_objective_manager(config, "research", difficulty=1)
+        spy_sink = SpyLogSink(config["run_id"])
+        runner = SimulationRunner(
+            run_id=config["run_id"],
+            world=world,
+            scheduler=scheduler,
+            agents=agents,
+            log_sink=spy_sink,
+            temperature=config["inference"]["temperature"],
+            top_p=config["inference"]["top_p"],
+            console_logger=ConsoleLogger(enabled=False),
+            objective_manager=objective_manager,
+        )
+        completed = []
 
-    def reward_proxy(agent_id, reward, objective):
-        completed.append((agent_id, objective.objective_id))
-        runner._handle_objective_reward(agent_id, reward, objective)
+        def reward_proxy(agent_id, reward, objective):
+            completed.append((agent_id, objective.objective_id))
+            runner._handle_objective_reward(agent_id, reward, objective)
 
-    objective_manager.register_reward_callback(reward_proxy)
-    runner.metric_tracker.out_dir = tmp_path
-
-    runner.run(config["steps"], max_events_per_tick=4)
+        objective_manager.register_reward_callback(reward_proxy)
+        runner.metric_tracker.out_dir = tmp_path
+        runner.run(config["steps"], max_events_per_tick=4)
 
     assert completed, "ObjectiveManager never completed an objective"
     assert spy_sink.recorded_actions, "LogSink should capture action logs"

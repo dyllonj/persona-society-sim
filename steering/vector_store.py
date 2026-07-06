@@ -6,7 +6,7 @@ import json
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Iterable, List
+from typing import Dict, Iterable, List, Mapping
 
 import numpy as np
 
@@ -49,8 +49,10 @@ class VectorStore:
         num_eval_prompts: int = 0,
         eval_set_hash: str | None = None,
         vector_store_id: str | None = None,
+        layer_diagnostics: Mapping[int, Mapping[str, float]] | None = None,
     ) -> dict:
         vs_id = vector_store_id or trait
+        diagnostics = layer_diagnostics or {}
         layer_records: List[dict] = []
         for layer, vec in layer_vectors.items():
             vector_path = self.root / f"{vs_id}_layer{layer}.npy"
@@ -73,6 +75,10 @@ class VectorStore:
                     "norm": float(norms[layer]),
                     "accuracy": None,
                     "accuracy_delta": None,
+                    **{
+                        key: float(value)
+                        for key, value in diagnostics.get(layer, {}).items()
+                    },
                 }
             )
 

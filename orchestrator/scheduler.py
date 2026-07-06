@@ -35,7 +35,7 @@ class Scheduler:
         for room_id, location in room_items:
             if len(encounters) >= max_events:
                 break
-            room_agents = [agent for agent in location.occupants if agent in available]
+            room_agents = sorted(agent for agent in location.occupants if agent in available)
             if not room_agents:
                 continue
             self.random.shuffle(room_agents)

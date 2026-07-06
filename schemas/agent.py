@@ -31,7 +31,7 @@ class PersonaCoeffs(BaseModel):
     E: float = Field(0.0, ge=-1.0, le=1.0)
     A: float = Field(0.0, ge=-1.0, le=1.0)
     C: float = Field(0.0, ge=-1.0, le=1.0)
-    O: float = Field(0.0, ge=-1.0, le=1.0)
+    O: float = Field(0.0, ge=-1.0, le=1.0)  # noqa: E741
     N: float = Field(0.0, ge=-1.0, le=1.0)
 
     def __init__(self, **data: float) -> None:  # type: ignore[override]

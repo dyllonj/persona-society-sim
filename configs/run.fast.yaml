@@ -7,6 +7,13 @@ seed: 7
 max_events_per_tick: 12
 steering:
   strength: 1.0  # global alpha multiplier used by steering hooks and eval harness
+  per_trait_strength:
+    fallback: 1.0  # per-trait alpha multiplier; missing traits use this fallback
+    E: 1.0
+    A: 1.0
+    C: 1.0
+    O: 1.0
+    N: 1.0
   coefficients:
     E: 0.8
     A: 0.5
@@ -39,6 +46,7 @@ inference:
   max_new_tokens: 48  # Reduced from 128 to 48 (3x faster)
 optimization:
   reflect_every_n_ticks: 5  # Only reflect every 5 ticks instead of every tick
+  mind_wander_probability: 0.05  # Inject a rare low-relevance memory on a seeded 5% retrieval cadence
   use_quantization: true     # Enable 4-bit quantization
   batch_size: 8              # Batch 8 agents at once (future feature)
   max_gpu_memory_gb: 16      # Cap GPU usage so other processes fit
@@ -46,3 +54,7 @@ optimization:
   offload_folder: "./artifacts/offload_cache"
 objectives:
   enabled: true
+probes:
+  enabled: true
+  definitions_path: configs/probes.yaml
+  persona_stability_cadence: 20

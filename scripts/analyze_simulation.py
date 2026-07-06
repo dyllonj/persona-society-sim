@@ -139,11 +139,11 @@ def analyze_agent_activity(actions, messages):
     print("AGENT ACTIVITY")
     print("=" * 80)
     print(f"\nTotal agents: {len(agent_actions)}")
-    print(f"\nMost active agents (by actions):")
+    print("\nMost active agents (by actions):")
     for agent_id, count in agent_actions.most_common(5):
         print(f"  {agent_id}: {count} actions, {agent_messages.get(agent_id, 0)} messages")
 
-    print(f"\nLeast active agents:")
+    print("\nLeast active agents:")
     for agent_id, count in list(agent_actions.most_common())[-5:]:
         print(f"  {agent_id}: {count} actions, {agent_messages.get(agent_id, 0)} messages")
 
@@ -162,7 +162,7 @@ def analyze_token_usage(messages):
     print(f"Total input tokens:  {total_in:,}")
     print(f"Total output tokens: {total_out:,}")
     print(f"Total tokens:        {total_in + total_out:,}")
-    print(f"\nAverage per message:")
+    print("\nAverage per message:")
     print(f"  Input:  {total_in / len(messages):.1f} tokens")
     print(f"  Output: {total_out / len(messages):.1f} tokens")
 

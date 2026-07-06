@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Union, cast
+from typing import Dict, List, Mapping, Optional, Union, cast
 
 try:  # pragma: no cover - optional dependency for inference
     import torch
@@ -19,6 +19,7 @@ except ModuleNotFoundError:  # pragma: no cover
     hf_logging = None  # type: ignore
 
 from steering.hooks import SteeringController
+from steering.per_trait_strength import resolve_per_trait_strength
 
 
 @dataclass
@@ -42,19 +43,23 @@ class LanguageBackend:
         temperature: float = 0.7,
         top_p: float = 0.9,
         alpha_strength: float = 1.0,
+        per_trait_strength: Optional[Mapping[str, object]] = None,
         suppress_alphas: bool = False,
     ):
         self.temperature = temperature
         self.top_p = top_p
-        self.alpha_strength = alpha_strength
+        self.alpha_strength = float(alpha_strength)
+        self.per_trait_strength = dict(per_trait_strength or {})
         self.suppress_alphas = suppress_alphas
 
     def _scale_alphas(self, alphas: Dict[str, float]) -> Dict[str, float]:
         if self.suppress_alphas:
             return {trait: 0.0 for trait in alphas.keys()}
-        if abs(self.alpha_strength - 1.0) < 1e-6:
-            return alphas
-        return {trait: coeff * self.alpha_strength for trait, coeff in alphas.items()}
+        return resolve_per_trait_strength(
+            alphas,
+            per_trait_strength=self.per_trait_strength,
+            global_strength=self.alpha_strength,
+        )
 
     def generate(self, prompt: str, max_new_tokens: int, alphas: Dict[str, float]) -> GenerationResult:  # pragma: no cover - interface
         raise NotImplementedError
@@ -80,6 +85,7 @@ class HFBackend(LanguageBackend):
         top_p: float = 0.9,
         use_quantization: bool = False,
         alpha_strength: float = 1.0,
+        per_trait_strength: Optional[Mapping[str, object]] = None,
         max_gpu_memory_gb: Optional[float] = None,
         max_cpu_memory_gb: Optional[float] = None,
         offload_folder: Optional[str] = None,
@@ -91,6 +97,7 @@ class HFBackend(LanguageBackend):
             temperature=temperature,
             top_p=top_p,
             alpha_strength=alpha_strength,
+            per_trait_strength=per_trait_strength,
             suppress_alphas=suppress_alphas,
         )
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -268,12 +275,14 @@ class MockBackend(LanguageBackend):
         temperature: float = 0.0,
         top_p: float = 1.0,
         alpha_strength: float = 1.0,
+        per_trait_strength: Optional[Mapping[str, object]] = None,
         suppress_alphas: bool = False,
     ):
         super().__init__(
             temperature=temperature,
             top_p=top_p,
             alpha_strength=alpha_strength,
+            per_trait_strength=per_trait_strength,
             suppress_alphas=suppress_alphas,
         )
         self.seed = seed

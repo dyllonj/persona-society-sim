@@ -7,6 +7,13 @@ seed: 42
 steering:
   enabled: true
   strength: 1.0
+  per_trait_strength:
+    fallback: 1.0  # per-trait alpha multiplier; missing traits use this fallback
+    E: 1.0
+    A: 1.0
+    C: 1.0
+    O: 1.0
+    N: 1.0
   coefficients:
     E: 0.9
     A: 0.7
@@ -39,3 +46,4 @@ inference:
   max_new_tokens: 160
 optimization:
   reflect_every_n_ticks: 10  # Reflect every 10 ticks for better planning
+  mind_wander_probability: 0.05  # Inject a rare low-relevance memory on a seeded 5% retrieval cadence

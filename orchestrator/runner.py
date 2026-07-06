@@ -25,6 +25,7 @@ from schemas.logs import (
     ResearchFactLog,
     ProbeLog,
     BehaviorProbeLog,
+    PersonaStabilityLog,
 )
 from storage.log_sink import LogSink
 from metrics import graphs, social_dynamics
@@ -211,7 +212,6 @@ class SimulationRunner:
                                 )
                             if batch_probe_assignment:
                                 batch_context = batch_probe_assignment.inject(batch_context)
-                                batch_context = batch_probe_assignment.inject(batch_context)
 
                         if self.event_bridge and hasattr(self.event_bridge, "broadcast"):
                             try:
@@ -250,6 +250,15 @@ class SimulationRunner:
                             probe_assignment,
                             batch_location,
                         )
+                        # Report mind-wander injections to metric tracker
+                        try:
+                            batch_agent = self.agents[result.agent_id]
+                            retriever = batch_agent.retriever
+                            if hasattr(retriever, 'last_mind_wander_injections') and retriever.last_mind_wander_injections > 0:
+                                self.metric_tracker.on_mind_wander(retriever.last_mind_wander_injections)
+                                retriever.last_mind_wander_injections = 0
+                        except Exception:
+                            pass
                 for agent_id in encounter.participants:
                     agent = self.agents[agent_id]
                     if self.batch_decisions_per_encounter:
@@ -274,7 +283,6 @@ class SimulationRunner:
                                     agent.state.agent_id, self.world.tick
                                 )
                             if probe_assignment:
-                                base_context = probe_assignment.inject(base_context)
                                 base_context = probe_assignment.inject(base_context)
                         
                         # Broadcast processing status
@@ -304,6 +312,14 @@ class SimulationRunner:
                             alignment_context=alignment_contexts.get(agent.state.agent_id),
                         )
                         decision = self.decision_pipeline.decide(decision_request).decision
+                        # Report mind-wander injections to metric tracker
+                        try:
+                            retriever = agent.retriever
+                            if hasattr(retriever, 'last_mind_wander_injections') and retriever.last_mind_wander_injections > 0:
+                                self.metric_tracker.on_mind_wander(retriever.last_mind_wander_injections)
+                                retriever.last_mind_wander_injections = 0
+                        except Exception:
+                            pass
                     if probe_assignment:
                         decision.probe_id = probe_assignment.probe_id
                         decision.probe_kind = probe_assignment.kind
@@ -484,17 +500,6 @@ class SimulationRunner:
                             )
                         )
 
-            if self.meta_orchestrator:
-                # Identify rooms where conversation happened
-                active_rooms = set()
-                for log in tick_logs:
-                    if log.action_type == "talk" and log.outcome == "success":
-                        # We need the room ID. It's in info['room_id'] usually, or we can infer from agent location
-                        # But agent might have moved.
-                        # Let's look at the log info or the msg_log if we had it.
-                        # Actually, we can just track it during the loop below.
-                        pass
-
             self.world.step()
             
             # Report activity to meta orchestrator
@@ -503,18 +508,6 @@ class SimulationRunner:
                 # Let's re-scan tick_logs or just track it in a set during the loop.
                 # Tracking in loop is better but requires more code changes.
                 # Let's scan tick_logs.
-                active_rooms = set()
-                for log in tick_logs:
-                    if log.action_type == "talk" and log.outcome == "success":
-                        # We can try to get room from info, or just look up agent location (post-tick might be wrong if they moved)
-                        # But "talk" usually doesn't happen same tick as "move" unless we allow multiple actions?
-                        # The system seems to allow 1 action per tick per agent.
-                        # If they talked, they didn't move. So their current location is valid.
-                        # Wait, world.step() might have moved OTHER agents, but the talker stayed put.
-                        # Actually, world.step() processes moves.
-                        # So we should capture location BEFORE world.step().
-                        pass
-                
                 # Actually, let's just do it right:
                 # We can iterate tick_logs. For 'talk', the agent was at 'from' location (if they moved? no they can't move and talk).
                 # So we can just check their location in the world *before* step? No, we are after step.
@@ -750,6 +743,9 @@ class SimulationRunner:
                     band_metadata=macro.band_metadata,
                     prompt_duplication_rate=macro.prompt_duplication_rate,
                     plan_reuse_rate=macro.plan_reuse_rate,
+                    action_type_entropy=macro.action_type_entropy,
+                    population_trait_variance=macro.population_trait_variance,
+                    variance_vs_mean_ratio=macro.variance_vs_mean_ratio,
                 )
                 self.log_sink.log_metrics_snapshot(metrics_snapshot)
         except Exception:
@@ -802,7 +798,7 @@ class SimulationRunner:
                 parser_hint=hint,
             )
             self.log_sink.log_probe(probe_log)
-        else:
+        elif assignment.kind == "behavior":
             outcome, hint = ProbeManager.score_behavior_response(assignment, decision.utterance)
             behavior_log = BehaviorProbeLog(
                 log_id=str(uuid4()),
@@ -823,3 +819,11 @@ class SimulationRunner:
                 preferred_outcome=assignment.preferred_outcome,
             )
             self.log_sink.log_behavior_probe(behavior_log)
+        else:
+            stability_log: PersonaStabilityLog = self.probe_manager.record_persona_stability_response(
+                agent.state.agent_id,
+                assignment,
+                self.world.tick,
+                decision.utterance,
+            )
+            self.metric_tracker.on_persona_stability(stability_log)

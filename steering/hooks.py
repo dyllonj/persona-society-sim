@@ -32,7 +32,7 @@ class SteeringController:
         }
         self.trait_vectors: LayerVectors = {}
         for trait, by_layer in trait_vectors.items():
-            normalized_layers: Dict[int, TorchTensor] = {}
+            layer_vectors: Dict[int, TorchTensor] = {}
             for layer, vec in by_layer.items():
                 tensor = vec if isinstance(vec, torch.Tensor) else torch.tensor(vec)
                 if hasattr(torch.linalg, "norm"):
@@ -40,12 +40,10 @@ class SteeringController:
                 else:  # pragma: no cover - legacy torch fallback
                     norm_tensor = tensor.norm()
                 norm_value = float(norm_tensor.item()) if hasattr(norm_tensor, "item") else float(norm_tensor)
-                if norm_value > 0:
-                    tensor = tensor / norm_value
-                normalized_layers[layer] = tensor
+                layer_vectors[layer] = tensor
                 self.vector_norms.setdefault(trait, {})[layer] = norm_value
-            if normalized_layers:
-                self.trait_vectors[trait] = normalized_layers
+            if layer_vectors:
+                self.trait_vectors[trait] = layer_vectors
         self.alphas = {trait: 0.0 for trait in self.trait_vectors}
         self._handles = []
         self.enabled = True

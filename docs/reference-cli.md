@@ -58,10 +58,10 @@ These flags only matter once you pass `--queued-runtime`; the default runtime do
 
 The full build-and-run sequence (viewer/TUI setup through `runner.run(...)`) is wrapped in one `try/except/finally`.
 
-- **On success**: only `finally`'s `event_bridge.stop()` runs. `log_sink.close()` is **not called** on the success path — with `--queued-runtime`, the background log worker thread is simply abandoned (harmless at process exit, but any error during its final flush is never surfaced).
-- **On failure**: `event_bridge.stop()` runs once in the `except` block and again in `finally` (both tolerate being called twice); `log_sink.close()` runs once in `except` (failures there are swallowed); the traceback is printed and the process exits `1`.
+- **On success**: `finally` runs both `event_bridge.stop()` and `log_sink.close()`, ensuring the background log worker thread is cleanly shut down and any final buffer flush errors are surfaced (previously `log_sink.close()` was only called on the exception path — see [explanation-known-gaps.md](explanation-known-gaps.md#log_sinkclose-is-never-called-on-a-successful-run)).
+- **On failure**: the `except` block prints the traceback and exits `1`; `finally` then runs the same cleanup (`event_bridge.stop()` + `log_sink.close()`) as the success path.
 
-See [explanation-known-gaps.md](explanation-known-gaps.md) for the practical implications (partial/queued telemetry may not be durably flushed even on a clean run).
+See [explanation-known-gaps.md](explanation-known-gaps.md) for the historical context (previously, partial/queued telemetry was not durably flushed even on a clean run).
 
 ## Related
 

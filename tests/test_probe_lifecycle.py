@@ -98,6 +98,8 @@ def test_probe_lifecycle_logs_scores():
                 instructions="Respond SHARE or REFUSE",
                 outcomes={"share": ["share"], "refuse": ["refuse"]},
                 cadence=1,
+                trait="A",
+                affordance="supply_sharing",
             )
         ],
         likert_interval=1,

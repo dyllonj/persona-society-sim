@@ -13,7 +13,7 @@ def view_file(filepath: Path, num_rows: int = 5):
     print(f"File: {filepath.name}")
     print(f"{'='*80}")
     print(f"Rows: {table.num_rows}, Columns: {table.num_columns}")
-    print(f"\nSchema:")
+    print("\nSchema:")
     print(table.schema)
 
     # Convert to Python dict for display

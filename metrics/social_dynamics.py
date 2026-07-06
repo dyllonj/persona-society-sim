@@ -52,6 +52,9 @@ def build_metrics_snapshot(
     band_metadata: Optional[Dict[str, object]] = None,
     prompt_duplication_rate: float = 0.0,
     plan_reuse_rate: float = 0.0,
+    action_type_entropy: float = 0.0,
+    population_trait_variance: float = 0.0,
+    variance_vs_mean_ratio: float = 0.0,
 ) -> MetricsSnapshot:
     return MetricsSnapshot(
         run_id=run_id,
@@ -65,4 +68,7 @@ def build_metrics_snapshot(
         band_metadata=band_metadata or {},
         prompt_duplication_rate=prompt_duplication_rate,
         plan_reuse_rate=plan_reuse_rate,
+        action_type_entropy=action_type_entropy,
+        population_trait_variance=population_trait_variance,
+        variance_vs_mean_ratio=variance_vs_mean_ratio,
     )

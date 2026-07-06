@@ -8,6 +8,8 @@ import random
 import re
 from typing import Dict, List, Literal, Optional, Tuple
 
+from schemas.logs import PersonaStabilityLog
+
 try:  # pragma: no cover - optional dependency
     import yaml
 except ModuleNotFoundError:  # pragma: no cover
@@ -15,6 +17,15 @@ except ModuleNotFoundError:  # pragma: no cover
 
 DEFAULT_PROBE_PATH = Path("configs/probes.yaml")
 LikertScore = Optional[int]
+ProbeKind = Literal["likert", "behavior", "persona_stability"]
+
+DEFAULT_PERSONA_STABILITY_KEYWORDS: Dict[str, List[str]] = {
+    "E": ["talk", "social", "group", "people", "outgoing", "meet"],
+    "A": ["help", "support", "kind", "cooperate", "share", "agree"],
+    "C": ["plan", "task", "careful", "schedule", "complete", "reliable"],
+    "O": ["learn", "explore", "novel", "curious", "ideas", "creative"],
+    "N": ["worry", "stress", "nervous", "uncertain", "calm", "steady"],
+}
 
 
 @dataclass
@@ -29,19 +40,32 @@ class LikertProbeDefinition:
 @dataclass
 class BehaviorProbeDefinition:
     probe_id: str
-    trait: Optional[str] = None
-    affordance: Optional[str] = None
     scenario: str
     instructions: str
     outcomes: Dict[str, List[str]]
     cadence: int
+    trait: Optional[str] = None
+    affordance: Optional[str] = None
     preferred_outcome: Optional[str] = None
+
+
+@dataclass
+class PersonaStabilityProbeDefinition:
+    probe_id: str
+    prompt: str
+    cadence: int = 20
+    trait_keywords: Dict[str, List[str]] = field(
+        default_factory=lambda: {
+            trait: list(keywords)
+            for trait, keywords in DEFAULT_PERSONA_STABILITY_KEYWORDS.items()
+        }
+    )
 
 
 @dataclass
 class ProbeAssignment:
     probe_id: str
-    kind: Literal["likert", "behavior"]
+    kind: ProbeKind
     prompt: str
     scheduled_tick: int
     question: Optional[str] = None
@@ -51,6 +75,7 @@ class ProbeAssignment:
     cooldown: int = 0
     affordance: Optional[str] = None
     preferred_outcome: Optional[str] = None
+    trait_keywords: Dict[str, List[str]] = field(default_factory=dict)
 
     def inject(self, observation: str) -> str:
         prefix = ["[Probe] You have been selected for a research probe.", self.prompt]
@@ -58,6 +83,8 @@ class ProbeAssignment:
             prefix.append(f"Question: {self.question}")
         if self.kind == "behavior" and self.scenario:
             prefix.append(f"Scenario: {self.scenario}")
+        if self.kind == "persona_stability":
+            prefix.append("Describe your current persona, priorities, and typical behavior.")
         prefix.append("Provide your probe response before continuing with normal conversation.")
         joined = "\n".join(prefix).strip()
         return f"{joined}\n\nOriginal observation:\n{observation}".strip()
@@ -79,21 +106,27 @@ class ProbeManager:
         self,
         likert_probes: List[LikertProbeDefinition],
         behavior_probes: List[BehaviorProbeDefinition],
+        persona_stability_probes: Optional[List[PersonaStabilityProbeDefinition]] = None,
         *,
         likert_interval: int = 30,
         behavior_interval: int = 45,
+        persona_stability_interval: int = 20,
         seed: int = 7,
     ):
         self.likert_probes = list(likert_probes)
         self.behavior_probes = list(behavior_probes)
+        self.persona_stability_probes = list(persona_stability_probes or [])
         self.likert_interval = likert_interval
         self.behavior_interval = behavior_interval
+        self.persona_stability_interval = persona_stability_interval
         self.random = random.Random(seed)
         self._active: Dict[str, ProbeAssignment] = {}
         self._next_due: Dict[str, Dict[str, int]] = {
             "likert": {},
             "behavior": {},
+            "persona_stability": {},
         }
+        self._persona_baselines: Dict[Tuple[str, str], str] = {}
         self._validate_behavior_affordances()
 
     @classmethod
@@ -108,8 +141,12 @@ class ProbeManager:
         payload = yaml.safe_load(path.read_text()) or {}
         likert_cfg = payload.get("likert", {}) or {}
         behavior_cfg = payload.get("behavior", {}) or {}
+        persona_cfg = payload.get("persona_stability", {}) or {}
         likert_interval = int(config.get("likert_cadence", likert_cfg.get("cadence", 30)))
         behavior_interval = int(config.get("behavior_cadence", behavior_cfg.get("cadence", 45)))
+        persona_interval = int(
+            config.get("persona_stability_cadence", persona_cfg.get("cadence", 20))
+        )
         likert_defs: List[LikertProbeDefinition] = []
         for entry in likert_cfg.get("questions", []):
             cadence = int(entry.get("cadence", likert_interval))
@@ -144,13 +181,41 @@ class ProbeManager:
                     preferred_outcome=entry.get("preferred_outcome"),
                 )
             )
-        if not likert_defs and not behavior_defs:
+        persona_defs: List[PersonaStabilityProbeDefinition] = []
+        if persona_cfg.get("enabled", False):
+            prompt_entries = persona_cfg.get("prompts") or [
+                {
+                    "id": "persona_stability",
+                    "prompt": "Briefly describe who you are in this simulation and how you usually decide what to do.",
+                }
+            ]
+            for entry in prompt_entries:
+                trait_keywords = entry.get("trait_keywords", DEFAULT_PERSONA_STABILITY_KEYWORDS)
+                persona_defs.append(
+                    PersonaStabilityProbeDefinition(
+                        probe_id=str(entry.get("id", "persona_stability")),
+                        prompt=str(
+                            entry.get(
+                                "prompt",
+                                "Briefly describe who you are in this simulation and how you usually decide what to do.",
+                            )
+                        ),
+                        cadence=int(entry.get("cadence", persona_interval)),
+                        trait_keywords={
+                            trait: [str(keyword).lower() for keyword in keywords]
+                            for trait, keywords in trait_keywords.items()
+                        },
+                    )
+                )
+        if not likert_defs and not behavior_defs and not persona_defs:
             return None
         return cls(
             likert_defs,
             behavior_defs,
+            persona_defs,
             likert_interval=likert_interval,
             behavior_interval=behavior_interval,
+            persona_stability_interval=persona_interval,
             seed=int(config.get("seed", 7)),
         )
 
@@ -162,14 +227,16 @@ class ProbeManager:
             for kind, definitions in (
                 ("likert", self.likert_probes),
                 ("behavior", self.behavior_probes),
+                ("persona_stability", self.persona_stability_probes),
             )
             if definitions and tick >= self._next_due[kind].get(agent_id, 0)
         ]
         if not due_kinds:
             return None
         # Prioritize Likert probes for stability, fall back to behavior
+        priority = {"persona_stability": 0, "likert": 1, "behavior": 2}
         due_kinds.sort(
-            key=lambda k: (self._next_due[k].get(agent_id, 0), 0 if k == "likert" else 1)
+            key=lambda k: (self._next_due[k].get(agent_id, 0), priority.get(k, 99))
         )
         kind = due_kinds[0]
         assignment = self._build_assignment(kind, tick)
@@ -194,7 +261,11 @@ class ProbeManager:
             return
         kind = assignment.kind
         interval = assignment.cooldown or (
-            self.likert_interval if kind == "likert" else self.behavior_interval
+            self.likert_interval
+            if kind == "likert"
+            else self.behavior_interval
+            if kind == "behavior"
+            else self.persona_stability_interval
         )
         self._next_due[kind][agent_id] = tick + interval
 
@@ -229,6 +300,19 @@ class ProbeManager:
                 trait=definition.trait,
                 affordance=definition.affordance,
                 preferred_outcome=definition.preferred_outcome,
+            )
+        if kind == "persona_stability" and self.persona_stability_probes:
+            definition = self.random.choice(self.persona_stability_probes)
+            return ProbeAssignment(
+                probe_id=definition.probe_id,
+                kind="persona_stability",
+                prompt=definition.prompt.strip(),
+                scheduled_tick=tick,
+                cooldown=definition.cadence,
+                trait_keywords={
+                    trait: [kw.lower() for kw in keywords]
+                    for trait, keywords in definition.trait_keywords.items()
+                },
             )
         return None
 
@@ -274,3 +358,63 @@ class ProbeManager:
             if label.lower() in lowered:
                 return label, label
         return None, "unparsed"
+
+    def record_persona_stability_response(
+        self,
+        agent_id: str,
+        assignment: ProbeAssignment,
+        tick: int,
+        response_text: str,
+    ) -> PersonaStabilityLog:
+        baseline_key = (agent_id, assignment.probe_id)
+        baseline = self._persona_baselines.get(baseline_key)
+        if baseline is None:
+            baseline = response_text
+            self._persona_baselines[baseline_key] = response_text
+        distance = self.keyword_overlap_distance(baseline, response_text)
+        return PersonaStabilityLog(
+            agent_id=agent_id,
+            tick=tick,
+            probe_text=assignment.prompt,
+            embedding_distance_from_baseline=distance,
+            trait_scores=self.score_persona_trait_keywords(
+                response_text,
+                assignment.trait_keywords or DEFAULT_PERSONA_STABILITY_KEYWORDS,
+            ),
+        )
+
+    @classmethod
+    def score_persona_trait_keywords(
+        cls,
+        response_text: str,
+        trait_keywords: Dict[str, List[str]],
+    ) -> Dict[str, float]:
+        tokens = cls._keyword_tokens(response_text)
+        scores: Dict[str, float] = {}
+        for trait, keywords in trait_keywords.items():
+            keyword_set = {keyword.lower() for keyword in keywords if keyword}
+            if not keyword_set:
+                continue
+            matches = len(tokens.intersection(keyword_set))
+            scores[trait] = matches / len(keyword_set)
+        return scores
+
+    @classmethod
+    def keyword_overlap_distance(cls, baseline_text: str, response_text: str) -> float:
+        baseline_tokens = cls._keyword_tokens(baseline_text)
+        response_tokens = cls._keyword_tokens(response_text)
+        if not baseline_tokens and not response_tokens:
+            return 0.0
+        union = baseline_tokens.union(response_tokens)
+        if not union:
+            return 0.0
+        similarity = len(baseline_tokens.intersection(response_tokens)) / len(union)
+        return round(1.0 - similarity, 6)
+
+    @staticmethod
+    def _keyword_tokens(text: str) -> set[str]:
+        return {
+            token
+            for token in re.findall(r"[a-z][a-z_'-]*", text.lower())
+            if len(token) >= 3
+        }

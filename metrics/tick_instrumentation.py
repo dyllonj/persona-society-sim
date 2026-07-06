@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from collections import defaultdict
 from dataclasses import dataclass
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
@@ -28,6 +29,9 @@ class MacroInput:
     opinions: Dict[str, float]
     prompt_duplication_rate: float
     plan_reuse_rate: float
+    action_type_entropy: float
+    population_trait_variance: float = 0.0
+    variance_vs_mean_ratio: float = 0.0
 
 
 class TickInstrumentation:
@@ -43,6 +47,9 @@ class TickInstrumentation:
         self._agent_opinions: Dict[str, float] = {}
         self._prompt_counts: Dict[str, int] = defaultdict(int)
         self._plan_counts: Dict[str, int] = defaultdict(int)
+        self._action_type_counts: Dict[Optional[str], Dict[str, int]] = defaultdict(
+            lambda: defaultdict(int)
+        )
         self._prompt_samples: Dict[str, str] = {}
         self._total_prompts = 0
         self._total_plans = 0
@@ -56,6 +63,7 @@ class TickInstrumentation:
         self._agent_opinions.clear()
         self._prompt_counts.clear()
         self._plan_counts.clear()
+        self._action_type_counts.clear()
         self._prompt_samples.clear()
         self._total_prompts = 0
         self._total_plans = 0
@@ -82,6 +90,7 @@ class TickInstrumentation:
         if trait_key:
             self._band_members[trait_key].add(agent_id)
         self._agent_opinions[agent_id] = satisfaction
+        self._record_action_type(action_type, trait_key)
 
         if action_type == "talk":
             self._record_message_edges(agent_id, encounter_participants, trait_key)
@@ -150,6 +159,7 @@ class TickInstrumentation:
                     opinions=opinion_slice,
                     prompt_duplication_rate=prompt_dup_rate,
                     plan_reuse_rate=plan_dup_rate,
+                    action_type_entropy=self.action_type_entropy(trait_key),
                 )
             )
         if not inputs:
@@ -164,9 +174,15 @@ class TickInstrumentation:
                     opinions=dict(opinions),
                     prompt_duplication_rate=prompt_dup_rate,
                     plan_reuse_rate=plan_dup_rate,
+                    action_type_entropy=0.0,
                 )
             )
         return inputs
+
+    def action_type_entropy(self, trait_key: Optional[str] = None) -> float:
+        """Return Shannon entropy over this tick's action-type counts."""
+
+        return self._shannon_entropy(self._action_type_counts.get(trait_key, {}))
 
     # ---- internals ----
 
@@ -200,6 +216,11 @@ class TickInstrumentation:
         if trait_key:
             self._cooperation_events[trait_key].append(event)
 
+    def _record_action_type(self, action_type: str, trait_key: Optional[str]) -> None:
+        self._action_type_counts[None][action_type] += 1
+        if trait_key:
+            self._action_type_counts[trait_key][action_type] += 1
+
     def _increment_conflict(self, trait_key: Optional[str]) -> None:
         self._conflicts[None] += 1
         if trait_key:
@@ -225,6 +246,19 @@ class TickInstrumentation:
             return 0.0
         duplicates = sum(count - 1 for count in counts.values() if count > 1)
         return duplicates / total
+
+    @staticmethod
+    def _shannon_entropy(counts: Dict[str, int]) -> float:
+        total = sum(counts.values())
+        if total <= 0:
+            return 0.0
+        entropy = 0.0
+        for count in counts.values():
+            if count <= 0:
+                continue
+            probability = count / total
+            entropy -= probability * math.log2(probability)
+        return entropy
 
     def _edge_with_metadata(
         self, src: str, dst: str, kind: str, trait_key: Optional[str]

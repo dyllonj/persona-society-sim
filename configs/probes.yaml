@@ -11,6 +11,19 @@ likert:
       question: "Rate your civic pride in the community from 1 (very low) to 5 (very high)."
       instructions: |
         Keep the answer compact. Provide the rating first, then explain in one sentence.
+persona_stability:
+  enabled: true
+  cadence: 20
+  prompts:
+    - id: persona_self_description
+      prompt: |
+        Briefly describe who you are in this simulation, what you care about, and how you usually decide what to do.
+      trait_keywords:
+        E: ["talk", "social", "group", "people", "outgoing", "meet"]
+        A: ["help", "support", "kind", "cooperate", "share", "agree"]
+        C: ["plan", "task", "careful", "schedule", "complete", "reliable"]
+        O: ["learn", "explore", "novel", "curious", "ideas", "creative"]
+        N: ["worry", "stress", "nervous", "uncertain", "calm", "steady"]
 behavior:
   cadence: 4
   scenarios:

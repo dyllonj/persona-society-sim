@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import datetime
 from typing import Any, Dict, List, Literal, Optional
 
 from utils.pydantic_compat import BaseModel, Field
@@ -140,6 +139,9 @@ class MetricsSnapshot(BaseModel):
     band_metadata: Dict[str, object] = Field(default_factory=dict)
     prompt_duplication_rate: float = 0.0
     plan_reuse_rate: float = 0.0
+    action_type_entropy: float = 0.0
+    population_trait_variance: float = 0.0
+    variance_vs_mean_ratio: float = 0.0
 
 
 class ResearchFactLog(BaseModel):
@@ -183,6 +185,14 @@ class ReportGradeLog(BaseModel):
     trait_band: Optional[str] = None
     alpha_value: Optional[float] = None
     alpha_bucket: Optional[str] = None
+
+
+class PersonaStabilityLog(BaseModel):
+    agent_id: str
+    tick: int
+    probe_text: str
+    embedding_distance_from_baseline: float
+    trait_scores: Dict[str, float] = Field(default_factory=dict)
 
 
 class ProbeLog(BaseModel):

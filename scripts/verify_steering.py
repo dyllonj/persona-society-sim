@@ -139,7 +139,7 @@ def analyze_steering_effects(messages_dir: Path, num_files: int = 20):
     print("✓ Steering appears to be active and functioning")
     print(f"  - {len(agents_with_steering)} agents with steering applied")
     print(f"  - {total_messages} messages analyzed")
-    print(f"  - Trait values show expected variation")
+    print("  - Trait values show expected variation")
     print("\nTo verify steering is actually affecting outputs:")
     print("  1. Run with different steering configs and compare results")
     print("  2. Check if high-E agents produce more enthusiastic language")

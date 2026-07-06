@@ -58,7 +58,11 @@ objectives:
   enabled: bool
 
 probes:                         # optional; see configs/probes.yaml below
-  ...
+  enabled: bool
+  definitions_path: path
+  likert_cadence: int
+  behavior_cadence: int
+  persona_stability_cadence: int  # default 20 ticks; emits passive validity metrics
 ```
 
 **`steering.vector_norm` is dead config** — no loader in `orchestrator/cli.py`,
@@ -167,9 +171,9 @@ behavior:
 At most one probe is ever "in flight" per agent. Likert probes are preferred
 over behavior probes when both are due on the same tick. Whatever the agent
 says on its next turn is scored as the probe's answer — there's no check that
-the response actually addresses the probe. See
-[explanation-known-gaps.md](explanation-known-gaps.md#probe-preamble-is-injected-twice)
-for a related injection bug.
+the response actually addresses the probe. (A previous double-inject bug
+where probe text was duplicated has been fixed; see
+[explanation-known-gaps.md](explanation-known-gaps.md#probe-preamble-is-injected-twice).)
 
 ## Persona sampling (`configs/personas.bigfive.yaml`)
 

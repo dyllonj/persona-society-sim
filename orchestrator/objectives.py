@@ -75,9 +75,9 @@ class ObjectiveManager:
             return None
         if action_log.outcome not in {"success", "noop"}:
             return None
-        if requirement_key == "fill_field" and action_log.info.get("unique") != "1":
+        if requirement_key == "fill_field" and not self._is_flag_set(action_log.info.get("unique")):
             return None
-        if requirement_key == "scan" and action_log.info.get("token_acquired") != "1":
+        if requirement_key == "scan" and not self._is_flag_set(action_log.info.get("token_acquired")):
             return None
         objective.progress[requirement_key] = min(
             objective.progress.get(requirement_key, 0) + 1,
@@ -92,6 +92,21 @@ class ObjectiveManager:
         return None
 
     # ---- internal helpers ----
+
+    def _is_flag_set(self, value) -> bool:
+        """Accept '1', 1, True as set; everything else as not set.
+
+        Normalizes flag values emitted by the action layer so that objective
+        progress increments regardless of whether the action layer stores the
+        success marker as a string, int, or bool.
+        """
+        if value is None:
+            return False
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, (int, float)):
+            return value == 1
+        return str(value).strip() == "1"
 
     def _select_template(self, template_name: Optional[str]) -> Optional[ObjectiveTemplate]:
         if template_name:

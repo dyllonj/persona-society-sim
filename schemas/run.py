@@ -51,6 +51,7 @@ class InferenceConfig(BaseModel):
 
 class OptimizationConfig(BaseModel):
     reflect_every_n_ticks: int = 1
+    mind_wander_probability: float = 0.05
     use_quantization: bool = False
     batch_size: Optional[int] = None
     max_gpu_memory_gb: Optional[float] = None

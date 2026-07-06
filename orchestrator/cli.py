@@ -334,6 +334,7 @@ def build_language_backend(
     use_quantization = optimization.get("use_quantization", False)
     steering_cfg = config.get("steering", {})
     alpha_strength = steering_cfg.get("strength", 1.0)
+    per_trait_strength = steering_cfg.get("per_trait_strength") or {}
     if suppress_alphas:
         alpha_strength = 0.0
     max_gpu_memory = _maybe_float(optimization.get("max_gpu_memory_gb"))
@@ -347,6 +348,7 @@ def build_language_backend(
             temperature=temperature,
             top_p=top_p,
             alpha_strength=alpha_strength,
+            per_trait_strength=per_trait_strength,
             suppress_alphas=suppress_alphas,
         )
     
@@ -373,6 +375,7 @@ def build_language_backend(
         top_p=top_p,
         use_quantization=use_quantization,
         alpha_strength=alpha_strength,
+        per_trait_strength=per_trait_strength,
         max_gpu_memory_gb=max_gpu_memory,
         max_cpu_memory_gb=max_cpu_memory,
         offload_folder=offload_folder,
@@ -412,6 +415,10 @@ def build_agents(
     optimization = config.get("optimization", {})
     max_tokens = inference.get("max_new_tokens", 120)
     reflect_every_n = optimization.get("reflect_every_n_ticks", 1)
+    try:
+        mind_wander_probability = float(optimization.get("mind_wander_probability", 0.05))
+    except (TypeError, ValueError):
+        mind_wander_probability = 0.05
     locations = list(world.locations.keys())
     role_roster = _env_roster(env_choice)
     role_assignments = _assign_roles(population, role_roster, rng)
@@ -448,7 +455,11 @@ def build_agents(
         )
         world.add_agent(agent_id, location)
         memory = MemoryStore()
-        retriever = MemoryRetriever(memory)
+        retriever = MemoryRetriever(
+            memory,
+            mind_wander_probability=mind_wander_probability,
+            seed=config.get("seed", 7) + idx,
+        )
         planner = Planner()
         agent = Agent(
             run_id=run_id,
@@ -796,7 +807,10 @@ def main() -> None:
             print(f"Run {run_id} completed {config.get('steps', 200)} steps with {len(agents)} agents.")
 
     except Exception:
-        # Ensure TUI is stopped before printing traceback so it's visible
+        traceback.print_exc()
+        sys.exit(1)
+    finally:
+        # Double check cleanup
         if event_bridge and hasattr(event_bridge, "stop"):
             try:
                 event_bridge.stop()
@@ -805,15 +819,6 @@ def main() -> None:
         if hasattr(log_sink, "close"):
             try:
                 log_sink.close()
-            except Exception:
-                pass
-        traceback.print_exc()
-        sys.exit(1)
-    finally:
-        # Double check cleanup
-        if event_bridge and hasattr(event_bridge, "stop"):
-            try:
-                event_bridge.stop()
             except Exception:
                 pass
 

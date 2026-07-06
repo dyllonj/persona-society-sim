@@ -28,6 +28,8 @@ def test_probe_manager_scores_behavior_keywords():
         instructions="Reply SHARE or REFUSE",
         outcomes={"share": ["share", "give"], "refuse": ["refuse"]},
         cadence=1,
+        trait="A",
+        affordance="supply_sharing",
     )
     manager = ProbeManager([], [definition], likert_interval=1, behavior_interval=1, seed=0)
     assignment = manager.assign_probe("agent-002", tick=0)

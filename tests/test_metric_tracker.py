@@ -2,7 +2,6 @@ import json
 from pathlib import Path
 
 from metrics.tracker import MetricTracker
-from schemas.agent import PersonaCoeffs
 from schemas.logs import (
     ActionLog,
     CitationLog,
@@ -46,7 +45,7 @@ def _message(agent_id: str, tick: int, snapshot: dict[str, float]) -> MsgLog:
 
 def test_metric_tracker_handles_personas_and_messages(tmp_path: Path) -> None:
     personas = {
-        "agent-1": PersonaCoeffs(E=0.2, A=-2.0, C=1.6, O=0.0, N=0.1),
+        "agent-1": {"E": 0.2, "A": -2.0, "C": 1.6, "O": 0.0, "N": 0.1},
     }
     tracker = MetricTracker("unit", agent_personas=personas, out_dir=tmp_path)
     tracker.on_action(_action("agent-1", 1, "research"), occupants=2)

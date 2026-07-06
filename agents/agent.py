@@ -75,6 +75,7 @@ class Agent:
         self._suppress_alphas = suppress_alphas
         self._last_plan_suggestion: Optional[PlanSuggestion] = None
         self._last_reflection: Optional[Tuple[str, List[str]]] = None
+        self._last_recalled_dialogue_lines: List[str] = []
         self._last_plan_location: Optional[str] = None
         self._last_plan_tick: Optional[int] = None
         self._last_observation: Optional[str] = None
@@ -107,9 +108,9 @@ class Agent:
 
     # ---- cognitive loop ----
 
-    def perceive(self, observation: str, tick: int) -> None:
+    def perceive(self, observation: str, tick: int, *, speaker: Optional[str] = None, self_authored: Optional[bool] = None) -> None:
         importance = min(1.0, 0.3 + 0.05 * len(observation.split()))
-        self.memory.add_event(self.state.agent_id, "observation", tick, observation, importance)
+        self.memory.add_event(self.state.agent_id, "observation", tick, observation, importance, speaker=speaker, self_authored=self_authored)
 
     def reflect_and_plan(
         self,
@@ -141,6 +142,7 @@ class Agent:
             focus_terms=[current_location] if current_location else None,
             agent_persona=self.persona_alphas(),
         )
+        summary, self._last_recalled_dialogue_lines = self._safe_memory_context(summary, events)
         reflection_text = f"Focus: {', '.join(self.state.goals) or 'open exploration'}"
         implications = [f"Reference memory {ev.memory_id}" for ev in events]
         self.memory.add_reflection(self.state.agent_id, tick, reflection_text, implications=implications)
@@ -198,6 +200,26 @@ class Agent:
             if len(keywords) >= limit:
                 break
         return keywords
+
+    def _safe_memory_context(
+        self,
+        fallback_summary: str,
+        events: Sequence[object],
+    ) -> Tuple[str, List[str]]:
+        reproject = getattr(self.retriever, "reproject_for_agent", None)
+        if not callable(reproject):
+            return fallback_summary, []
+
+        event_list = list(events)
+        safe_lines = reproject(self.state.agent_id, event_list)
+        safe_summary = "; ".join(safe_lines) if safe_lines else fallback_summary
+        dialogue_events = [
+            event
+            for event in event_list
+            if getattr(event, "speaker", None) or getattr(event, "self_authored", False)
+        ]
+        dialogue_lines = reproject(self.state.agent_id, dialogue_events) if dialogue_events else []
+        return safe_summary, dialogue_lines
 
     def _extract_observation_highlights(
         self,
@@ -339,6 +361,12 @@ class Agent:
                 for entry in recent_dialogue
             )
             dialogue_section = f"Recent dialogue:\n{formatted_dialogue}\n"
+        recalled_dialogue_section = ""
+        if self._last_recalled_dialogue_lines:
+            formatted_memories = "\n".join(
+                f"- {line}" for line in self._last_recalled_dialogue_lines
+            )
+            recalled_dialogue_section = f"Recalled dialogue memories:\n{formatted_memories}\n"
         highlights = self._extract_observation_highlights(observation, recent_dialogue)
         highlight_section = ""
         if highlights:
@@ -407,6 +435,7 @@ class Agent:
             f"Current goals: {goals_text}\n"
             f"Observation: {observation}\n"
             f"{dialogue_section}"
+            f"{recalled_dialogue_section}"
             f"{agent_name}'s response:"
         )
 
@@ -425,6 +454,15 @@ class Agent:
         alignment_context: Optional["AlignmentContext"] = None,
     ) -> ActionDecision:
         self.perceive(observation, tick)
+        # Ingest recent dialogue with speaker tags for ECP perspective-safe recall
+        if recent_dialogue:
+            for entry in recent_dialogue:
+                self.perceive(
+                    entry.content,
+                    entry.tick,
+                    speaker=entry.speaker,
+                    self_authored=(entry.speaker == self.state.agent_id),
+                )
         suggestion = self.reflect_and_plan(
             tick,
             current_location=current_location,

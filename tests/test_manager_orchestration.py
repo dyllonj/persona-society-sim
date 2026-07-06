@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import MagicMock
-from orchestrator.meta_manager import MetaOrchestrator, AlignmentContext
-from agents.planner import Planner, PlanSuggestion
+from orchestrator.meta_manager import MetaOrchestrator
+from agents.planner import Planner
 
 class TestManagerOrchestration(unittest.TestCase):
     def test_meta_orchestrator_silence_detection(self):

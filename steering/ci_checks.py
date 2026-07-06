@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Iterable, List, Mapping, Sequence, Tuple
@@ -91,6 +90,67 @@ def validate_directionality(
                     f"{directional_threshold:.3f}"
                 )
             )
+    return failures
+
+
+def validate_anti_steerable_fraction(
+    trait_rows: Iterable[Mapping[str, object]],
+    *,
+    threshold: float = 0.5,
+) -> List[str]:
+    """Fail traits whose anti-steerable fraction is too high."""
+
+    failures: List[str] = []
+    for row in trait_rows:
+        value = float(row.get("anti_steerable_fraction", 0.0) or 0.0)
+        if value > threshold:
+            trait = row.get("trait_name") or row.get("trait") or "unknown"
+            failures.append(
+                f"{trait} anti_steerable_fraction={value:.3f} > {threshold:.3f}"
+            )
+    return failures
+
+
+def validate_directional_agreement_metadata(
+    metadata: Mapping[str, object],
+    *,
+    threshold: float = 0.3,
+) -> List[str]:
+    """Fail vector metadata whose per-layer directional agreement is weak."""
+
+    failures: List[str] = []
+    trait = metadata.get("trait") or metadata.get("vector_store_id") or "unknown"
+    for layer in metadata.get("layers", []) or []:
+        if not isinstance(layer, Mapping):
+            continue
+        if "directional_agreement" not in layer:
+            continue
+        value = float(layer.get("directional_agreement") or 0.0)
+        if value < threshold:
+            failures.append(
+                f"{trait} layer={layer.get('layer_id')} directional_agreement="
+                f"{value:.3f} < {threshold:.3f}"
+            )
+    return failures
+
+
+def validate_bleed_matrix(
+    bleed_matrix: Mapping[str, Mapping[str, float]],
+    *,
+    threshold: float = 2.0,
+) -> List[str]:
+    """Flag excessive off-diagonal cross-trait bleed."""
+
+    failures: List[str] = []
+    for source, row in bleed_matrix.items():
+        for target, value in row.items():
+            if source == target:
+                continue
+            numeric = abs(float(value))
+            if numeric > threshold:
+                failures.append(
+                    f"bleed {source}->{target}={numeric:.3f} > {threshold:.3f}"
+                )
     return failures
 
 

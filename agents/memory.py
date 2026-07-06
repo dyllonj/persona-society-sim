@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 from datetime import datetime
-from typing import Dict, Iterable, List, Optional, Sequence
+from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 from uuid import uuid4
 
 from schemas.memory import MemoryEvent, Plan, Reflection
@@ -16,7 +16,17 @@ class MemoryStore:
         self.reflections: List[Reflection] = []
         self.plans: List[Plan] = []
 
-    def add_event(self, agent_id: str, kind: str, tick: int, text: str, importance: float) -> MemoryEvent:
+    def add_event(
+        self,
+        agent_id: str,
+        kind: str,
+        tick: int,
+        text: str,
+        importance: float,
+        speaker: Optional[str] = None,
+        self_authored: Optional[bool] = None,
+    ) -> MemoryEvent:
+        authored_by_agent = (speaker == agent_id) if self_authored is None else self_authored
         event = MemoryEvent(
             memory_id=str(uuid4()),
             agent_id=agent_id,
@@ -25,6 +35,8 @@ class MemoryStore:
             timestamp=datetime.utcnow(),
             text=text,
             importance=importance,
+            speaker=speaker,
+            self_authored=authored_by_agent,
             traits=self._tag_traits(text),
         )
         self.events.append(event)
@@ -88,7 +100,9 @@ class MemoryStore:
         return plan
 
     def recent_events(self, limit: int = 30) -> List[MemoryEvent]:
-        return sorted(self.events, key=lambda ev: (ev.tick, ev.timestamp), reverse=True)[:limit]
+        indexed_events = list(enumerate(self.events))
+        indexed_events.sort(key=lambda pair: (-pair[1].tick, pair[0]))
+        return [event for _, event in indexed_events[:limit]]
 
     def relevant_events(
         self,
@@ -98,6 +112,25 @@ class MemoryStore:
         focus_terms: Optional[Sequence[str]] = None,
         agent_persona: Optional[Dict[str, float]] = None,
     ) -> List[MemoryEvent]:
+        """Return the highest-scoring events for a retrieval query."""
+
+        return [
+            event
+            for _, event in self.ranked_relevant_events(
+                query=query,
+                current_tick=current_tick,
+                focus_terms=focus_terms,
+                agent_persona=agent_persona,
+            )[:limit]
+        ]
+
+    def ranked_relevant_events(
+        self,
+        query: str,
+        current_tick: int | None = None,
+        focus_terms: Optional[Sequence[str]] = None,
+        agent_persona: Optional[Dict[str, float]] = None,
+    ) -> List[Tuple[float, MemoryEvent]]:
         """Score events by keyword overlap × recency × importance × trait resonance."""
 
         keywords = set(query.lower().split())
@@ -144,4 +177,4 @@ class MemoryStore:
             score += jitter * 0.05
             scored.append((score, event))
         scored.sort(key=lambda pair: pair[0], reverse=True)
-        return [ev for _, ev in scored[:limit]]
+        return scored
