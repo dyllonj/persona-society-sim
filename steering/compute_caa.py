@@ -426,14 +426,14 @@ def compute_trait_vectors(
         mean_diff = stacked.mean(dim=0)
         norm = float(torch.linalg.norm(mean_diff).item())
         norms[layer] = norm
-        diff_array = stacked.detach().cpu().numpy()
+        diff_array = stacked.float().detach().cpu().numpy()
         diagnostics[layer] = {
             "directional_agreement": directional_agreement(diff_array),
             "separability_d_prime": separability_d_prime(diff_array),
         }
         if norm > 0:
             mean_diff = mean_diff / norm
-        vectors[layer] = mean_diff.cpu().numpy().astype(np.float32)
+        vectors[layer] = mean_diff.float().cpu().numpy().astype(np.float32)
     return vectors, norms, diagnostics
 
 
