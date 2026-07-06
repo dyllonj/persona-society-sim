@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import copy
+import gc
 import json
 import random
 import sys
@@ -207,6 +208,14 @@ def _release_runner_resources(runner: SimulationRunner, sink: CollectingLogSink)
                 controller.remove()
             except Exception:
                 pass
+            try:
+                controller.model = None
+            except Exception:
+                pass
+            try:
+                backend.controller = None
+            except Exception:
+                pass
         if hasattr(backend, "model"):
             try:
                 delattr(backend, "model")
@@ -219,8 +228,10 @@ def _release_runner_resources(runner: SimulationRunner, sink: CollectingLogSink)
             engine.dispose()
         except Exception:
             pass
+    gc.collect()
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
+        torch.cuda.ipc_collect()
 
 
 def _aggregate_macro_metrics(metrics: Iterable[MetricsSnapshot]) -> Dict[str, Dict[str, float]]:
