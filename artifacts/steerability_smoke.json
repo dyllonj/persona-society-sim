@@ -12,9 +12,9 @@
   "scores": [
     {
       "trait": "E",
-      "layer": 60,
+      "layer": 36,
       "count": 8,
-      "preliminary_steerability": 0.9170423779477961,
+      "preliminary_steerability": 0.9632467690621414,
       "status": "PASS",
       "reasons": []
     },
@@ -31,14 +31,6 @@
       "layer": 20,
       "count": 8,
       "preliminary_steerability": 0.98024893597467,
-      "status": "PASS",
-      "reasons": []
-    },
-    {
-      "trait": "C",
-      "layer": 60,
-      "count": 8,
-      "preliminary_steerability": 0.9258459745677619,
       "status": "PASS",
       "reasons": []
     }
