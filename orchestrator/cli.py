@@ -583,6 +583,8 @@ def main() -> None:
     parser.add_argument("--mock-model", action="store_true", help="Use mock backend instead of HF model")
     parser.add_argument("--gemini", action="store_true", help="Use Gemini backend")
     parser.add_argument("--max-events", type=int, help="Max encounters per tick (overrides config)")
+    parser.add_argument("--steps", type=int, help="Simulation steps to run (overrides config)")
+    parser.add_argument("--run-id", help="Run id override for logs and dumps")
     parser.add_argument("--vector-dir", type=Path, default=Path("data/vectors"), help="Directory with steering vectors")
     parser.add_argument("--env", choices=["research", "policy", "nav"], default="research", help="Select experiment environment (research, policy, nav)")
     parser.add_argument("--difficulty", type=int, default=3, help="Difficulty parameter (facts, checklist fields, or tokens)")
@@ -654,6 +656,13 @@ def main() -> None:
     args = parser.parse_args()
 
     config = load_config(args.config)
+    if args.run_id:
+        config["run_id"] = args.run_id
+        logging_cfg = config.setdefault("logging", {})
+        logging_cfg["db_url"] = f"sqlite:///./storage/sim_{args.run_id}.db"
+        logging_cfg["parquet_dir"] = f"./storage/dumps/{args.run_id}"
+    if args.steps is not None:
+        config["steps"] = int(args.steps)
     run_id = config.get("run_id") or f"run-{uuid4().hex[:6]}"
     max_events = config.get("max_events_per_tick")
     if args.max_events is not None:
