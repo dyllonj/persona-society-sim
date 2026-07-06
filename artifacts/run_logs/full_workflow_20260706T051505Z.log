@@ -1,0 +1,169 @@
+Traceback (most recent call last):
+  File "/workspace/persona-society-sim/scripts/split_eval_prompts.py", line 283, in <module>
+    raise SystemExit(_cli())
+                     ^^^^^^
+  File "/workspace/persona-society-sim/scripts/split_eval_prompts.py", line 269, in _cli
+    result = split_prompt_file(
+             ^^^^^^^^^^^^^^^^^^
+  File "/workspace/persona-society-sim/scripts/split_eval_prompts.py", line 189, in split_prompt_file
+    raise FileExistsError(f"Refusing to overwrite existing split file(s): {names}")
+FileExistsError: Refusing to overwrite existing split file(s): data/prompts/agreeableness_train.jsonl, data/prompts/agreeableness_eval.jsonl
+agreeableness: train=8 -> data/prompts/agreeableness_train.jsonl; eval=2 -> data/prompts/agreeableness_eval.jsonl
+conscientiousness: train=8 -> data/prompts/conscientiousness_train.jsonl; eval=2 -> data/prompts/conscientiousness_eval.jsonl
+extraversion: train=8 -> data/prompts/extraversion_train.jsonl; eval=2 -> data/prompts/extraversion_eval.jsonl
+usage: steerability_smoke_test.py [-h] [--diffs DIFFS] [--config CONFIG]
+                                  [--traits TRAITS] [--model MODEL]
+                                  [--sample-pairs SAMPLE_PAIRS]
+                                  [--layer-step LAYER_STEP]
+                                  [--reference-vector REFERENCE_VECTOR]
+                                  [--reference-vector-file REFERENCE_VECTOR_FILE]
+                                  [--deadband DEADBAND]
+                                  [--pass-threshold PASS_THRESHOLD]
+                                  [--warn-threshold WARN_THRESHOLD]
+                                  [--min-count MIN_COUNT]
+                                  [--min-mean-projection MIN_MEAN_PROJECTION]
+                                  [--json-output JSON_OUTPUT]
+steerability_smoke_test.py: error: unrecognized arguments: --output artifacts/steerability_smoke.json
+/workspace/persona-society-sim/.venv/lib/python3.11/site-packages/pydantic/_internal/_fields.py:160: UserWarning: Field "model_name" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+Loading checkpoint shards:   0%|          | 0/17 [00:00<?, ?it/s]Loading checkpoint shards:   6%|▌         | 1/17 [00:01<00:18,  1.13s/it]Loading checkpoint shards:  12%|█▏        | 2/17 [00:02<00:14,  1.01it/s]Loading checkpoint shards:  18%|█▊        | 3/17 [00:02<00:12,  1.11it/s]Loading checkpoint shards:  24%|██▎       | 4/17 [00:04<00:13,  1.01s/it]Loading checkpoint shards:  29%|██▉       | 5/17 [00:04<00:11,  1.02it/s]Loading checkpoint shards:  35%|███▌      | 6/17 [00:05<00:10,  1.05it/s]Loading checkpoint shards:  41%|████      | 7/17 [00:06<00:09,  1.05it/s]Loading checkpoint shards:  47%|████▋     | 8/17 [00:07<00:08,  1.04it/s]Loading checkpoint shards:  53%|█████▎    | 9/17 [00:08<00:08,  1.05s/it]Loading checkpoint shards:  59%|█████▉    | 10/17 [00:09<00:07,  1.01s/it]Loading checkpoint shards:  65%|██████▍   | 11/17 [00:11<00:07,  1.27s/it]Loading checkpoint shards:  71%|███████   | 12/17 [00:13<00:06,  1.35s/it]Loading checkpoint shards:  76%|███████▋  | 13/17 [00:14<00:05,  1.44s/it]Loading checkpoint shards:  82%|████████▏ | 14/17 [00:16<00:04,  1.35s/it]Loading checkpoint shards:  88%|████████▊ | 15/17 [00:17<00:02,  1.26s/it]Loading checkpoint shards:  94%|█████████▍| 16/17 [00:18<00:01,  1.17s/it]Loading checkpoint shards: 100%|██████████| 17/17 [00:18<00:00,  1.01s/it]Loading checkpoint shards: 100%|██████████| 17/17 [00:18<00:00,  1.10s/it]
+Starting from v4.46, the `logits` model output will have the same type as the model (except at train time, where it will always be FP32)
+{
+  "model": "Qwen/Qwen2.5-32B-Instruct",
+  "config": "configs/steering.layers.yaml",
+  "sample_pairs": 10,
+  "pass_threshold": 0.3,
+  "warn_threshold": 0.2,
+  "trait_status": {
+    "E": "PASS",
+    "A": "PASS",
+    "C": "PASS"
+  },
+  "scores": [
+    {
+      "trait": "E",
+      "layer": 36,
+      "count": 8,
+      "preliminary_steerability": 0.9632467690621414,
+      "status": "PASS",
+      "reasons": []
+    },
+    {
+      "trait": "A",
+      "layer": 40,
+      "count": 8,
+      "preliminary_steerability": 0.9388721805455249,
+      "status": "PASS",
+      "reasons": []
+    },
+    {
+      "trait": "C",
+      "layer": 20,
+      "count": 8,
+      "preliminary_steerability": 0.98024893597467,
+      "status": "PASS",
+      "reasons": []
+    }
+  ]
+}
+[vector-eval] Regenerating steering vectors using configs/steering.layers.yaml...
+/workspace/persona-society-sim/.venv/lib/python3.11/site-packages/pydantic/_internal/_fields.py:160: UserWarning: Field "model_name" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+Loading checkpoint shards:   0%|          | 0/17 [00:00<?, ?it/s]Loading checkpoint shards:   6%|▌         | 1/17 [00:01<00:29,  1.85s/it]Loading checkpoint shards:  12%|█▏        | 2/17 [00:03<00:29,  1.96s/it]Loading checkpoint shards:  18%|█▊        | 3/17 [00:06<00:28,  2.07s/it]Loading checkpoint shards:  24%|██▎       | 4/17 [00:08<00:28,  2.23s/it]Loading checkpoint shards:  29%|██▉       | 5/17 [00:10<00:25,  2.15s/it]Loading checkpoint shards:  35%|███▌      | 6/17 [00:12<00:24,  2.18s/it]Loading checkpoint shards:  41%|████      | 7/17 [00:15<00:21,  2.19s/it]Loading checkpoint shards:  47%|████▋     | 8/17 [00:17<00:20,  2.31s/it]Loading checkpoint shards:  53%|█████▎    | 9/17 [00:19<00:18,  2.29s/it]Loading checkpoint shards:  59%|█████▉    | 10/17 [00:21<00:15,  2.21s/it]Loading checkpoint shards:  65%|██████▍   | 11/17 [00:24<00:13,  2.23s/it]Loading checkpoint shards:  71%|███████   | 12/17 [00:26<00:10,  2.19s/it]Loading checkpoint shards:  76%|███████▋  | 13/17 [00:28<00:08,  2.09s/it]Loading checkpoint shards:  82%|████████▏ | 14/17 [00:30<00:06,  2.08s/it]Loading checkpoint shards:  88%|████████▊ | 15/17 [00:32<00:04,  2.12s/it]Loading checkpoint shards:  94%|█████████▍| 16/17 [00:34<00:02,  2.05s/it]Loading checkpoint shards: 100%|██████████| 17/17 [00:35<00:00,  1.87s/it]Loading checkpoint shards: 100%|██████████| 17/17 [00:35<00:00,  2.10s/it]
+Starting from v4.46, the `logits` model output will have the same type as the model (except at train time, where it will always be FP32)
+Saved steering vectors for trait E with vector_store_id=E_caa_qwen32b_v1
+/workspace/persona-society-sim/.venv/lib/python3.11/site-packages/pydantic/_internal/_fields.py:160: UserWarning: Field "model_name" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+Loading checkpoint shards:   0%|          | 0/17 [00:00<?, ?it/s]Loading checkpoint shards:   6%|▌         | 1/17 [00:01<00:30,  1.91s/it]Loading checkpoint shards:  12%|█▏        | 2/17 [00:03<00:28,  1.93s/it]Loading checkpoint shards:  18%|█▊        | 3/17 [00:05<00:26,  1.92s/it]Loading checkpoint shards:  24%|██▎       | 4/17 [00:07<00:24,  1.91s/it]Loading checkpoint shards:  29%|██▉       | 5/17 [00:09<00:22,  1.92s/it]Loading checkpoint shards:  35%|███▌      | 6/17 [00:11<00:20,  1.91s/it]Loading checkpoint shards:  41%|████      | 7/17 [00:13<00:19,  1.90s/it]Loading checkpoint shards:  47%|████▋     | 8/17 [00:15<00:17,  1.91s/it]Loading checkpoint shards:  53%|█████▎    | 9/17 [00:17<00:16,  2.03s/it]Loading checkpoint shards:  59%|█████▉    | 10/17 [00:19<00:14,  2.02s/it]Loading checkpoint shards:  65%|██████▍   | 11/17 [00:21<00:12,  2.03s/it]Loading checkpoint shards:  71%|███████   | 12/17 [00:23<00:10,  2.09s/it]Loading checkpoint shards:  76%|███████▋  | 13/17 [00:25<00:08,  2.10s/it]Loading checkpoint shards:  82%|████████▏ | 14/17 [00:28<00:06,  2.23s/it]Loading checkpoint shards:  88%|████████▊ | 15/17 [00:30<00:04,  2.24s/it]Loading checkpoint shards:  94%|█████████▍| 16/17 [00:33<00:02,  2.38s/it]Loading checkpoint shards: 100%|██████████| 17/17 [00:34<00:00,  2.07s/it]Loading checkpoint shards: 100%|██████████| 17/17 [00:34<00:00,  2.05s/it]
+Starting from v4.46, the `logits` model output will have the same type as the model (except at train time, where it will always be FP32)
+Saved steering vectors for trait A with vector_store_id=A_caa_qwen32b_v1
+/workspace/persona-society-sim/.venv/lib/python3.11/site-packages/pydantic/_internal/_fields.py:160: UserWarning: Field "model_name" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+Loading checkpoint shards:   0%|          | 0/17 [00:00<?, ?it/s]Loading checkpoint shards:   6%|▌         | 1/17 [00:01<00:27,  1.75s/it]Loading checkpoint shards:  12%|█▏        | 2/17 [00:03<00:26,  1.76s/it]Loading checkpoint shards:  18%|█▊        | 3/17 [00:05<00:24,  1.74s/it]Loading checkpoint shards:  24%|██▎       | 4/17 [00:07<00:22,  1.76s/it]Loading checkpoint shards:  29%|██▉       | 5/17 [00:08<00:21,  1.76s/it]Loading checkpoint shards:  35%|███▌      | 6/17 [00:10<00:19,  1.81s/it]Loading checkpoint shards:  41%|████      | 7/17 [00:12<00:18,  1.83s/it]Loading checkpoint shards:  47%|████▋     | 8/17 [00:14<00:16,  1.82s/it]Loading checkpoint shards:  53%|█████▎    | 9/17 [00:16<00:14,  1.80s/it]Loading checkpoint shards:  59%|█████▉    | 10/17 [00:17<00:12,  1.81s/it]Loading checkpoint shards:  65%|██████▍   | 11/17 [00:19<00:10,  1.80s/it]Loading checkpoint shards:  71%|███████   | 12/17 [00:21<00:08,  1.79s/it]Loading checkpoint shards:  76%|███████▋  | 13/17 [00:23<00:07,  1.77s/it]Loading checkpoint shards:  82%|████████▏ | 14/17 [00:25<00:05,  1.77s/it]Loading checkpoint shards:  88%|████████▊ | 15/17 [00:26<00:03,  1.80s/it]Loading checkpoint shards:  94%|█████████▍| 16/17 [00:28<00:01,  1.84s/it]Loading checkpoint shards: 100%|██████████| 17/17 [00:30<00:00,  1.71s/it]Loading checkpoint shards: 100%|██████████| 17/17 [00:30<00:00,  1.78s/it]
+Starting from v4.46, the `logits` model output will have the same type as the model (except at train time, where it will always be FP32)
+Saved steering vectors for trait C with vector_store_id=C_caa_qwen32b_v1
+[compute-vectors] trait=E config=configs/steering.layers.yaml
+[compute-vectors] trait=A config=configs/steering.layers.yaml
+[compute-vectors] trait=C config=configs/steering.layers.yaml
+[vector-eval] Writing baseline BFI prompt skeleton to artifacts/steering_eval/baseline_bfi_prompt.txt
+[vector-eval] Evaluating traits extraversion agreeableness conscientiousness with model Qwen/Qwen2.5-32B-Instruct
+/workspace/persona-society-sim/.venv/lib/python3.11/site-packages/pydantic/_internal/_fields.py:160: UserWarning: Field "model_name" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+INFO:accelerate.utils.modeling:We will use 90% of the memory on device 0 for storing the model, and 10% for the buffer to avoid OOM. You can set `max_memory` in to a higher value to use more memory (at your own risk).
+Loading checkpoint shards:   0%|          | 0/17 [00:00<?, ?it/s]Loading checkpoint shards:   6%|▌         | 1/17 [00:01<00:28,  1.81s/it]Loading checkpoint shards:  12%|█▏        | 2/17 [00:03<00:27,  1.81s/it]Loading checkpoint shards:  18%|█▊        | 3/17 [00:05<00:25,  1.84s/it]Loading checkpoint shards:  24%|██▎       | 4/17 [00:07<00:24,  1.91s/it]Loading checkpoint shards:  29%|██▉       | 5/17 [00:09<00:22,  1.86s/it]Loading checkpoint shards:  35%|███▌      | 6/17 [00:11<00:20,  1.88s/it]Loading checkpoint shards:  41%|████      | 7/17 [00:13<00:19,  1.92s/it]Loading checkpoint shards:  47%|████▋     | 8/17 [00:15<00:18,  2.01s/it]Loading checkpoint shards:  53%|█████▎    | 9/17 [00:17<00:15,  2.00s/it]Loading checkpoint shards:  59%|█████▉    | 10/17 [00:19<00:13,  1.97s/it]Loading checkpoint shards:  65%|██████▍   | 11/17 [00:21<00:12,  2.00s/it]Loading checkpoint shards:  71%|███████   | 12/17 [00:23<00:10,  2.01s/it]Loading checkpoint shards:  76%|███████▋  | 13/17 [00:25<00:08,  2.03s/it]Loading checkpoint shards:  82%|████████▏ | 14/17 [00:27<00:05,  2.00s/it]Loading checkpoint shards:  88%|████████▊ | 15/17 [00:29<00:03,  1.96s/it]Loading checkpoint shards:  94%|█████████▍| 16/17 [00:31<00:02,  2.04s/it]Loading checkpoint shards: 100%|██████████| 17/17 [00:32<00:00,  1.85s/it]Loading checkpoint shards: 100%|██████████| 17/17 [00:32<00:00,  1.94s/it]
+Starting from v4.46, the `logits` model output will have the same type as the model (except at train time, where it will always be FP32)
+/workspace/persona-society-sim/.venv/lib/python3.11/site-packages/pydantic/_internal/_fields.py:160: UserWarning: Field "model_name" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+Loading checkpoint shards:   0%|          | 0/17 [00:00<?, ?it/s]Loading checkpoint shards:   6%|▌         | 1/17 [00:01<00:28,  1.79s/it]Loading checkpoint shards:  12%|█▏        | 2/17 [00:03<00:27,  1.81s/it]Loading checkpoint shards:  18%|█▊        | 3/17 [00:05<00:25,  1.79s/it]Loading checkpoint shards:  24%|██▎       | 4/17 [00:07<00:24,  1.87s/it]Loading checkpoint shards:  29%|██▉       | 5/17 [00:09<00:22,  1.86s/it]Loading checkpoint shards:  35%|███▌      | 6/17 [00:11<00:20,  1.87s/it]Loading checkpoint shards:  41%|████      | 7/17 [00:12<00:18,  1.85s/it]Loading checkpoint shards:  47%|████▋     | 8/17 [00:14<00:16,  1.83s/it]Loading checkpoint shards:  53%|█████▎    | 9/17 [00:16<00:14,  1.84s/it]Loading checkpoint shards:  59%|█████▉    | 10/17 [00:18<00:13,  1.86s/it]Loading checkpoint shards:  65%|██████▍   | 11/17 [00:20<00:11,  1.88s/it]Loading checkpoint shards:  71%|███████   | 12/17 [00:22<00:09,  1.91s/it]Loading checkpoint shards:  76%|███████▋  | 13/17 [00:24<00:07,  1.91s/it]Loading checkpoint shards:  82%|████████▏ | 14/17 [00:26<00:05,  1.92s/it]Loading checkpoint shards:  88%|████████▊ | 15/17 [00:28<00:03,  2.00s/it]Loading checkpoint shards:  94%|█████████▍| 16/17 [00:30<00:01,  1.94s/it]Loading checkpoint shards: 100%|██████████| 17/17 [00:31<00:00,  1.77s/it]Loading checkpoint shards: 100%|██████████| 17/17 [00:31<00:00,  1.86s/it]
+Starting from v4.46, the `logits` model output will have the same type as the model (except at train time, where it will always be FP32)
+Saved steering vectors for trait E with vector_store_id=E_caa_qwen32b_v1
+/workspace/persona-society-sim/.venv/lib/python3.11/site-packages/pydantic/_internal/_fields.py:160: UserWarning: Field "model_name" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+Loading checkpoint shards:   0%|          | 0/17 [00:00<?, ?it/s]Loading checkpoint shards:   6%|▌         | 1/17 [00:01<00:29,  1.85s/it]Loading checkpoint shards:  12%|█▏        | 2/17 [00:03<00:27,  1.80s/it]Loading checkpoint shards:  18%|█▊        | 3/17 [00:05<00:25,  1.84s/it]Loading checkpoint shards:  24%|██▎       | 4/17 [00:07<00:24,  1.92s/it]Loading checkpoint shards:  29%|██▉       | 5/17 [00:09<00:22,  1.88s/it]Loading checkpoint shards:  35%|███▌      | 6/17 [00:11<00:20,  1.84s/it]Loading checkpoint shards:  41%|████      | 7/17 [00:12<00:18,  1.84s/it]Loading checkpoint shards:  47%|████▋     | 8/17 [00:14<00:16,  1.83s/it]Loading checkpoint shards:  53%|█████▎    | 9/17 [00:16<00:14,  1.81s/it]Loading checkpoint shards:  59%|█████▉    | 10/17 [00:18<00:13,  1.92s/it]Loading checkpoint shards:  65%|██████▍   | 11/17 [00:20<00:11,  1.96s/it]Loading checkpoint shards:  71%|███████   | 12/17 [00:22<00:09,  1.93s/it]Loading checkpoint shards:  76%|███████▋  | 13/17 [00:24<00:08,  2.05s/it]Loading checkpoint shards:  82%|████████▏ | 14/17 [00:26<00:05,  1.99s/it]Loading checkpoint shards:  88%|████████▊ | 15/17 [00:28<00:04,  2.05s/it]Loading checkpoint shards:  94%|█████████▍| 16/17 [00:31<00:02,  2.07s/it]Loading checkpoint shards: 100%|██████████| 17/17 [00:32<00:00,  1.88s/it]Loading checkpoint shards: 100%|██████████| 17/17 [00:32<00:00,  1.91s/it]
+Starting from v4.46, the `logits` model output will have the same type as the model (except at train time, where it will always be FP32)
+Saved steering vectors for trait A with vector_store_id=A_caa_qwen32b_v1
+/workspace/persona-society-sim/.venv/lib/python3.11/site-packages/pydantic/_internal/_fields.py:160: UserWarning: Field "model_name" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+Loading checkpoint shards:   0%|          | 0/17 [00:00<?, ?it/s]Loading checkpoint shards:   6%|▌         | 1/17 [00:01<00:30,  1.89s/it]Loading checkpoint shards:  12%|█▏        | 2/17 [00:03<00:27,  1.85s/it]Loading checkpoint shards:  18%|█▊        | 3/17 [00:05<00:26,  1.86s/it]Loading checkpoint shards:  24%|██▎       | 4/17 [00:07<00:24,  1.88s/it]Loading checkpoint shards:  29%|██▉       | 5/17 [00:09<00:22,  1.86s/it]Loading checkpoint shards:  35%|███▌      | 6/17 [00:11<00:19,  1.81s/it]Loading checkpoint shards:  41%|████      | 7/17 [00:13<00:19,  1.90s/it]Loading checkpoint shards:  47%|████▋     | 8/17 [00:14<00:16,  1.86s/it]Loading checkpoint shards:  53%|█████▎    | 9/17 [00:17<00:15,  1.97s/it]Loading checkpoint shards:  59%|█████▉    | 10/17 [00:18<00:13,  1.90s/it]Loading checkpoint shards:  65%|██████▍   | 11/17 [00:20<00:11,  1.92s/it]Loading checkpoint shards:  71%|███████   | 12/17 [00:22<00:09,  1.95s/it]Loading checkpoint shards:  76%|███████▋  | 13/17 [00:24<00:07,  1.98s/it]Loading checkpoint shards:  82%|████████▏ | 14/17 [00:26<00:05,  1.99s/it]Loading checkpoint shards:  88%|████████▊ | 15/17 [00:28<00:03,  1.97s/it]Loading checkpoint shards:  94%|█████████▍| 16/17 [00:30<00:02,  2.03s/it]Loading checkpoint shards: 100%|██████████| 17/17 [00:32<00:00,  1.83s/it]Loading checkpoint shards: 100%|██████████| 17/17 [00:32<00:00,  1.90s/it]
+Starting from v4.46, the `logits` model output will have the same type as the model (except at train time, where it will always be FP32)
+Saved steering vectors for trait C with vector_store_id=C_caa_qwen32b_v1
+[compute-vectors] trait=E config=configs/steering.layers.yaml
+[compute-vectors] trait=A config=configs/steering.layers.yaml
+[compute-vectors] trait=C config=configs/steering.layers.yaml
+/workspace/persona-society-sim/.venv/lib/python3.11/site-packages/pydantic/_internal/_fields.py:160: UserWarning: Field "model_name" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+Loading checkpoint shards:   0%|          | 0/17 [00:00<?, ?it/s]Loading checkpoint shards:   6%|▌         | 1/17 [00:01<00:29,  1.82s/it]Loading checkpoint shards:  12%|█▏        | 2/17 [00:03<00:27,  1.82s/it]Loading checkpoint shards:  18%|█▊        | 3/17 [00:05<00:25,  1.80s/it]Loading checkpoint shards:  24%|██▎       | 4/17 [00:07<00:23,  1.84s/it]Loading checkpoint shards:  29%|██▉       | 5/17 [00:09<00:22,  1.84s/it]Loading checkpoint shards:  35%|███▌      | 6/17 [00:10<00:19,  1.82s/it]Loading checkpoint shards:  41%|████      | 7/17 [00:12<00:18,  1.84s/it]Loading checkpoint shards:  47%|████▋     | 8/17 [00:14<00:16,  1.83s/it]Loading checkpoint shards:  53%|█████▎    | 9/17 [00:16<00:14,  1.83s/it]Loading checkpoint shards:  59%|█████▉    | 10/17 [00:18<00:13,  1.88s/it]Loading checkpoint shards:  65%|██████▍   | 11/17 [00:20<00:11,  1.91s/it]Loading checkpoint shards:  71%|███████   | 12/17 [00:22<00:09,  1.93s/it]Loading checkpoint shards:  76%|███████▋  | 13/17 [00:24<00:07,  1.88s/it]Loading checkpoint shards:  82%|████████▏ | 14/17 [00:26<00:05,  1.89s/it]Loading checkpoint shards:  88%|████████▊ | 15/17 [00:28<00:03,  1.91s/it]Loading checkpoint shards:  94%|█████████▍| 16/17 [00:29<00:01,  1.90s/it]Loading checkpoint shards: 100%|██████████| 17/17 [00:31<00:00,  1.76s/it]Loading checkpoint shards: 100%|██████████| 17/17 [00:31<00:00,  1.85s/it]
+Starting from v4.46, the `logits` model output will have the same type as the model (except at train time, where it will always be FP32)
+Layer sweep complete for trait E. Best layers: [12, 36, 60]
+Metadata updated at data/vectors/E.meta.json
+[vector-eval] Regenerating steering vectors using configs/steering.layers.yaml...
+/workspace/persona-society-sim/.venv/lib/python3.11/site-packages/pydantic/_internal/_fields.py:160: UserWarning: Field "model_name" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+Loading checkpoint shards:   0%|          | 0/17 [00:00<?, ?it/s]Loading checkpoint shards:   6%|▌         | 1/17 [00:01<00:29,  1.82s/it]Loading checkpoint shards:  12%|█▏        | 2/17 [00:03<00:28,  1.88s/it]Loading checkpoint shards:  18%|█▊        | 3/17 [00:05<00:25,  1.85s/it]Loading checkpoint shards:  24%|██▎       | 4/17 [00:07<00:24,  1.90s/it]Loading checkpoint shards:  29%|██▉       | 5/17 [00:09<00:22,  1.88s/it]Loading checkpoint shards:  35%|███▌      | 6/17 [00:11<00:20,  1.85s/it]Loading checkpoint shards:  41%|████      | 7/17 [00:12<00:18,  1.84s/it]Loading checkpoint shards:  47%|████▋     | 8/17 [00:14<00:16,  1.85s/it]Loading checkpoint shards:  53%|█████▎    | 9/17 [00:16<00:15,  1.90s/it]Loading checkpoint shards:  59%|█████▉    | 10/17 [00:18<00:13,  1.91s/it]Loading checkpoint shards:  65%|██████▍   | 11/17 [00:20<00:11,  1.96s/it]Loading checkpoint shards:  71%|███████   | 12/17 [00:23<00:10,  2.06s/it]Loading checkpoint shards:  76%|███████▋  | 13/17 [00:25<00:07,  2.00s/it]Loading checkpoint shards:  82%|████████▏ | 14/17 [00:27<00:06,  2.05s/it]Loading checkpoint shards:  88%|████████▊ | 15/17 [00:29<00:03,  1.99s/it]Loading checkpoint shards:  94%|█████████▍| 16/17 [00:30<00:01,  1.97s/it]Loading checkpoint shards: 100%|██████████| 17/17 [00:32<00:00,  1.79s/it]Loading checkpoint shards: 100%|██████████| 17/17 [00:32<00:00,  1.90s/it]
+Starting from v4.46, the `logits` model output will have the same type as the model (except at train time, where it will always be FP32)
+Saved steering vectors for trait E with vector_store_id=E_caa_qwen32b_v1
+/workspace/persona-society-sim/.venv/lib/python3.11/site-packages/pydantic/_internal/_fields.py:160: UserWarning: Field "model_name" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+Loading checkpoint shards:   0%|          | 0/17 [00:00<?, ?it/s]Loading checkpoint shards:   6%|▌         | 1/17 [00:01<00:28,  1.77s/it]Loading checkpoint shards:  12%|█▏        | 2/17 [00:03<00:26,  1.79s/it]Loading checkpoint shards:  18%|█▊        | 3/17 [00:05<00:25,  1.83s/it]Loading checkpoint shards:  24%|██▎       | 4/17 [00:07<00:24,  1.87s/it]Loading checkpoint shards:  29%|██▉       | 5/17 [00:09<00:22,  1.85s/it]Loading checkpoint shards:  35%|███▌      | 6/17 [00:11<00:20,  1.83s/it]Loading checkpoint shards:  41%|████      | 7/17 [00:12<00:18,  1.85s/it]Loading checkpoint shards:  47%|████▋     | 8/17 [00:14<00:16,  1.84s/it]Loading checkpoint shards:  53%|█████▎    | 9/17 [00:16<00:14,  1.85s/it]Loading checkpoint shards:  59%|█████▉    | 10/17 [00:18<00:13,  1.89s/it]Loading checkpoint shards:  65%|██████▍   | 11/17 [00:20<00:11,  1.92s/it]Loading checkpoint shards:  71%|███████   | 12/17 [00:22<00:09,  1.95s/it]Loading checkpoint shards:  76%|███████▋  | 13/17 [00:24<00:07,  1.95s/it]Loading checkpoint shards:  82%|████████▏ | 14/17 [00:26<00:05,  1.94s/it]Loading checkpoint shards:  88%|████████▊ | 15/17 [00:28<00:03,  1.92s/it]Loading checkpoint shards:  94%|█████████▍| 16/17 [00:30<00:01,  1.92s/it]Loading checkpoint shards: 100%|██████████| 17/17 [00:31<00:00,  1.74s/it]Loading checkpoint shards: 100%|██████████| 17/17 [00:31<00:00,  1.85s/it]
+Starting from v4.46, the `logits` model output will have the same type as the model (except at train time, where it will always be FP32)
+Saved steering vectors for trait A with vector_store_id=A_caa_qwen32b_v1
+/workspace/persona-society-sim/.venv/lib/python3.11/site-packages/pydantic/_internal/_fields.py:160: UserWarning: Field "model_name" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+Loading checkpoint shards:   0%|          | 0/17 [00:00<?, ?it/s]Loading checkpoint shards:   6%|▌         | 1/17 [00:01<00:28,  1.79s/it]Loading checkpoint shards:  12%|█▏        | 2/17 [00:03<00:27,  1.81s/it]Loading checkpoint shards:  18%|█▊        | 3/17 [00:05<00:25,  1.83s/it]Loading checkpoint shards:  24%|██▎       | 4/17 [00:07<00:24,  1.91s/it]Loading checkpoint shards:  29%|██▉       | 5/17 [00:09<00:22,  1.91s/it]Loading checkpoint shards:  35%|███▌      | 6/17 [00:11<00:20,  1.87s/it]Loading checkpoint shards:  41%|████      | 7/17 [00:12<00:18,  1.84s/it]Loading checkpoint shards:  47%|████▋     | 8/17 [00:14<00:16,  1.84s/it]Loading checkpoint shards:  53%|█████▎    | 9/17 [00:16<00:14,  1.86s/it]Loading checkpoint shards:  59%|█████▉    | 10/17 [00:18<00:13,  1.96s/it]Loading checkpoint shards:  65%|██████▍   | 11/17 [00:20<00:11,  1.95s/it]Loading checkpoint shards:  71%|███████   | 12/17 [00:22<00:10,  2.01s/it]Loading checkpoint shards:  76%|███████▋  | 13/17 [00:24<00:07,  1.97s/it]Loading checkpoint shards:  82%|████████▏ | 14/17 [00:26<00:05,  1.97s/it]Loading checkpoint shards:  88%|████████▊ | 15/17 [00:28<00:03,  1.95s/it]Loading checkpoint shards:  94%|█████████▍| 16/17 [00:30<00:01,  1.92s/it]Loading checkpoint shards: 100%|██████████| 17/17 [00:32<00:00,  1.82s/it]Loading checkpoint shards: 100%|██████████| 17/17 [00:32<00:00,  1.89s/it]
+Starting from v4.46, the `logits` model output will have the same type as the model (except at train time, where it will always be FP32)
+Saved steering vectors for trait C with vector_store_id=C_caa_qwen32b_v1
+[compute-vectors] trait=E config=configs/steering.layers.yaml
+[compute-vectors] trait=A config=configs/steering.layers.yaml
+[compute-vectors] trait=C config=configs/steering.layers.yaml
+[vector-eval] Evaluating traits extraversion agreeableness conscientiousness with model Qwen/Qwen2.5-32B-Instruct
+/workspace/persona-society-sim/.venv/lib/python3.11/site-packages/pydantic/_internal/_fields.py:160: UserWarning: Field "model_name" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+INFO:accelerate.utils.modeling:We will use 90% of the memory on device 0 for storing the model, and 10% for the buffer to avoid OOM. You can set `max_memory` in to a higher value to use more memory (at your own risk).
+Loading checkpoint shards:   0%|          | 0/17 [00:00<?, ?it/s]Loading checkpoint shards:   6%|▌         | 1/17 [00:01<00:30,  1.89s/it]Loading checkpoint shards:  12%|█▏        | 2/17 [00:03<00:27,  1.86s/it]Loading checkpoint shards:  18%|█▊        | 3/17 [00:05<00:26,  1.87s/it]Loading checkpoint shards:  24%|██▎       | 4/17 [00:07<00:25,  1.94s/it]Loading checkpoint shards:  29%|██▉       | 5/17 [00:09<00:22,  1.88s/it]Loading checkpoint shards:  35%|███▌      | 6/17 [00:11<00:20,  1.86s/it]Loading checkpoint shards:  41%|████      | 7/17 [00:13<00:18,  1.88s/it]Loading checkpoint shards:  47%|████▋     | 8/17 [00:15<00:17,  1.91s/it]Loading checkpoint shards:  53%|█████▎    | 9/17 [00:17<00:15,  1.92s/it]Loading checkpoint shards:  59%|█████▉    | 10/17 [00:19<00:13,  1.97s/it]Loading checkpoint shards:  65%|██████▍   | 11/17 [00:21<00:11,  1.97s/it]Loading checkpoint shards:  71%|███████   | 12/17 [00:23<00:09,  1.97s/it]Loading checkpoint shards:  76%|███████▋  | 13/17 [00:25<00:07,  1.98s/it]Loading checkpoint shards:  82%|████████▏ | 14/17 [00:27<00:05,  1.97s/it]Loading checkpoint shards:  88%|████████▊ | 15/17 [00:28<00:03,  1.94s/it]Loading checkpoint shards:  94%|█████████▍| 16/17 [00:30<00:01,  1.94s/it]Loading checkpoint shards: 100%|██████████| 17/17 [00:32<00:00,  1.78s/it]Loading checkpoint shards: 100%|██████████| 17/17 [00:32<00:00,  1.90s/it]
+Starting from v4.46, the `logits` model output will have the same type as the model (except at train time, where it will always be FP32)

@@ -2,7 +2,7 @@
 
 *Model*: Qwen/Qwen2.5-32B-Instruct
 *Alpha*: 2.0
-*Timestamp*: 2026-07-06T04:48:03+00:00
+*Timestamp*: 2026-07-06T05:25:16+00:00
 
 | Trait | Prompts | Baseline Acc. | Steered Acc. | Delta Acc. | Sign Consistency | Anti-Steerable |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -48,3 +48,4 @@
 | agreeableness | 0.091 | 0.112 | -0.030 |
 | conscientiousness | 0.108 | 0.165 | 0.089 |
 | extraversion | 0.039 | -0.065 | 0.050 |
+
