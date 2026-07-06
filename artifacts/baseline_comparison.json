@@ -1,0 +1,164 @@
+{
+  "env": "research",
+  "seed": 7,
+  "runs": [
+    {
+      "mode": "targeted",
+      "run_id": "debug32-baseline4-targeted",
+      "db_url": "sqlite:///storage/sim_debug32-debug32-baseline4-targeted.db",
+      "parquet_dir": "storage/dumps/debug32/debug32-baseline4-targeted",
+      "collab_ratio": 0.0,
+      "prompt_duplication": 0.0,
+      "task_completions": 0,
+      "macro_metrics": {
+        "global": {
+          "cooperation_rate": 0.0,
+          "gini_wealth": 0.0,
+          "polarization_modularity": 0.0,
+          "prompt_duplication_rate": 0.0,
+          "plan_reuse_rate": 0.611,
+          "conflicts": 0.0,
+          "rule_enforcement_cost": 0.0
+        },
+        "C:neutral": {
+          "cooperation_rate": 0.0,
+          "gini_wealth": 0.0,
+          "polarization_modularity": 0.0,
+          "prompt_duplication_rate": 0.0,
+          "plan_reuse_rate": 0.667,
+          "conflicts": 0.0,
+          "rule_enforcement_cost": 0.0
+        },
+        "E:high": {
+          "cooperation_rate": 0.0,
+          "gini_wealth": 0.0,
+          "polarization_modularity": 0.0,
+          "prompt_duplication_rate": 0.0,
+          "plan_reuse_rate": 0.611,
+          "conflicts": 0.0,
+          "rule_enforcement_cost": 0.0
+        },
+        "E:neutral": {
+          "cooperation_rate": 0.0,
+          "gini_wealth": 0.0,
+          "polarization_modularity": 0.0,
+          "prompt_duplication_rate": 0.0,
+          "plan_reuse_rate": 0.583,
+          "conflicts": 0.0,
+          "rule_enforcement_cost": 0.0
+        }
+      },
+      "action_type_variance": 0.015625
+    },
+    {
+      "mode": "placebo",
+      "run_id": "debug32-baseline4-placebo",
+      "db_url": "sqlite:///storage/sim_debug32-debug32-baseline4-placebo.db",
+      "parquet_dir": "storage/dumps/debug32/debug32-baseline4-placebo",
+      "collab_ratio": 0.0,
+      "prompt_duplication": 0.0,
+      "task_completions": 0,
+      "macro_metrics": {
+        "global": {
+          "cooperation_rate": 0.0,
+          "gini_wealth": 0.0,
+          "polarization_modularity": 0.0,
+          "prompt_duplication_rate": 0.0,
+          "plan_reuse_rate": 0.611,
+          "conflicts": 0.0,
+          "rule_enforcement_cost": 0.0
+        },
+        "C:neutral": {
+          "cooperation_rate": 0.0,
+          "gini_wealth": 0.0,
+          "polarization_modularity": 0.0,
+          "prompt_duplication_rate": 0.0,
+          "plan_reuse_rate": 0.667,
+          "conflicts": 0.0,
+          "rule_enforcement_cost": 0.0
+        },
+        "E:high": {
+          "cooperation_rate": 0.0,
+          "gini_wealth": 0.0,
+          "polarization_modularity": 0.0,
+          "prompt_duplication_rate": 0.0,
+          "plan_reuse_rate": 0.611,
+          "conflicts": 0.0,
+          "rule_enforcement_cost": 0.0
+        },
+        "E:neutral": {
+          "cooperation_rate": 0.0,
+          "gini_wealth": 0.0,
+          "polarization_modularity": 0.0,
+          "prompt_duplication_rate": 0.0,
+          "plan_reuse_rate": 0.583,
+          "conflicts": 0.0,
+          "rule_enforcement_cost": 0.0
+        }
+      },
+      "action_type_variance": 0.015625,
+      "placebo_mapping": {
+        "E": "C",
+        "A": "E",
+        "C": "A"
+      }
+    },
+    {
+      "mode": "disabled",
+      "run_id": "debug32-baseline4-disabled",
+      "db_url": "sqlite:///storage/sim_debug32-debug32-baseline4-disabled.db",
+      "parquet_dir": "storage/dumps/debug32/debug32-baseline4-disabled",
+      "collab_ratio": 0.0,
+      "prompt_duplication": 0.0,
+      "task_completions": 0,
+      "macro_metrics": {
+        "global": {
+          "cooperation_rate": 0.0,
+          "gini_wealth": 0.0,
+          "polarization_modularity": 0.0,
+          "prompt_duplication_rate": 0.0,
+          "plan_reuse_rate": 0.556,
+          "conflicts": 0.0,
+          "rule_enforcement_cost": 0.0
+        },
+        "E:neutral": {
+          "cooperation_rate": 0.0,
+          "gini_wealth": 0.0,
+          "polarization_modularity": 0.0,
+          "prompt_duplication_rate": 0.0,
+          "plan_reuse_rate": 0.556,
+          "conflicts": 0.0,
+          "rule_enforcement_cost": 0.0
+        }
+      },
+      "action_type_variance": 0.045918
+    }
+  ],
+  "placebo_vs_neutral": {
+    "deltas": {
+      "collab_ratio": 0.0,
+      "prompt_duplication": 0.0,
+      "task_completions": 0.0
+    },
+    "tolerance": 0.02,
+    "matched": true
+  },
+  "targeted_vs_neutral_trait_deltas": {
+    "global": 0.0,
+    "C:neutral": 0.0,
+    "E:high": 0.0,
+    "E:neutral": 0.0
+  },
+  "behavioral_variance_comparison": {
+    "targeted": 0.015625,
+    "placebo": 0.015625,
+    "disabled": 0.045918
+  },
+  "placebo_mapping": {
+    "placebo": {
+      "E": "C",
+      "A": "E",
+      "C": "A"
+    }
+  }
+}
