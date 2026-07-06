@@ -7,11 +7,16 @@ import argparse
 import json
 import os
 import subprocess
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Sequence, Tuple
 
 import yaml
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from steering.ci_checks import (
     TraitCurvePoint,
@@ -65,6 +70,14 @@ def _load_trait_specs(config_path: Path, only: Sequence[str] | None) -> List[Tra
     if not specs:
         raise ValueError("No trait definitions matched the requested filter")
     return specs
+
+
+def _resolve_model_name(config_path: Path, explicit_model: str | None) -> str:
+    if explicit_model:
+        return explicit_model
+    config = yaml.safe_load(config_path.read_text()) or {}
+    defaults = config.get("defaults") or {}
+    return defaults.get("model") or "meta-llama/Llama-3.1-8B-Instruct"
 
 
 def _run_command(cmd: Sequence[str], env: Dict[str, str]) -> None:
@@ -178,8 +191,14 @@ def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Run steering vector sweeps with cosine/directionality gates.",
     )
-    parser.add_argument("--model", default="meta-llama/Llama-3.1-8B-Instruct")
-    parser.add_argument("--vector-metadata", type=Path, default=Path("configs/steering.layers.yaml"))
+    parser.add_argument("--model")
+    parser.add_argument(
+        "--vector-metadata",
+        "--config",
+        dest="vector_metadata",
+        type=Path,
+        default=Path("configs/steering.layers.yaml"),
+    )
     parser.add_argument("--artifact-root", type=Path, default=Path("artifacts/steering_eval"))
     parser.add_argument("--compute-script", type=Path, default=Path("scripts/compute_vectors.sh"))
     parser.add_argument("--eval-script", type=Path, default=Path("scripts/eval_vectors.sh"))
@@ -193,12 +212,18 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--delta-threshold", type=float, default=0.1)
     parser.add_argument("--prompt-dir", type=Path, default=Path("data/prompts"))
     parser.add_argument("--vector-root-override", type=Path)
+    parser.add_argument(
+        "--vector-dir",
+        type=Path,
+        help="Existing vector directory to validate without recomputing vectors",
+    )
     parser.add_argument("--dry-run", action="store_true")
     return parser.parse_args()
 
 
 def main() -> None:
     args = _parse_args()
+    args.model = _resolve_model_name(args.vector_metadata, args.model)
     artifact_root = args.artifact_root.resolve()
     artifact_root.mkdir(parents=True, exist_ok=True)
 
@@ -207,10 +232,13 @@ def main() -> None:
     directionality_points: List[TraitDirectionality] = []
     curve_points: List[TraitCurvePoint] = []
     vector_roots: List[Tuple[int, Path]] = []
+    existing_vector_root = args.vector_dir.resolve() if args.vector_dir else None
 
     for seed in args.seeds:
         vector_root = (
-            args.vector_root_override.resolve()
+            existing_vector_root
+            if existing_vector_root
+            else args.vector_root_override.resolve()
             if args.vector_root_override
             else artifact_root / f"vectors_seed{seed}"
         )
@@ -228,7 +256,12 @@ def main() -> None:
         compute_env = base_env.copy()
         compute_env.update({"VECTOR_ROOT": str(vector_root)})
 
-        if not args.dry_run:
+        if args.dry_run:
+            if existing_vector_root is None:
+                print(f"[dry-run] compute vectors -> {vector_root}")
+            else:
+                print(f"[dry-run] use existing vectors -> {vector_root}")
+        elif existing_vector_root is None:
             _run_command([str(args.compute_script)], compute_env)
 
         for alpha in args.strengths:
@@ -242,7 +275,13 @@ def main() -> None:
                 args=args,
             )
 
-            if not args.dry_run:
+            if args.dry_run:
+                print(
+                    f"[dry-run] eval seed={seed} alpha={alpha} "
+                    f"artifacts -> {artifact_dir}"
+                )
+                continue
+            else:
                 _run_command([str(args.eval_script)], eval_env)
 
             report_path = artifact_dir / "report.json"

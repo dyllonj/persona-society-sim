@@ -1,12 +1,12 @@
 {
-  "vector_store_id": "A_caa_v2",
+  "vector_store_id": "A_caa_qwen32b_v1",
   "trait": "A",
   "method": "caa_ab",
-  "model_name": "meta-llama/Llama-3.1-8B-Instruct",
+  "model_name": "Qwen/Qwen2.5-32B-Instruct",
   "dataset": {
-    "train_size": 10,
+    "train_size": 8,
     "eval_size": 0,
-    "train_hash": "faa2d07c19de8c21de7d092228bae6405781f6fbdaa90a5c06ffaaf5f1f7cd9f",
+    "train_hash": "eda2666ddca54950d9619b861e4a8a5317ce6085068892482c28d1a2853b5c12",
     "eval_hash": null
   },
   "extraction_hyperparameters": {
@@ -15,39 +15,45 @@
     "pooling": "token",
     "difference_equation": "high_minus_low",
     "layers": [
-      8,
-      20,
-      28
+      16,
+      40,
+      58
     ]
   },
   "layers": [
     {
-      "layer_id": 8,
-      "vector_path": "/workspace/PLAY/persona-society-sim/data/vectors/A_caa_v2_layer8.npy",
-      "norm": 2.80078125,
+      "layer_id": 16,
+      "vector_path": "/workspace/persona-society-sim/data/vectors/A_caa_qwen32b_v1_layer16.npy",
+      "norm": 68.375,
       "accuracy": null,
-      "accuracy_delta": null
+      "accuracy_delta": null,
+      "directional_agreement": 0.9834292281735426,
+      "separability_d_prime": 53.39266476306899
     },
     {
-      "layer_id": 20,
-      "vector_path": "/workspace/PLAY/persona-society-sim/data/vectors/A_caa_v2_layer20.npy",
-      "norm": 7.73046875,
+      "layer_id": 40,
+      "vector_path": "/workspace/persona-society-sim/data/vectors/A_caa_qwen32b_v1_layer40.npy",
+      "norm": 123.4375,
       "accuracy": null,
-      "accuracy_delta": null
+      "accuracy_delta": null,
+      "directional_agreement": 0.9391059260007737,
+      "separability_d_prime": 19.074140113532042
     },
     {
-      "layer_id": 28,
-      "vector_path": "/workspace/PLAY/persona-society-sim/data/vectors/A_caa_v2_layer28.npy",
-      "norm": 24.65625,
+      "layer_id": 58,
+      "vector_path": "/workspace/persona-society-sim/data/vectors/A_caa_qwen32b_v1_layer58.npy",
+      "norm": 395.75,
       "accuracy": null,
-      "accuracy_delta": null
+      "accuracy_delta": null,
+      "directional_agreement": 0.914689130149867,
+      "separability_d_prime": 19.309061424285932
     }
   ],
   "preferred_layers": [
-    8,
-    20,
-    28
+    16,
+    40,
+    58
   ],
   "layer_sweep": null,
-  "created_at": "2025-11-15T13:31:47Z"
+  "created_at": "2026-07-06T04:15:44Z"
 }

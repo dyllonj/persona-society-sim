@@ -1,0 +1,46 @@
+{
+  "model": "Qwen/Qwen2.5-32B-Instruct",
+  "config": "configs/steering.layers.yaml",
+  "sample_pairs": 10,
+  "pass_threshold": 0.3,
+  "warn_threshold": 0.2,
+  "trait_status": {
+    "E": "PASS",
+    "A": "PASS",
+    "C": "PASS"
+  },
+  "scores": [
+    {
+      "trait": "E",
+      "layer": 60,
+      "count": 8,
+      "preliminary_steerability": 0.9170423779477961,
+      "status": "PASS",
+      "reasons": []
+    },
+    {
+      "trait": "A",
+      "layer": 40,
+      "count": 8,
+      "preliminary_steerability": 0.9388721805455249,
+      "status": "PASS",
+      "reasons": []
+    },
+    {
+      "trait": "C",
+      "layer": 20,
+      "count": 8,
+      "preliminary_steerability": 0.98024893597467,
+      "status": "PASS",
+      "reasons": []
+    },
+    {
+      "trait": "C",
+      "layer": 60,
+      "count": 8,
+      "preliminary_steerability": 0.9258459745677619,
+      "status": "PASS",
+      "reasons": []
+    }
+  ]
+}

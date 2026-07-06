@@ -407,7 +407,7 @@ def run_model_smoke_test(
                 layers,
             )
             for layer in layers:
-                diff = (high_state[layer] - low_state[layer]).detach().cpu().numpy()
+                diff = (high_state[layer] - low_state[layer]).float().detach().cpu().numpy()
                 per_layer[layer].append(diff.tolist())
         for layer, diffs in per_layer.items():
             scores.append(

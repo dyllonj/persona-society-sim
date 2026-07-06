@@ -32,5 +32,5 @@ traits:
     name: conscientiousness
     vector_store_id: C_caa_qwen32b_v1
     prompt_file: ../data/prompts/conscientiousness_train.jsonl
-    layers: [20, 44, 60]
-    description: Later layers (scaled from 8B 10/22/30) for procedural focus and planning.
+    layers: [20, 44, 62]
+    description: Later layers (scaled from 8B 10/22/30) for procedural focus and planning; layer 62 avoids the E@60 collision on Qwen2.5-32B.

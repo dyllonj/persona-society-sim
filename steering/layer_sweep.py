@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Sequence, Tuple
@@ -15,6 +16,22 @@ from steering.compute_caa import compute_file_hash, encode_answer_token, high_lo
 from steering.vector_store import VectorStore
 
 DEFAULT_MODEL = "meta-llama/Llama-3.1-8B-Instruct"
+
+
+def resolve_vector_store_id(
+    trait: str, vector_root: Path, explicit_vector_store_id: str | None = None
+) -> str:
+    """Resolve a trait code like E to the vector_store_id in its metadata."""
+
+    if explicit_vector_store_id:
+        return explicit_vector_store_id
+    metadata_path = vector_root / f"{trait}.meta.json"
+    if metadata_path.exists():
+        metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+        vector_store_id = metadata.get("vector_store_id")
+        if vector_store_id:
+            return str(vector_store_id)
+    return trait
 
 
 def _score_layers(
@@ -127,7 +144,9 @@ def main() -> None:
     parser.add_argument("--vector-store-id")
     args = parser.parse_args()
 
-    sweep_id = args.vector_store_id or args.trait
+    sweep_id = resolve_vector_store_id(
+        args.trait, args.vector_root, args.vector_store_id
+    )
     result = run_sweep(
         args.trait,
         args.vector_root,
