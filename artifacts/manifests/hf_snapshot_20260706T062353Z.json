@@ -1,0 +1,23 @@
+{
+  "snapshot_utc": "2026-07-06T06:23:53Z",
+  "created_utc": "2026-07-06T06:26:03Z",
+  "git_commit": "9f4ebbe627f6f8c64c6b447e29f490a3390894ee",
+  "hf_repo": "dyllonj/persona-society-sim-pilot",
+  "hf_path": "snapshots/20260706T062353Z/persona_hf_snapshot_20260706T062353Z.tar.gz",
+  "hf_url": "https://huggingface.co/datasets/dyllonj/persona-society-sim-pilot/tree/main/snapshots/20260706T062353Z",
+  "archive": {
+    "filename": "persona_hf_snapshot_20260706T062353Z.tar.gz",
+    "bytes": 21084844,
+    "sha256": "660cf09a33597699fb0d47546e9b1dad7b0f1c6388846c300a18a6b4f1fcd8b7"
+  },
+  "contents": [
+    "artifacts/",
+    "data/vectors/",
+    "data/prompts/",
+    "storage/dumps/",
+    "storage/*.db",
+    "storage/*.db.bak-*"
+  ],
+  "status": "HF archive and manifest uploaded successfully.",
+  "note": "Snapshot captured while baseline comparison process may still have been running; final completed workflow should get a superseding snapshot."
+}
