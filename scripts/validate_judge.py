@@ -4,8 +4,14 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from dataclasses import asdict, dataclass
+from pathlib import Path
 from typing import Iterable, Mapping, Sequence
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from steering.llm_judge import (
     DEFAULT_TRAITS,
@@ -130,6 +136,11 @@ def _cli(argv: Iterable[str] | None = None) -> int:
     parser.add_argument("--tolerance", type=int, default=0)
     parser.add_argument("--json", action="store_true")
     parser.add_argument(
+        "--output",
+        type=Path,
+        help="Write the validation report JSON to this path",
+    )
+    parser.add_argument(
         "--client-smoke",
         action="store_true",
         help="Also exercise StaticJudgeClient through score_text_with_judge",
@@ -140,6 +151,12 @@ def _cli(argv: Iterable[str] | None = None) -> int:
     if args.client_smoke:
         run_static_client_smoke()
     payload = report.to_dict()
+    if args.output:
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(
+            json.dumps(payload, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
     if args.json:
         print(json.dumps(payload, indent=2, sort_keys=True))
     else:

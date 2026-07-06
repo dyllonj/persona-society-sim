@@ -610,6 +610,12 @@ def main() -> None:
         help="Disable persona steering vectors and run agents with neutral traits",
     )
     parser.add_argument(
+        "--steering-mode",
+        choices=["targeted", "placebo", "disabled"],
+        default="targeted",
+        help="Select targeted steering, shuffled placebo vectors, or disabled steering",
+    )
+    parser.add_argument(
         "--queued-runtime",
         action="store_true",
         help="Use queue-backed log/event adapters as a scale-refactor migration path",

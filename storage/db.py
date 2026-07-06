@@ -131,6 +131,9 @@ CREATE TABLE IF NOT EXISTS metrics_snapshot (
   rule_enforcement_cost FLOAT,
   prompt_duplication_rate FLOAT,
   plan_reuse_rate FLOAT,
+  action_type_entropy FLOAT,
+  population_trait_variance FLOAT,
+  variance_vs_mean_ratio FLOAT,
   PRIMARY KEY (run_id, tick, trait_key)
 );
 CREATE TABLE IF NOT EXISTS research_fact_log (
@@ -192,11 +195,17 @@ CREATE TABLE IF NOT EXISTS behavior_probe_log (
   tick INT,
   agent_id TEXT,
   probe_id TEXT,
+  trait TEXT,
   scenario TEXT,
   prompt_text TEXT,
   response_text TEXT,
   outcome TEXT,
-  parser_hint TEXT
+  parser_hint TEXT,
+  trait_key TEXT,
+  trait_band TEXT,
+  alpha_bucket TEXT,
+  affordance TEXT,
+  preferred_outcome TEXT
 );
 CREATE TABLE IF NOT EXISTS steering_vector_store (
   vector_store_id TEXT,
@@ -241,6 +250,55 @@ class Database:
         with self.engine.begin() as conn:
             for statement in filter(None, DDL.split(";")):
                 conn.execute(text(statement))
+            self._migrate(conn)
+
+    def _migrate(self, conn: Any) -> None:
+        """Add columns introduced after older SQLite/Postgres DBs were created."""
+
+        migrations = {
+            "metrics_snapshot": {
+                "action_type_entropy": "FLOAT DEFAULT 0.0",
+                "population_trait_variance": "FLOAT DEFAULT 0.0",
+                "variance_vs_mean_ratio": "FLOAT DEFAULT 0.0",
+            },
+            "behavior_probe_log": {
+                "trait": "TEXT",
+                "trait_key": "TEXT",
+                "trait_band": "TEXT",
+                "alpha_bucket": "TEXT",
+                "affordance": "TEXT",
+                "preferred_outcome": "TEXT",
+            },
+        }
+        dialect = self.engine.dialect.name
+        for table, columns in migrations.items():
+            existing = set(self._column_names(conn, table))
+            for column, column_type in columns.items():
+                if column in existing:
+                    continue
+                if dialect == "postgresql":
+                    conn.execute(
+                        text(
+                            f"ALTER TABLE {table} "
+                            f"ADD COLUMN IF NOT EXISTS {column} {column_type}"
+                        )
+                    )
+                else:
+                    conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {column} {column_type}"))
+
+    def _column_names(self, conn: Any, table: str) -> list[str]:
+        dialect = self.engine.dialect.name
+        if dialect == "sqlite":
+            rows = conn.execute(text(f"PRAGMA table_info({table})")).mappings()
+            return [str(row["name"]) for row in rows]
+        rows = conn.execute(
+            text(
+                "SELECT column_name FROM information_schema.columns "
+                "WHERE table_name = :table"
+            ),
+            {"table": table},
+        )
+        return [str(row[0]) for row in rows]
 
     def insert_many(self, table: str, rows: Iterable[dict]) -> None:
         rows = list(rows)

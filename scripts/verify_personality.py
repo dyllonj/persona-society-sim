@@ -3,10 +3,12 @@
 import sys
 import unittest
 from datetime import datetime
+from pathlib import Path
 from unittest.mock import MagicMock
 
-# Add project root to path
-sys.path.append(".")
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from agents.memory import MemoryStore
 from agents.agent import Agent

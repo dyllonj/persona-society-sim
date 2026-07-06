@@ -1,0 +1,32 @@
+{
+  "exact_trait_rate": 1.0,
+  "examples": [
+    {
+      "absolute_error": 0.0,
+      "exact_traits": 5,
+      "example_id": "sociable_helper",
+      "parsed_scores": {
+        "A": 4,
+        "C": 4,
+        "E": 5,
+        "N": 2,
+        "O": 3
+      },
+      "total_traits": 5
+    },
+    {
+      "absolute_error": 0.0,
+      "exact_traits": 5,
+      "example_id": "anxious_critic",
+      "parsed_scores": {
+        "A": 2,
+        "C": 4,
+        "E": 2,
+        "N": 5,
+        "O": 3
+      },
+      "total_traits": 5
+    }
+  ],
+  "mean_absolute_error": 0.0
+}
