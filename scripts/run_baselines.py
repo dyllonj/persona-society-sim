@@ -42,8 +42,9 @@ from env.world import World
 class CollectingLogSink(LogSink):
     """Log sink that preserves metrics and actions for in-memory analysis."""
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs)
+    def __init__(self, run_id: str, db_url: str | None, parquet_dir: str | None) -> None:
+        super().__init__(run_id, db_url, parquet_dir)
+        self.db_url = db_url
         self.metrics_snapshots: List[MetricsSnapshot] = []
         self.actions: List[ActionLog] = []
 
@@ -70,6 +71,12 @@ def _prepare_runner(
     config = copy.deepcopy(base_config)
     run_root = config.get("run_id") or f"run-{uuid4().hex[:6]}"
     run_id = f"{run_root}-{run_suffix}"
+    logging_cfg = copy.deepcopy(config.get("logging", {}))
+    logging_cfg["db_url"] = _sqlite_db_url_for_run(logging_cfg.get("db_url"), run_id)
+    logging_cfg["parquet_dir"] = _parquet_dir_for_run(
+        logging_cfg.get("parquet_dir"), run_root, run_id
+    )
+    config["logging"] = logging_cfg
     seed = config.get("seed", 7)
     random.seed(seed)
     np.random.seed(seed)
@@ -127,7 +134,6 @@ def _prepare_runner(
         suppress_alphas=not steering_enabled,
     )
 
-    logging_cfg = config.get("logging", {})
     log_sink: CollectingLogSink = CollectingLogSink(
         run_id,
         logging_cfg.get("db_url"),
@@ -158,6 +164,63 @@ def _prepare_runner(
     )
     steps = int(config.get("steps", 200))
     return runner, log_sink, steps, shuffle_mapping
+
+
+def _sqlite_db_url_for_run(db_url: str | None, run_id: str) -> str | None:
+    """Give each baseline arm its own SQLite DB, preserving non-SQLite URLs."""
+
+    if not db_url or not db_url.startswith("sqlite:///"):
+        return db_url
+    raw_path = db_url.removeprefix("sqlite:///")
+    path = Path(raw_path)
+    suffix = path.suffix or ".db"
+    target = path.with_name(f"{path.stem}-{run_id}{suffix}")
+    return f"sqlite:///{target}"
+
+
+def _parquet_dir_for_run(
+    parquet_dir: str | None, run_root: str, run_id: str
+) -> str | None:
+    """Give each baseline arm an isolated dump directory."""
+
+    if not parquet_dir:
+        return parquet_dir
+    path = Path(parquet_dir)
+    if path.name == run_root:
+        return str(path.parent / run_id)
+    return str(path / run_id)
+
+
+def _release_runner_resources(runner: SimulationRunner, sink: CollectingLogSink) -> None:
+    """Drop large HF model references between baseline arms."""
+
+    seen_backends = set()
+    for agent in runner.agents.values():
+        backend = agent.language_backend
+        backend_id = id(backend)
+        if backend_id in seen_backends:
+            continue
+        seen_backends.add(backend_id)
+        controller = getattr(backend, "controller", None)
+        if controller is not None:
+            try:
+                controller.remove()
+            except Exception:
+                pass
+        if hasattr(backend, "model"):
+            try:
+                delattr(backend, "model")
+            except Exception:
+                pass
+    db = getattr(sink, "db", None)
+    engine = getattr(db, "engine", None)
+    if engine is not None:
+        try:
+            engine.dispose()
+        except Exception:
+            pass
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
 
 
 def _aggregate_macro_metrics(metrics: Iterable[MetricsSnapshot]) -> Dict[str, Dict[str, float]]:
@@ -286,15 +349,24 @@ def main() -> None:
             run_suffix=arm,
             placebo_seed=placebo_seed,
         )
-        runner.run(
-            base_config.get("steps", steps),
-            max_events_per_tick=base_config.get("max_events_per_tick", base_config.get("max_events", 16)),
-        )
-        summary = {"mode": arm, **_summarize(sink)}
-        if shuffle_mapping:
-            summary["placebo_mapping"] = shuffle_mapping
-            shuffle_maps[arm] = shuffle_mapping
-        results[arm] = summary
+        try:
+            runner.run(
+                base_config.get("steps", steps),
+                max_events_per_tick=base_config.get("max_events_per_tick", base_config.get("max_events", 16)),
+            )
+            summary = {
+                "mode": arm,
+                "run_id": runner.run_id,
+                "db_url": sink.db_url,
+                "parquet_dir": str(sink.parquet_dir) if sink.parquet_dir else None,
+                **_summarize(sink),
+            }
+            if shuffle_mapping:
+                summary["placebo_mapping"] = shuffle_mapping
+                shuffle_maps[arm] = shuffle_mapping
+            results[arm] = summary
+        finally:
+            _release_runner_resources(runner, sink)
 
     rows = list(results.values())
     print("Steering arm comparison (seed=%s, env=%s)" % (base_config.get("seed", 7), args.env))
