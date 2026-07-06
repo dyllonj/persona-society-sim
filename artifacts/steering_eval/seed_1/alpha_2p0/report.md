@@ -2,7 +2,7 @@
 
 *Model*: Qwen/Qwen2.5-32B-Instruct
 *Alpha*: 2.0
-*Timestamp*: 2026-07-06T04:51:55+00:00
+*Timestamp*: 2026-07-06T05:27:51+00:00
 
 | Trait | Prompts | Baseline Acc. | Steered Acc. | Delta Acc. | Sign Consistency | Anti-Steerable |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -16,3 +16,4 @@
 - anti_steerable_threshold: 0.5
 
 ## Grading prompts
+
