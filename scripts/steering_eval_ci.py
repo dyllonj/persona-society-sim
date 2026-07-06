@@ -40,6 +40,7 @@ class TraitSpec:
     name: str
     vector_store_id: str
     layers: List[int]
+    polarity: float | None = None
 
 
 def _format_alpha(alpha: float) -> str:
@@ -64,6 +65,7 @@ def _load_trait_specs(config_path: Path, only: Sequence[str] | None) -> List[Tra
                 name=name,
                 vector_store_id=payload.get("vector_store_id") or trait_code,
                 layers=list(layers),
+                polarity=float(payload["polarity"]) if "polarity" in payload else None,
             )
         )
 
@@ -78,6 +80,37 @@ def _resolve_model_name(config_path: Path, explicit_model: str | None) -> str:
     config = yaml.safe_load(config_path.read_text()) or {}
     defaults = config.get("defaults") or {}
     return defaults.get("model") or "meta-llama/Llama-3.1-8B-Instruct"
+
+
+def _load_defaults(config_path: Path) -> dict:
+    config = yaml.safe_load(config_path.read_text()) or {}
+    defaults = config.get("defaults") or {}
+    if not isinstance(defaults, dict):
+        return {}
+    return defaults
+
+
+def _resolve_strengths(defaults: dict, explicit_strengths: Sequence[float] | None) -> List[float]:
+    if explicit_strengths is not None:
+        if not explicit_strengths:
+            raise ValueError("--strengths must include at least one value")
+        return [float(value) for value in explicit_strengths]
+    configured = defaults.get("ci_strengths")
+    if configured is not None:
+        strengths = [float(value) for value in configured]
+        if not strengths:
+            raise ValueError("defaults.ci_strengths must include at least one value")
+        return strengths
+    return list(DEFAULT_STRENGTHS)
+
+
+def _resolve_directional_threshold(defaults: dict, explicit_value: float | None) -> float:
+    if explicit_value is not None:
+        return float(explicit_value)
+    configured = defaults.get("ci_directional_threshold")
+    if configured is not None:
+        return float(configured)
+    return 0.6
 
 
 def _run_command(cmd: Sequence[str], env: Dict[str, str]) -> None:
@@ -95,7 +128,7 @@ def _load_vectors(
         for spec in trait_specs:
             bundle = store.load(spec.vector_store_id, layers=spec.layers)
             layer_map = grouped.setdefault(spec.code, {})
-            for layer_id, vector in bundle.vectors.items():
+            for layer_id, vector in bundle.calibrated_vectors(spec.polarity).items():
                 layer_map.setdefault(layer_id, []).append((seed, vector))
     return grouped
 
@@ -203,11 +236,11 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--compute-script", type=Path, default=Path("scripts/compute_vectors.sh"))
     parser.add_argument("--eval-script", type=Path, default=Path("scripts/eval_vectors.sh"))
     parser.add_argument("--seeds", type=int, nargs="*", default=list(DEFAULT_SEEDS))
-    parser.add_argument("--strengths", type=float, nargs="*", default=list(DEFAULT_STRENGTHS))
+    parser.add_argument("--strengths", type=float, nargs="*", default=None)
     parser.add_argument("--traits", nargs="*", default=list(DEFAULT_TRAITS))
     parser.add_argument("--cosine-threshold", type=float, default=0.995)
     parser.add_argument("--logprob-tolerance", type=float, default=1e-4)
-    parser.add_argument("--directional-threshold", type=float, default=0.6)
+    parser.add_argument("--directional-threshold", type=float)
     parser.add_argument("--sign-threshold", type=float, default=0.55)
     parser.add_argument("--delta-threshold", type=float, default=0.1)
     parser.add_argument("--prompt-dir", type=Path, default=Path("data/prompts"))
@@ -223,7 +256,12 @@ def _parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = _parse_args()
+    defaults = _load_defaults(args.vector_metadata)
     args.model = _resolve_model_name(args.vector_metadata, args.model)
+    args.strengths = _resolve_strengths(defaults, args.strengths)
+    args.directional_threshold = _resolve_directional_threshold(
+        defaults, args.directional_threshold
+    )
     artifact_root = args.artifact_root.resolve()
     artifact_root.mkdir(parents=True, exist_ok=True)
 

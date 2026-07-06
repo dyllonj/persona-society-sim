@@ -86,6 +86,58 @@ def test_build_markdown_includes_failures():
     assert "extraversion delta 0.1 < 0.2" in markdown
 
 
+def test_saturated_accuracy_gate_uses_logprob_direction():
+    saturated = steering_eval.TraitEvaluation(
+        trait_name="extraversion",
+        trait_code="E",
+        prompt_path="prompts.jsonl",
+        metadata_path="vectors/E.meta.json",
+        vector_store_id="E",
+        num_prompts=2,
+        accuracy_baseline=1.0,
+        accuracy_steered=1.0,
+        logprob_gap_baseline=0.1,
+        logprob_gap_steered=0.2,
+        sign_consistency=1.0,
+        directional_improvement=1.0,
+        prompt_results=[],
+    )
+    failures = steering_eval._summarize_failures(
+        [saturated],
+        delta_threshold=0.1,
+        sign_threshold=None,
+        anti_steerable_threshold=None,
+    )
+
+    assert failures == []
+
+
+def test_saturated_accuracy_gate_fails_when_logprob_regresses():
+    regressed = steering_eval.TraitEvaluation(
+        trait_name="extraversion",
+        trait_code="E",
+        prompt_path="prompts.jsonl",
+        metadata_path="vectors/E.meta.json",
+        vector_store_id="E",
+        num_prompts=2,
+        accuracy_baseline=1.0,
+        accuracy_steered=1.0,
+        logprob_gap_baseline=0.2,
+        logprob_gap_steered=0.1,
+        sign_consistency=1.0,
+        directional_improvement=0.0,
+        prompt_results=[],
+    )
+    failures = steering_eval._summarize_failures(
+        [regressed],
+        delta_threshold=0.1,
+        sign_threshold=None,
+        anti_steerable_threshold=None,
+    )
+
+    assert failures == ["extraversion delta 0.000 < 0.100"]
+
+
 def test_coherence_score_penalizes_repetition():
     coherent = steering_eval.coherence_score("I will organize the notes and share them.")
     repetitive = steering_eval.coherence_score("yes yes yes yes")

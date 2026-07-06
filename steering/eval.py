@@ -398,7 +398,7 @@ def _load_trait_vectors(
         preferred = metadata.get("preferred_layers") or []
         bundle = store.load(vector_store_id, layers=preferred or None)
         tensor_layers: Dict[int, torch.Tensor] = {}
-        for layer_id, array in bundle.vectors.items():
+        for layer_id, array in bundle.calibrated_vectors().items():
             tensor_layers[layer_id] = torch.tensor(array, dtype=torch.float32)
         vectors[trait_code] = tensor_layers
         metadata_map[trait_code] = metadata
@@ -910,9 +910,15 @@ def _summarize_failures(
     failures: List[str] = []
     for trait in traits:
         if delta_threshold is not None and trait.accuracy_delta < delta_threshold:
-            failures.append(
-                f"{trait.trait_name} delta {trait.accuracy_delta:.3f} < {delta_threshold:.3f}"
+            saturated_accuracy = (
+                trait.accuracy_baseline >= 1.0
+                and trait.accuracy_steered >= trait.accuracy_baseline
+                and trait.logprob_gap_delta >= 0.0
             )
+            if not saturated_accuracy:
+                failures.append(
+                    f"{trait.trait_name} delta {trait.accuracy_delta:.3f} < {delta_threshold:.3f}"
+                )
         if sign_threshold is not None and trait.sign_consistency < sign_threshold:
             failures.append(
                 f"{trait.trait_name} sign {trait.sign_consistency:.3f} < {sign_threshold:.3f}"

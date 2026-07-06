@@ -1,5 +1,10 @@
 from pathlib import Path
 
+from scripts.steering_eval_ci import (
+    _load_defaults,
+    _resolve_directional_threshold,
+    _resolve_strengths,
+)
 from steering.ci_checks import (
     TraitCurvePoint,
     TraitDirectionality,
@@ -97,3 +102,27 @@ def test_validate_bleed_matrix_flags_off_diagonal_bleed():
     )
 
     assert failures == ["bleed E->A=2.500 > 2.000"]
+
+
+def test_ci_defaults_can_come_from_steering_config(tmp_path: Path):
+    config = tmp_path / "steering.layers.yaml"
+    config.write_text(
+        """
+defaults:
+  ci_strengths: [2.0]
+  ci_directional_threshold: 0.5
+traits: {}
+        """.strip()
+    )
+
+    defaults = _load_defaults(config)
+
+    assert _resolve_strengths(defaults, None) == [2.0]
+    assert _resolve_directional_threshold(defaults, None) == 0.5
+
+
+def test_explicit_ci_defaults_win_over_config():
+    defaults = {"ci_strengths": [2.0], "ci_directional_threshold": 0.5}
+
+    assert _resolve_strengths(defaults, [0.5, 1.0]) == [0.5, 1.0]
+    assert _resolve_directional_threshold(defaults, 0.75) == 0.75

@@ -29,7 +29,7 @@ from orchestrator.scheduler import Scheduler
 from safety.governor import SafetyConfig, SafetyGovernor
 from schemas.agent import AgentState, PersonaCoeffs
 from schemas.objectives import ObjectiveTemplate, DEFAULT_OBJECTIVE_TEMPLATES
-from steering.vector_store import VectorStore
+from steering.vector_store import VectorStore, coerce_polarity
 from storage.log_sink import LogSink
 from orchestrator.queued_runtime import QueueBackedLogSink, QueuedEventBridge
 from orchestrator.decision_pipeline import QueueDecisionPipeline
@@ -227,7 +227,8 @@ def load_trait_vectors(
         except Exception:
             fallback_traits.append(trait)
             continue
-        trait_vectors[trait] = bundle.vectors
+        override_polarity = override.get("polarity") if override and "polarity" in override else None
+        trait_vectors[trait] = bundle.calibrated_vectors(override_polarity)
         layer_norms: Dict[int, float] = {}
         for layer_id, layer_meta in bundle.layer_metadata.items():
             norm_val = layer_meta.get("norm")
@@ -282,6 +283,7 @@ def _load_vectors_from_meta_files(
         if not meta_path.exists():
             continue
         metadata = json.loads(meta_path.read_text())
+        polarity = coerce_polarity(metadata.get("polarity", 1.0))
         layer_entries = {entry["layer_id"]: entry for entry in metadata.get("layers", [])}
         preferred = metadata.get("preferred_layers") or []
         ordered_layers: List[int] = []
@@ -312,6 +314,7 @@ def _load_vectors_from_meta_files(
             norms.setdefault(trait, {})[layer_id] = float(norm)
             if norm > 0:
                 vector = vector / norm
+            vector = vector * polarity
             per_layer[layer_id] = vector.astype(np.float32)
         if per_layer:
             store[trait] = per_layer
