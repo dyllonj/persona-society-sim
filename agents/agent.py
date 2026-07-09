@@ -549,17 +549,13 @@ class Agent:
                     raise ValueError(f"param {key} must be a scalar")
                 params[str(key)] = str(value)
             missing = [key for key in required if not params.get(key)]
-            if missing and action_type == suggestion.action_type:
-                for key in missing:
-                    fallback_value = suggestion.params.get(key)
-                    if fallback_value:
-                        params[key] = str(fallback_value)
-                missing = [key for key in required if not params.get(key)]
             if missing:
                 raise ValueError(f"missing params for {action_type}: {missing}")
             raw_utterance = payload.get("utterance", "")
             if not isinstance(raw_utterance, str):
                 raise ValueError("utterance must be a string")
+            if not raw_utterance.strip():
+                raise ValueError("utterance must not be empty")
             return action_type, params, raw_utterance, "model", None
         except (ValueError, json.JSONDecodeError) as exc:
             return (

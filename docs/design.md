@@ -31,8 +31,10 @@ round-trip. It is presented to the acting LLM as an advisory candidate. In
 research configs the model must return one JSON object containing `action`,
 `params`, and `utterance`; the agent validates that object against the action
 schema before the runner executes it. Invalid JSON, unsupported actions, or
-bad params fall back to the planner suggestion with `decision_source` and
-`decision_parse_error` recorded. This keeps planning free, instant, and
+bad params or an empty utterance fall back to the planner suggestion with
+`decision_source` and `decision_parse_error` recorded. Required params are
+never silently borrowed from the planner while attributing the action to the
+model. This keeps planning free, instant, and
 reproducible while making the model's behavioral choice explicit. Similarly,
 "reflection" here means "retrieve and
 concatenate relevant memories," not "generate a new abstract insight" the way

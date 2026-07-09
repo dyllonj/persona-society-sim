@@ -140,6 +140,42 @@ def test_invalid_structured_output_falls_back_and_records_reason():
     assert "unsupported action" in (decision.decision_parse_error or "")
 
 
+def test_structured_output_never_silently_borrows_missing_planner_params():
+    agent, _ = _make_agent(structured_actions_enabled=True)
+    suggestion = PlanSuggestion(
+        "move",
+        {"destination": "library"},
+        "I will go to the library.",
+    )
+
+    action, params, utterance, source, error = agent._parse_structured_action(
+        '{"action":"move","params":{},"utterance":"I will move."}',
+        suggestion,
+    )
+
+    assert (action, params, utterance) == (
+        "move",
+        {"destination": "library"},
+        "I will go to the library.",
+    )
+    assert source == "planner_fallback"
+    assert "missing params" in (error or "")
+
+
+def test_structured_output_requires_an_explicit_utterance():
+    backend = StubLanguageBackend('{"action":"work","params":{},"utterance":""}')
+    agent, _ = _make_agent(
+        language_backend=backend,
+        structured_actions_enabled=True,
+        persona_prompt_enabled=False,
+    )
+
+    decision = agent.act("Help with the project.", tick=1, current_location="town_square")
+
+    assert decision.decision_source == "planner_fallback"
+    assert "utterance must not be empty" in (decision.decision_parse_error or "")
+
+
 def test_activation_only_prompt_omits_trait_labels():
     agent, _ = _make_agent(
         structured_actions_enabled=True,
