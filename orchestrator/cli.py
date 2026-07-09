@@ -774,7 +774,6 @@ def main() -> None:
         steering_mode = "disabled"
     steering_enabled = bool(steering_cfg.get("enabled", True)) and steering_mode != "disabled"
     alpha_strength = float(steering_cfg.get("strength", 1.0)) if steering_enabled else 0.0
-    steering_base = _steering_coefficients(steering_cfg) if steering_enabled else {}
     metadata_files = steering_cfg.get("metadata_files") or {}
     trait_vectors: Dict[str, Dict[int, np.ndarray]] = {}
     vector_norms: Dict[str, Dict[int, float]] = {}

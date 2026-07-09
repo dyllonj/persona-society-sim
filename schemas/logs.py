@@ -87,6 +87,8 @@ class InferenceEvent(BaseModel):
     input_ids: List[int] = Field(default_factory=list)
     attention_mask: List[int] = Field(default_factory=list)
     generated_ids: List[int] = Field(default_factory=list)
+    prompt_token_count: int
+    generated_token_count: int
     raw_completion: str = ""
     model_id: str
     model_revision: Optional[str] = None

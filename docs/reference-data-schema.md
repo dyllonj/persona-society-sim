@@ -1,7 +1,7 @@
 # Data schema reference
 
-*(Renamed/expanded from the old `parquet_schema.md`, which only documented 5
-of the 10 tables actually written. This file supersedes it.)*
+*(Renamed/expanded from the old `parquet_schema.md`, which documented only a
+subset of the tables actually written. This file supersedes it.)*
 
 Every simulation run dual-writes structured telemetry: once to a SQL database
 (SQLite or Postgres, via `storage/db.py`) and once to Parquet (one file per
@@ -12,7 +12,7 @@ mid-tick loses that tick's unflushed buffer from **both** stores.
 
 ## Active tables (written every run)
 
-All ten live under `{parquet_dir}/<name>/` as `<name>_t{tick:05d}.parquet`
+All eleven live under `{parquet_dir}/<name>/` as `<name>_t{tick:05d}.parquet`
 (only written for ticks that produced ≥1 record of that kind), and as a
 same-named SQL table when `logging.db_url` is set.
 
@@ -28,6 +28,7 @@ same-named SQL table when `logging.db_url` is set.
 | `report_grades` | `log_id`, `run_id`, `tick`, `agent_id`, `targets_total`, `facts_correct`, `citations_valid`, `reward_points`, `trait_key`, `trait_band`, `alpha_value`, `alpha_bucket` | one row per `submit_report` action |
 | `probe_logs` | `log_id`, `run_id`, `tick`, `agent_id`, `probe_id`, `question`, `prompt_text`, `response_text`, `trait`, `score`, `parser_hint` | one row per answered Likert self-report probe |
 | `behavior_probes` | `log_id`, `run_id`, `tick`, `agent_id`, `probe_id`, `scenario`, `prompt_text`, `response_text`, `outcome`, `parser_hint` | one row per answered scripted behavioral probe |
+| `inference_events` | `trace_id`, simulation join keys, exact input/output token IDs, immutable model/tokenizer revisions, decoding state, effective alphas, vector IDs/hashes, selected action and decision source | deterministic sample of ordinary generations plus probes, safety events, and report submissions when `interpretability.enabled` is true |
 
 **`trait_key`**: `null` in the Pydantic model becomes the literal string
 `"global"` at write time (`LogSink._normalize`), representing the
@@ -76,13 +77,11 @@ out of sync.
 
 ## Schema evolution
 
-There is no migration/versioning framework — `Database.init()` only issues
-`CREATE TABLE IF NOT EXISTS`, with no `ALTER TABLE` path. Schema changes are
-handled by one-off scripts instead; `scripts/migrate_remove_trade_records.py`
-is the template for that pattern (rewrite SQLite tables in place, row-filter
-and rewrite affected Parquet files). If you're removing or renaming a field
-in `schemas/logs.py`, write a similar script rather than assuming old dumps
-stay compatible.
+There is no general migration/versioning framework. `Database.init()` issues
+`CREATE TABLE IF NOT EXISTS` and `Database._migrate()` adds a small declared
+set of backward-compatible columns. Destructive changes still require a
+one-off migration; `scripts/migrate_remove_trade_records.py` is the template.
+Do not assume old Parquet dumps acquire new fields automatically.
 
 ## Related
 

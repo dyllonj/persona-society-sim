@@ -2,6 +2,9 @@
 
 ## Status
 
+Implemented locally through the fit/replay toolchain and full regression
+suite. The external GPU pilot remains the final validation gate.
+
 This document is the implementation contract for adding Anthropic's Jacobian
 Lens to the simulator. The integration is intentionally split into two
 processes:
@@ -88,25 +91,19 @@ Paid GPU work must not begin until all of the following pass locally:
 The run configuration gains two explicit sections:
 
 ```yaml
-persona_prompt:
-  enabled: false
-  style: descriptive
+inference:
+  persona_prompt: false
+  structured_actions: true
 
 interpretability:
   enabled: true
-  capture_mode: manifest
   sample_rate: 0.05
-  always_capture:
-    - probe
-    - report_submission
-    - safety_event
-  output_dir: ./storage/inference_events
-  store_prompt_text: true
-  store_token_ids: true
+  include_prompt_text: false
 ```
 
-`capture_mode: manifest` records replay inputs only. The simulator does not
-load a lens or perform a second forward pass.
+This records replay inputs only. The simulator does not load a lens or perform
+a second forward pass. Probe, report-submission, and safety-event generations
+are always captured; `sample_rate` applies to ordinary decisions.
 
 ## Inference event schema
 

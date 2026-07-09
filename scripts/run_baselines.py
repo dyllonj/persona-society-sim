@@ -1,4 +1,6 @@
 """Run neutral, placebo, and targeted steering arms with matched probes/metrics."""
+# ruff: noqa: E402
+
 from __future__ import annotations
 
 import argparse
@@ -19,7 +21,6 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from orchestrator.cli import (
-    TRAIT_KEYS,
     build_agents,
     build_language_backend,
     build_meta_orchestrator,
@@ -30,7 +31,6 @@ from orchestrator.cli import (
     shuffle_trait_vectors,
     _load_metadata_file,
     _active_steering_traits,
-    _steering_coefficients,
 )
 from orchestrator.console_logger import ConsoleLogger
 from orchestrator.runner import SimulationRunner
@@ -90,7 +90,6 @@ def _prepare_runner(
 
     steering_cfg = config.get("steering", {})
     steering_enabled = steering_mode != "disabled" and steering_cfg.get("enabled", True)
-    steering_base = _steering_coefficients(steering_cfg) if steering_enabled else {}
     metadata_files = steering_cfg.get("metadata_files") or {}
     vector_metadata = _load_metadata_file(metadata_files.get("vectors"), config_dir=config_path.parent)
     trait_vectors: Dict[str, Dict[int, np.ndarray]] = {}

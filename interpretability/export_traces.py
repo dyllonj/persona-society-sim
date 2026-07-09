@@ -108,6 +108,10 @@ def _validate_events(
             raise ValueError(f"trace {event.get('trace_id')} has invalid prompt token arrays")
         if not generated_ids:
             raise ValueError(f"trace {event.get('trace_id')} has no generated token IDs")
+        if event.get("prompt_token_count") != len(input_ids):
+            raise ValueError(f"trace {event.get('trace_id')} prompt token count mismatch")
+        if event.get("generated_token_count") != len(generated_ids):
+            raise ValueError(f"trace {event.get('trace_id')} generated token count mismatch")
 
 
 def _resolve_vector_path(root: Path, recorded: str) -> Path:

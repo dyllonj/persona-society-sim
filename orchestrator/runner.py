@@ -678,6 +678,8 @@ class SimulationRunner:
                 input_ids=decision.input_ids,
                 attention_mask=decision.attention_mask,
                 generated_ids=decision.generated_ids,
+                prompt_token_count=len(decision.input_ids),
+                generated_token_count=len(decision.generated_ids),
                 raw_completion=decision.raw_completion,
                 model_id=decision.model_id or "",
                 model_revision=decision.model_revision,

@@ -91,6 +91,8 @@ CREATE TABLE IF NOT EXISTS inference_event (
   input_ids JSONB,
   attention_mask JSONB,
   generated_ids JSONB,
+  prompt_token_count INT,
+  generated_token_count INT,
   raw_completion TEXT,
   model_id TEXT,
   model_revision TEXT,
@@ -296,6 +298,8 @@ class Database:
                 "selected_action_type": "TEXT",
                 "decision_source": "TEXT",
                 "decision_parse_error": "TEXT",
+                "prompt_token_count": "INT",
+                "generated_token_count": "INT",
             },
             "metrics_snapshot": {
                 "action_type_entropy": "FLOAT DEFAULT 0.0",

@@ -8,6 +8,7 @@ from schemas.logs import (
     CitationLog,
     Edge,
     GraphSnapshot,
+    InferenceEvent,
     MetricsSnapshot,
     ProbeLog,
     ReportGradeLog,
@@ -99,6 +100,29 @@ def test_log_sink_flush(tmp_path: Path):
         response_text="share",
         outcome="share",
     )
+    inference_event = InferenceEvent(
+        trace_id="trace-1",
+        run_id="r1",
+        tick=0,
+        agent_id="agent-1",
+        action_id="a1",
+        selected_action_type="talk",
+        decision_source="model",
+        capture_reason="probe",
+        prompt_hash="abc123",
+        input_ids=[1, 2],
+        attention_mask=[1, 1],
+        generated_ids=[3],
+        prompt_token_count=2,
+        generated_token_count=1,
+        raw_completion="hi",
+        model_id="org/model",
+        model_revision="commit-1",
+        tokenizer_revision="commit-1",
+        temperature=0.7,
+        top_p=0.9,
+        effective_alphas={"E": 0.5},
+    )
     sink.log_graph_snapshot(graph)
     sink.log_metrics_snapshot(metrics)
     sink.log_research_fact(fact_log)
@@ -106,9 +130,11 @@ def test_log_sink_flush(tmp_path: Path):
     sink.log_report_grade(report)
     sink.log_probe(probe_log)
     sink.log_behavior_probe(behavior_log)
+    sink.log_inference(inference_event)
     assert sink.action_buffer and sink.graph_buffer and sink.metrics_buffer
     assert sink.research_buffer and sink.citation_buffer and sink.report_grade_buffer
     assert sink.probe_buffer and sink.behavior_probe_buffer
+    assert sink.inference_buffer
     sink.flush(tick=0)
     assert not sink.action_buffer
     assert not sink.graph_buffer
@@ -118,6 +144,7 @@ def test_log_sink_flush(tmp_path: Path):
     assert not sink.report_grade_buffer
     assert not sink.probe_buffer
     assert not sink.behavior_probe_buffer
+    assert not sink.inference_buffer
     graph_dir = tmp_path / "graph_snapshots"
     metrics_dir = tmp_path / "metrics_snapshots"
     research_dir = tmp_path / "research_facts"
@@ -125,9 +152,11 @@ def test_log_sink_flush(tmp_path: Path):
     grades_dir = tmp_path / "report_grades"
     probe_dir = tmp_path / "probe_logs"
     behavior_dir = tmp_path / "behavior_probes"
+    inference_dir = tmp_path / "inference_events"
     assert graph_dir.exists() and metrics_dir.exists()
     assert research_dir.exists() and citation_dir.exists() and grades_dir.exists()
     assert probe_dir.exists() and behavior_dir.exists()
+    assert inference_dir.exists()
     if log_sink_module.pq is not None:
         graph_files = list(graph_dir.glob("*.parquet"))
         metrics_files = list(metrics_dir.glob("*.parquet"))
@@ -136,6 +165,11 @@ def test_log_sink_flush(tmp_path: Path):
         grade_files = list(grades_dir.glob("*.parquet"))
         probe_files = list(probe_dir.glob("*.parquet"))
         behavior_files = list(behavior_dir.glob("*.parquet"))
+        inference_files = list(inference_dir.glob("*.parquet"))
         assert graph_files and metrics_files
         assert fact_files and citation_files and grade_files
         assert probe_files and behavior_files
+        assert inference_files
+        inference_row = log_sink_module.pq.read_table(inference_files[0]).to_pylist()[0]
+        assert inference_row["input_ids"] == "[1, 2]"
+        assert inference_row["effective_alphas"] == '{"E": 0.5}'
