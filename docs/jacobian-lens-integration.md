@@ -188,8 +188,10 @@ The primary trace dataset is long-form Parquet, partitioned by run and trace:
 | `actual_next_token_rank` | Its rank under the readout |
 | `is_actual_next_token` | Convenience indicator |
 
-Full-vocabulary logits are not stored by default. Top-k output is paired with a
-small preregistered token set for hypothesis-driven concept tracking.
+Full-vocabulary logits are not stored by default. The current exporter writes
+top-k output only. Support for a small preregistered token set is a required
+follow-up before confirmatory concept testing; top-k inspection alone is
+exploratory and selection-biased.
 
 ## Replay rules
 
@@ -264,7 +266,66 @@ J-lens output is an approximate token-indexed, first-order readout. It must not
 be described as a verbatim chain of thought or as complete access to the
 model's internal computation.
 
-## Performance strategy
+## Implementation audit and prioritized improvements
+
+### Implemented now
+
+- The simulation captures replay data without importing Jacobian Lens or
+  performing an extra forward pass.
+- Enabled steering fails closed on missing, wrong-model, out-of-range,
+  wrong-width, or hash-mismatched artifacts.
+- A real startup forward verifies a nonzero local residual change at every
+  configured trait/layer hook.
+- Shared-model generation is locked; sampled batches preserve independent
+  per-decision seeds by running sequentially.
+- CAA-only configs omit prompt-derived trait labels.
+- Structured actions are schema-validated. Missing params and empty utterances
+  produce an explicit recorded planner fallback rather than silently mixing
+  model and planner decisions.
+- Replays consume exact token IDs, validate final logits, and export top-k
+  readouts rather than full vocabulary tensors.
+
+### P0 before a confirmatory study
+
+1. Add truly held-out trait evaluation prompts. The current steering harness
+   falls back to its training items, so its quality estimates are optimistic.
+2. Fit a lens that includes every active intervention layer. A three-layer
+   engineering pilot can validate the pipeline but cannot characterize all
+   seven E/A/C injection sites.
+3. Match the numerical condition. The fast simulation config uses NF4 while
+   the primary pilot lens is BF16; either run the research arm in BF16 or fit
+   and report a quantization-matched sensitivity artifact.
+4. Run multiple independently seeded simulations per arm. Actions are nested
+   observations; treating thousands of actions from one world as independent
+   would be pseudoreplication.
+5. Add preregistered token/concept export. Top-k tokens discovered after seeing
+   the traces are useful for hypothesis generation, not confirmatory evidence.
+6. Report planner-fallback rate by arm and exclude or model fallback decisions
+   in the primary action-choice analysis.
+
+### P1 engineering optimizations
+
+1. Batch post-hoc replays by model, sequence length, and condition. The current
+   exporter processes events sequentially for correctness and simplicity.
+2. Stream Parquet row groups instead of retaining all trace rows in memory.
+3. Compute each trait vector's `unembed(J_l @ v_trait)` signature once per lens
+   and cache it; it is model-level, not agent-level.
+4. Shard lens fitting by prompt and merge with `JacobianLens.merge()` for the
+   1,000-sequence artifact, retaining shard hashes and failure recovery.
+5. Add trace-level summary tables so most analyses do not scan long-form top-k
+   rows repeatedly.
+
+### Interpretation limits
+
+- A neutral replay over the observed token path estimates a local mechanistic
+  contrast; it is not the behavior the neutral agent would have generated.
+  Paired live neutral/CAA runs remain necessary for behavioral causal effects.
+- Jacobian Lens is a corpus-averaged first-order approximation. Results should
+  be sensitivity-checked across corpus choice, layer coverage, and lens seed.
+- Cross-agent concept propagation is observational unless communication edges,
+  timing, and randomized interventions are incorporated into the design.
+
+## Performance strategy for the final artifact
 
 - Capture manifests during the simulation; trace post-hoc.
 - Sample ordinary events and always retain probes, safety events, and terminal
