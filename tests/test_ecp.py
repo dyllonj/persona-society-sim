@@ -113,7 +113,7 @@ class _CapturingBackend:
     def __init__(self):
         self.prompt = ""
 
-    def generate(self, prompt, max_new_tokens, alphas):  # noqa: D401 - test stub
+    def generate(self, prompt, max_new_tokens, alphas, **kwargs):  # noqa: D401 - test stub
         self.prompt = prompt
         return GenerationResult("ack", 1, 1)
 

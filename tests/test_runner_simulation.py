@@ -34,7 +34,7 @@ class _StubLanguageBackend(LanguageBackend):
     def __init__(self):
         super().__init__(temperature=0.1, top_p=0.95)
 
-    def generate(self, prompt, max_new_tokens, alphas):  # pragma: no cover - stub
+    def generate(self, prompt, max_new_tokens, alphas, **kwargs):  # pragma: no cover - stub
         return GenerationResult("ack", 1, 1)
 
     def layers_used(self):  # pragma: no cover - stub

@@ -49,6 +49,7 @@ class MsgLog(BaseModel):
     top_p: float
     steering_snapshot: Dict[str, float]
     layers_used: List[int]
+    steering_applied: bool = False
 
 
 class ActionLog(BaseModel):
@@ -65,6 +66,38 @@ class ActionLog(BaseModel):
     plan_metadata: Dict[str, Any] = Field(default_factory=dict)
     reflection_summary: Optional[str] = None
     reflection_implications: List[str] = Field(default_factory=list)
+
+
+class InferenceEvent(BaseModel):
+    """Replay-complete record of one model generation."""
+
+    trace_id: str
+    schema_version: str = "1.0"
+    run_id: str
+    tick: int
+    agent_id: str
+    action_id: str
+    cognitive_phase: str = "action_generation"
+    capture_reason: str
+    prompt_hash: str
+    prompt_text: Optional[str] = None
+    input_ids: List[int] = Field(default_factory=list)
+    attention_mask: List[int] = Field(default_factory=list)
+    generated_ids: List[int] = Field(default_factory=list)
+    raw_completion: str = ""
+    model_id: str
+    model_revision: Optional[str] = None
+    tokenizer_revision: Optional[str] = None
+    inference_dtype: Optional[str] = None
+    quantization: Optional[str] = None
+    do_sample: bool = False
+    temperature: float
+    top_p: float
+    sampling_seed: Optional[int] = None
+    effective_alphas: Dict[str, float] = Field(default_factory=dict)
+    steering_applied: bool = False
+    steering_vector_ids: Dict[str, str] = Field(default_factory=dict)
+    steering_vector_hashes: Dict[str, Dict[str, str]] = Field(default_factory=dict)
 
 
 class EconTxn(BaseModel):

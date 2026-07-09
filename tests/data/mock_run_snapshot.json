@@ -20,6 +20,7 @@
                     }
                 ],
                 "utterance": "[mock tokens=16] Persona[A:+0.22, C:+0.25, E:-0.00, N:-0.15, O:+0.04] responds to: agent-000's response:",
+                "steering_applied": false,
                 "steering_snapshot": {
                     "E": -0.00481414916324345,
                     "A": 0.21769169011838074,
@@ -61,6 +62,7 @@
                     }
                 ],
                 "utterance": "[mock tokens=16] Persona[A:+0.19, C:+0.32, E:+0.26, N:-0.11, O:-0.12] responds to: agent-001's response:",
+                "steering_applied": false,
                 "steering_snapshot": {
                     "E": 0.2635273600741299,
                     "A": 0.18769293504760864,
@@ -102,6 +104,7 @@
                     }
                 ],
                 "utterance": "[mock tokens=16] Persona[A:+0.22, C:+0.25, E:-0.00, N:-0.15, O:+0.04] responds to: agent-000's response:",
+                "steering_applied": false,
                 "steering_snapshot": {
                     "E": -0.00481414916324345,
                     "A": 0.21769169011838074,
@@ -143,6 +146,7 @@
                     }
                 ],
                 "utterance": "[mock tokens=16] Persona[A:+0.19, C:+0.32, E:+0.26, N:-0.11, O:-0.12] responds to: agent-001's response:",
+                "steering_applied": false,
                 "steering_snapshot": {
                     "E": 0.2635273600741299,
                     "A": 0.18769293504760864,
@@ -173,6 +177,7 @@
             "info": {
                 "doc_id": "doc_alpha",
                 "utterance": "[mock tokens=16] Persona[A:+0.22, C:+0.25, E:-0.00, N:-0.15, O:+0.04] responds to: agent-000's response:",
+                "steering_applied": false,
                 "steering_snapshot": {
                     "E": -0.00481414916324345,
                     "A": 0.21769169011838074,
@@ -203,6 +208,7 @@
             "info": {
                 "doc_id": "doc_alpha",
                 "utterance": "[mock tokens=16] Persona[A:+0.19, C:+0.32, E:+0.26, N:-0.11, O:-0.12] responds to: agent-001's response:",
+                "steering_applied": false,
                 "steering_snapshot": {
                     "E": 0.2635273600741299,
                     "A": 0.18769293504760864,

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import random
 from datetime import datetime
@@ -126,7 +127,11 @@ def _load_metadata_file(path_value: Optional[str], *, config_dir: Optional[Path]
         data = yaml.safe_load(candidate.read_text())
     except Exception:
         return {}
-    return data if isinstance(data, dict) else {}
+    if not isinstance(data, dict):
+        return {}
+    data = dict(data)
+    data["__source_dir__"] = str(candidate.parent.resolve())
+    return data
 
 
 def sample_persona(base: Dict[str, float], rng: random.Random, jitter: float = 0.2) -> PersonaCoeffs:
@@ -196,22 +201,64 @@ def _steering_coefficients(steering_cfg: Dict[str, Any]) -> Dict[str, float]:
     return legacy
 
 
+def _active_steering_traits(
+    steering_cfg: Dict[str, Any], vector_metadata: Dict[str, Any]
+) -> List[str]:
+    """Return the traits that must have real activation artifacts."""
+
+    explicit = steering_cfg.get("active_traits")
+    if explicit is not None:
+        if not isinstance(explicit, list) or not explicit:
+            raise ValueError("steering.active_traits must be a non-empty list")
+        return [str(trait).upper() for trait in explicit]
+    metadata_traits = vector_metadata.get("traits") or {}
+    if isinstance(metadata_traits, dict) and metadata_traits:
+        return [str(trait).upper() for trait in metadata_traits]
+    coefficients = _steering_coefficients(steering_cfg)
+    active = [trait for trait, value in coefficients.items() if abs(value) > 0.0]
+    if not active:
+        raise ValueError(
+            "Steering is enabled but no active traits are declared in metadata, "
+            "steering.active_traits, or non-zero coefficients"
+        )
+    return active
+
+
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 def load_trait_vectors(
     traits: List[str],
     vector_dir: Path,
     vector_metadata: Optional[Dict[str, Any]] = None,
-) -> Tuple[Dict[str, Dict[int, np.ndarray]], Dict[str, Dict[int, float]]]:
+    *,
+    strict: bool = True,
+) -> Tuple[
+    Dict[str, Dict[int, np.ndarray]],
+    Dict[str, Dict[int, float]],
+    Dict[str, Dict[str, Any]],
+]:
     if np is None:
         raise ModuleNotFoundError("numpy is required to load trait vectors")
     metadata_cfg = vector_metadata or {}
     vector_root = Path(metadata_cfg.get("vector_root") or vector_dir)
+    if not vector_root.is_absolute():
+        source_dir = Path(metadata_cfg.get("__source_dir__") or Path.cwd())
+        vector_root = (source_dir / vector_root).resolve()
     defaults = metadata_cfg.get("defaults") or {}
     default_layers = defaults.get("layers")
     trait_overrides = metadata_cfg.get("traits") or {}
     store = VectorStore(vector_root)
     trait_vectors: Dict[str, Dict[int, np.ndarray]] = {}
     norms: Dict[str, Dict[int, float]] = {}
+    artifacts: Dict[str, Dict[str, Any]] = {}
     fallback_traits: List[str] = []
+    load_errors: Dict[str, str] = {}
     for trait in traits:
         override = (
             trait_overrides.get(trait)
@@ -224,8 +271,9 @@ def load_trait_vectors(
             layers = default_layers
         try:
             bundle = store.load(vector_store_id or trait, layers=layers)
-        except Exception:
+        except Exception as exc:
             fallback_traits.append(trait)
+            load_errors[trait] = str(exc)
             continue
         override_polarity = override.get("polarity") if override and "polarity" in override else None
         trait_vectors[trait] = bundle.calibrated_vectors(override_polarity)
@@ -236,14 +284,34 @@ def load_trait_vectors(
                 layer_norms[layer_id] = float(norm_val)
         if layer_norms:
             norms[trait] = layer_norms
+        artifacts[trait] = {
+            **bundle.metadata,
+            "vector_store_id": bundle.vector_store_id,
+            "loaded_layers": sorted(bundle.vectors),
+            "vector_hashes": {
+                str(layer): digest for layer, digest in bundle.vector_hashes.items()
+            },
+            "vector_root": str(vector_root),
+        }
     if fallback_traits:
-        legacy_vectors, legacy_norms = _load_vectors_from_meta_files(
+        legacy_vectors, legacy_norms, legacy_artifacts = _load_vectors_from_meta_files(
             fallback_traits, vector_root
         )
         trait_vectors.update(legacy_vectors)
+        artifacts.update(legacy_artifacts)
         for trait, per_layer in legacy_norms.items():
             norms.setdefault(trait, {}).update(per_layer)
-    return trait_vectors, norms
+    missing = [trait for trait in traits if trait not in trait_vectors]
+    if strict and missing:
+        detail = "; ".join(
+            f"{trait}: {load_errors.get(trait, 'no usable metadata or vector file')}"
+            for trait in missing
+        )
+        raise ValueError(
+            "Steering is enabled but required vector artifacts failed to load: "
+            f"{detail}. Vector root: {vector_root}"
+        )
+    return trait_vectors, norms, artifacts
 
 
 def shuffle_trait_vectors(
@@ -275,9 +343,15 @@ def shuffle_trait_vectors(
 
 def _load_vectors_from_meta_files(
     traits: List[str], vector_dir: Path
-) -> Tuple[Dict[str, Dict[int, np.ndarray]], Dict[str, Dict[int, float]]]:
+) -> Tuple[
+    Dict[str, Dict[int, np.ndarray]],
+    Dict[str, Dict[int, float]],
+    Dict[str, Dict[str, Any]],
+]:
     store: Dict[str, Dict[int, np.ndarray]] = {}
     norms: Dict[str, Dict[int, float]] = {}
+    artifacts: Dict[str, Dict[str, Any]] = {}
+    vector_store = VectorStore(vector_dir)
     for trait in traits:
         meta_path = vector_dir / f"{trait}.meta.json"
         if not meta_path.exists():
@@ -302,12 +376,9 @@ def _load_vectors_from_meta_files(
             vector_path_value = entry.get("vector_path")
             if not vector_path_value:
                 continue
-            vec_path = Path(vector_path_value)
-            if not vec_path.exists():
-                candidate = (meta_path.parent / vec_path).resolve()
-                if candidate.exists():
-                    vec_path = candidate
-            if not vec_path.exists():
+            try:
+                vec_path = vector_store.resolve_vector_path(vector_path_value)
+            except FileNotFoundError:
                 continue
             vector = np.load(vec_path, allow_pickle=False)
             norm = np.linalg.norm(vector)
@@ -318,7 +389,22 @@ def _load_vectors_from_meta_files(
             per_layer[layer_id] = vector.astype(np.float32)
         if per_layer:
             store[trait] = per_layer
-    return store, norms
+            artifacts[trait] = {
+                **metadata,
+                "vector_store_id": metadata.get("vector_store_id") or trait,
+                "loaded_layers": sorted(per_layer),
+                "vector_root": str(vector_dir.resolve()),
+                "legacy_fallback": True,
+            }
+            # Legacy manifests did not carry hashes. The store loader computes
+            # them for indexed artifacts; fallback files are hashed directly.
+            artifacts[trait]["vector_hashes"] = {
+                str(layer): _sha256_file(
+                    vector_store.resolve_vector_path(layer_entries[layer]["vector_path"])
+                )
+                for layer in per_layer
+            }
+    return store, norms, artifacts
 
 
 def build_language_backend(
@@ -329,11 +415,13 @@ def build_language_backend(
     use_gemini: bool = False,
     *,
     suppress_alphas: bool = False,
+    vector_artifacts: Optional[Dict[str, Dict[str, Any]]] = None,
 ) -> LanguageBackend:
     inference = config.get("inference", {})
     optimization = config.get("optimization", {})
     temperature = inference.get("temperature", 0.7)
     top_p = inference.get("top_p", 0.9)
+    do_sample = bool(inference.get("do_sample", False))
     use_quantization = optimization.get("use_quantization", False)
     steering_cfg = config.get("steering", {})
     alpha_strength = steering_cfg.get("strength", 1.0)
@@ -353,6 +441,7 @@ def build_language_backend(
             alpha_strength=alpha_strength,
             per_trait_strength=per_trait_strength,
             suppress_alphas=suppress_alphas,
+            do_sample=do_sample,
         )
     
     if use_gemini:
@@ -364,6 +453,7 @@ def build_language_backend(
             top_p=top_p,
             alpha_strength=alpha_strength,
             suppress_alphas=suppress_alphas,
+            do_sample=do_sample,
         )
 
     torch_vectors = {
@@ -374,6 +464,7 @@ def build_language_backend(
         model_name=config["model_name"],
         trait_vectors=torch_vectors,
         vector_norms=vector_norms,
+        vector_artifacts=vector_artifacts,
         temperature=temperature,
         top_p=top_p,
         use_quantization=use_quantization,
@@ -383,6 +474,9 @@ def build_language_backend(
         max_cpu_memory_gb=max_cpu_memory,
         offload_folder=offload_folder,
         suppress_alphas=suppress_alphas,
+        model_revision=config.get("model_revision"),
+        tokenizer_revision=config.get("tokenizer_revision"),
+        do_sample=do_sample,
     )
 
 
@@ -475,6 +569,7 @@ def build_agents(
             max_new_tokens=max_tokens,
             reflect_every_n_ticks=reflect_every_n,
             suppress_alphas=suppress_alphas,
+            sampling_seed_base=config.get("seed", 7),
         )
         agents.append(agent)
     return agents
@@ -681,20 +776,28 @@ def main() -> None:
     vector_norms: Dict[str, Dict[int, float]] = {}
     shuffle_mapping: Dict[str, str] = {}
     vector_metadata: Dict[str, Any] = {}
+    vector_artifacts: Dict[str, Dict[str, Any]] = {}
     if steering_enabled:
         vector_metadata = _load_metadata_file(
             metadata_files.get("vectors"), config_dir=args.config.parent
         )
-        trait_vectors, vector_norms = load_trait_vectors(
-            list(steering_base.keys() or TRAIT_KEYS),
+        active_traits = _active_steering_traits(steering_cfg, vector_metadata)
+        trait_vectors, vector_norms, vector_artifacts = load_trait_vectors(
+            active_traits,
             args.vector_dir,
             vector_metadata=vector_metadata,
+            strict=True,
         )
         if steering_mode == "placebo":
             rng = random.Random(config.get("seed", 7))
             trait_vectors, vector_norms, shuffle_mapping = shuffle_trait_vectors(
                 trait_vectors, vector_norms, rng
             )
+            vector_artifacts = {
+                trait: dict(vector_artifacts[source])
+                for trait, source in shuffle_mapping.items()
+                if source in vector_artifacts
+            }
     safety_cfg = config.get("safety", {})
     safety = SafetyGovernor(
         SafetyConfig(
@@ -711,7 +814,13 @@ def main() -> None:
         mock=args.mock_model,
         use_gemini=args.gemini,
         suppress_alphas=not steering_enabled,
+        vector_artifacts=vector_artifacts,
     )
+    if isinstance(backend, HFBackend) and args.decision_workers > 1:
+        raise ValueError(
+            "--decision-workers > 1 is unsafe for one shared HF model and steering "
+            "controller. Use one worker or wire true generate_batch() scheduling."
+        )
     world = World()
     world.configure_environment(args.env, args.difficulty)
     scheduler = Scheduler(world, seed=config.get("seed", 7))
@@ -818,6 +927,7 @@ def main() -> None:
                 else None
             ),
             batch_decisions_per_encounter=args.batch_decisions_per_encounter,
+            interpretability_config=config.get("interpretability"),
         )
         runner.run(config.get("steps", 200), max_events_per_tick=max_events)
 

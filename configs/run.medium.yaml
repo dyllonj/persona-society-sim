@@ -1,11 +1,12 @@
 template: run.fast.yaml
 run_id: "study100"
-model_name: "meta-llama/Llama-3-70b-instruct"
+model_name: "Qwen/Qwen2.5-32B-Instruct"
 population: 100
 steps: 500
 seed: 42
 steering:
   enabled: true
+  active_traits: [E, A, C]
   strength: 1.0
   per_trait_strength:
     fallback: 1.0  # per-trait alpha multiplier; missing traits use this fallback
@@ -41,9 +42,14 @@ safety:
   toxicity_threshold: 0.35
   governor_backoff: 0.15
 inference:
+  do_sample: true
   temperature: 0.65
   top_p: 0.92
   max_new_tokens: 160
+interpretability:
+  enabled: true
+  sample_rate: 0.05
+  include_prompt_text: false
 optimization:
   reflect_every_n_ticks: 10  # Reflect every 10 ticks for better planning
   mind_wander_probability: 0.05  # Inject a rare low-relevance memory on a seeded 5% retrieval cadence

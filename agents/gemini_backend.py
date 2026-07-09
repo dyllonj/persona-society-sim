@@ -21,12 +21,14 @@ class GeminiBackend(LanguageBackend):
         top_p: float = 0.9,
         alpha_strength: float = 1.0,
         suppress_alphas: bool = False,
+        do_sample: bool = True,
     ):
         super().__init__(
             temperature=temperature,
             top_p=top_p,
             alpha_strength=alpha_strength,
             suppress_alphas=suppress_alphas,
+            do_sample=do_sample,
         )
         
         self.api_key = api_key or os.environ.get("GEMINI_API_KEY")
@@ -34,9 +36,17 @@ class GeminiBackend(LanguageBackend):
             raise ValueError("GEMINI_API_KEY not found in environment or arguments.")
             
         genai.configure(api_key=self.api_key)
+        self.model_name = model_name
         self.model = genai.GenerativeModel(model_name)
         
-    def generate(self, prompt: str, max_new_tokens: int, alphas: Dict[str, float]) -> GenerationResult:
+    def generate(
+        self,
+        prompt: str,
+        max_new_tokens: int,
+        alphas: Dict[str, float],
+        *,
+        sampling_seed: Optional[int] = None,
+    ) -> GenerationResult:
         """
         Generate text using Gemini.
         Steering is applied by prepending system instructions derived from 'alphas'.
@@ -79,12 +89,29 @@ class GeminiBackend(LanguageBackend):
                 tokens_in = response.usage_metadata.prompt_token_count
                 tokens_out = response.usage_metadata.candidates_token_count
             
-            return GenerationResult(text=text, tokens_in=tokens_in, tokens_out=tokens_out)
+            return GenerationResult(
+                text=text,
+                tokens_in=tokens_in,
+                tokens_out=tokens_out,
+                effective_alphas=scaled_alphas,
+                steering_applied=bool(steering_prompt),
+                model_id=self.model_name,
+                do_sample=self.do_sample,
+                sampling_seed=None,
+            )
             
         except Exception as e:
             # Fallback or error handling
             print(f"Gemini generation error: {e}")
-            return GenerationResult(text=f"[Error: {e}]", tokens_in=0, tokens_out=0)
+            return GenerationResult(
+                text=f"[Error: {e}]",
+                tokens_in=0,
+                tokens_out=0,
+                effective_alphas=scaled_alphas,
+                steering_applied=False,
+                model_id=self.model_name,
+                do_sample=self.do_sample,
+            )
 
     def generate_batch(self, requests: List[BatchGenerationRequest]) -> List[GenerationResult]:
         """
@@ -94,7 +121,12 @@ class GeminiBackend(LanguageBackend):
         """
         results = []
         for req in requests:
-            res = self.generate(req.prompt, req.max_new_tokens, req.alphas)
+            res = self.generate(
+                req.prompt,
+                req.max_new_tokens,
+                req.alphas,
+                sampling_seed=req.sampling_seed,
+            )
             results.append(res)
         return results
 

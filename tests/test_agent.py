@@ -42,7 +42,7 @@ class StubLanguageBackend:
     def __init__(self, text: str = "ok"):
         self.text = text
 
-    def generate(self, prompt, max_new_tokens, alphas):  # noqa: D401 - stub
+    def generate(self, prompt, max_new_tokens, alphas, **kwargs):  # noqa: D401 - stub
         return GenerationResult(self.text, 10, 12)
 
     def layers_used(self):  # noqa: D401 - stub

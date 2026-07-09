@@ -30,6 +30,7 @@ class SteeringConfig(BaseModel):
     coefficients: Dict[str, float] = Field(default_factory=dict)
     vector_norm: Dict[str, float] = Field(default_factory=dict)
     metadata_files: SteeringMetadataFiles = Field(default_factory=SteeringMetadataFiles)
+    active_traits: list[str] = Field(default_factory=list)
 
 
 class LoggingConfig(BaseModel):
@@ -44,9 +45,16 @@ class RunSafetyConfig(BaseModel):
 
 
 class InferenceConfig(BaseModel):
+    do_sample: bool = False
     temperature: float = 0.7
     top_p: float = 0.9
     max_new_tokens: int = 120
+
+
+class InterpretabilityConfig(BaseModel):
+    enabled: bool = False
+    sample_rate: float = 0.0
+    include_prompt_text: bool = False
 
 
 class OptimizationConfig(BaseModel):
@@ -76,6 +84,7 @@ class RunConfig(BaseModel):
     logging: Optional[LoggingConfig] = None
     safety: Optional[RunSafetyConfig] = None
     inference: Optional[InferenceConfig] = None
+    interpretability: Optional[InterpretabilityConfig] = None
     optimization: Optional[OptimizationConfig] = None
     objectives: Optional[ObjectivesConfig] = None
     probes: Optional[Dict[str, Any]] = None

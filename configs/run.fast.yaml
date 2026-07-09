@@ -1,11 +1,12 @@
 run_id: "fast_test"
 git_commit: "local"
-model_name: "meta-llama/Llama-3.1-8B-Instruct"
+model_name: "Qwen/Qwen2.5-32B-Instruct"
 population: 32
 steps: 200
 seed: 7
 max_events_per_tick: 12
 steering:
+  active_traits: [E, A, C]
   strength: 1.0  # global alpha multiplier used by steering hooks and eval harness
   per_trait_strength:
     fallback: 1.0  # per-trait alpha multiplier; missing traits use this fallback
@@ -41,9 +42,14 @@ safety:
   toxicity_threshold: 0.4
   governor_backoff: 0.2
 inference:
+  do_sample: true
   temperature: 0.7
   top_p: 0.9
   max_new_tokens: 48  # Reduced from 128 to 48 (3x faster)
+interpretability:
+  enabled: true
+  sample_rate: 0.05
+  include_prompt_text: false
 optimization:
   reflect_every_n_ticks: 5  # Only reflect every 5 ticks instead of every tick
   mind_wander_probability: 0.05  # Inject a rare low-relevance memory on a seeded 5% retrieval cadence

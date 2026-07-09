@@ -74,3 +74,45 @@ def test_batched_matches_sequential_outputs():
     controller.remove()
 
     assert torch.allclose(sequential, batched)
+
+
+def test_prompt_mask_steers_only_continuation_positions():
+    model = DummyModel()
+    hidden = torch.zeros(1, 4, 4)
+    controller = SteeringController(model, {"E": {0: torch.ones(4)}})
+    controller.register()
+    controller.set_alphas(
+        {"E": 1.0}, prompt_mask=torch.tensor([True, True, False, False])
+    )
+
+    out = model(inputs_embeds=hidden)
+
+    controller.remove()
+    assert torch.allclose(out[:, :2], torch.zeros(1, 2, 4))
+    assert torch.allclose(out[:, 2:], torch.ones(1, 2, 4))
+
+
+def test_batched_prompt_masks_support_different_padding_layouts():
+    model = DummyModel()
+    hidden = torch.zeros(2, 4, 4)
+    controller = SteeringController(model, {"E": {0: torch.ones(4)}})
+    controller.register()
+    controller.set_batched_alphas(
+        [{"E": 1.0}, {"E": 2.0}],
+        prompt_masks=torch.tensor(
+            [
+                [True, True, False, False],
+                [True, False, True, False],
+            ]
+        ),
+    )
+
+    out = model(inputs_embeds=hidden)
+
+    controller.remove()
+    assert torch.allclose(out[0, :2], torch.zeros(2, 4))
+    assert torch.allclose(out[0, 2:], torch.ones(2, 4))
+    assert torch.allclose(out[1, 0], torch.zeros(4))
+    assert torch.allclose(out[1, 1], torch.full((4,), 2.0))
+    assert torch.allclose(out[1, 2], torch.zeros(4))
+    assert torch.allclose(out[1, 3], torch.full((4,), 2.0))

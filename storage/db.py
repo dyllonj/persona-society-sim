@@ -56,7 +56,8 @@ CREATE TABLE IF NOT EXISTS msg_log (
   temperature FLOAT,
   top_p FLOAT,
   steering_snapshot JSONB,
-  layers_used INT[]
+  layers_used INT[],
+  steering_applied BOOLEAN DEFAULT FALSE
 );
 CREATE TABLE IF NOT EXISTS action_log (
   action_id TEXT PRIMARY KEY,
@@ -72,6 +73,35 @@ CREATE TABLE IF NOT EXISTS action_log (
   plan_metadata JSONB,
   reflection_summary TEXT,
   reflection_implications JSONB
+);
+CREATE TABLE IF NOT EXISTS inference_event (
+  trace_id TEXT PRIMARY KEY,
+  schema_version TEXT,
+  run_id TEXT,
+  tick INT,
+  agent_id TEXT,
+  action_id TEXT,
+  cognitive_phase TEXT,
+  capture_reason TEXT,
+  prompt_hash TEXT,
+  prompt_text TEXT,
+  input_ids JSONB,
+  attention_mask JSONB,
+  generated_ids JSONB,
+  raw_completion TEXT,
+  model_id TEXT,
+  model_revision TEXT,
+  tokenizer_revision TEXT,
+  inference_dtype TEXT,
+  quantization TEXT,
+  do_sample BOOLEAN,
+  temperature FLOAT,
+  top_p FLOAT,
+  sampling_seed BIGINT,
+  effective_alphas JSONB,
+  steering_applied BOOLEAN,
+  steering_vector_ids JSONB,
+  steering_vector_hashes JSONB
 );
 CREATE TABLE IF NOT EXISTS econ_txn (
   txn_id TEXT PRIMARY KEY,
@@ -256,6 +286,9 @@ class Database:
         """Add columns introduced after older SQLite/Postgres DBs were created."""
 
         migrations = {
+            "msg_log": {
+                "steering_applied": "BOOLEAN DEFAULT FALSE",
+            },
             "metrics_snapshot": {
                 "action_type_entropy": "FLOAT DEFAULT 0.0",
                 "population_trait_variance": "FLOAT DEFAULT 0.0",

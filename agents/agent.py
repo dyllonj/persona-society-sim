@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field as dataclass_field
 from typing import Dict, List, Optional, TYPE_CHECKING, Sequence, Tuple
 
 from agents.language_backend import GenerationResult, LanguageBackend
@@ -45,6 +45,22 @@ class ActionDecision:
     plan_metadata: Dict[str, object]
     reflection_summary: Optional[str]
     reflection_implications: List[str]
+    steering_applied: bool = False
+    input_ids: List[int] = dataclass_field(default_factory=list)
+    attention_mask: List[int] = dataclass_field(default_factory=list)
+    generated_ids: List[int] = dataclass_field(default_factory=list)
+    raw_completion: str = ""
+    model_id: Optional[str] = None
+    model_revision: Optional[str] = None
+    tokenizer_revision: Optional[str] = None
+    inference_dtype: Optional[str] = None
+    quantization: Optional[str] = None
+    do_sample: Optional[bool] = None
+    sampling_seed: Optional[int] = None
+    steering_vector_ids: Dict[str, str] = dataclass_field(default_factory=dict)
+    steering_vector_hashes: Dict[str, Dict[str, str]] = dataclass_field(
+        default_factory=dict
+    )
     probe_id: Optional[str] = None
     probe_kind: Optional[str] = None
 
@@ -62,6 +78,7 @@ class Agent:
         max_new_tokens: int = 120,
         reflect_every_n_ticks: int = 1,
         suppress_alphas: bool = False,
+        sampling_seed_base: int = 0,
     ):
         self.run_id = run_id
         self.state = state
@@ -73,6 +90,7 @@ class Agent:
         self.max_new_tokens = max_new_tokens
         self.reflect_every_n_ticks = reflect_every_n_ticks
         self._suppress_alphas = suppress_alphas
+        self._sampling_seed_base = int(sampling_seed_base)
         self._last_plan_suggestion: Optional[PlanSuggestion] = None
         self._last_reflection: Optional[Tuple[str, List[str]]] = None
         self._last_recalled_dialogue_lines: List[str] = []
@@ -439,8 +457,23 @@ class Agent:
             f"{agent_name}'s response:"
         )
 
-    def generate(self, prompt: str, alphas: Dict[str, float]) -> GenerationResult:
-        return self.language_backend.generate(prompt, self.max_new_tokens, alphas)
+    def generate(
+        self, prompt: str, alphas: Dict[str, float], *, sampling_seed: int
+    ) -> GenerationResult:
+        return self.language_backend.generate(
+            prompt,
+            self.max_new_tokens,
+            alphas,
+            sampling_seed=sampling_seed,
+        )
+
+    def _sampling_seed(self, tick: int, prompt_hash: str) -> int:
+        material = (
+            f"{self._sampling_seed_base}:{self.run_id}:{tick}:"
+            f"{self.state.agent_id}:{prompt_hash}"
+        )
+        digest = hashlib.sha256(material.encode("utf-8")).digest()
+        return int.from_bytes(digest[:8], "big") % (2**63 - 1)
 
     def act(
         self,
@@ -504,7 +537,12 @@ class Agent:
         )
         prompt_hash = hashlib.sha256(prompt.encode("utf-8")).hexdigest()
         alphas = self.persona_alphas()
-        generation = self.generate(prompt, alphas)
+        generation = self.generate(
+            prompt,
+            alphas,
+            sampling_seed=self._sampling_seed(tick, prompt_hash),
+        )
+        effective_alphas = generation.effective_alphas or alphas
         cleaned_text = sanitize_agent_output(generation.text)
         # Fallback if cleaning removed everything
         if not cleaned_text:
@@ -514,7 +552,7 @@ class Agent:
             agent_id=self.state.agent_id,
             text=generation.text,
             tick=tick,
-            current_alphas=alphas,
+            current_alphas=effective_alphas,
         )
         if safety_event:
             self.apply_alpha_delta(safety_event.applied_alpha_delta)
@@ -531,10 +569,27 @@ class Agent:
             prompt_hash=prompt_hash,
             tokens_in=generation.tokens_in,
             tokens_out=generation.tokens_out,
-            steering_snapshot=alphas,
+            steering_snapshot=effective_alphas,
             layers_used=self.language_backend.layers_used(),
             safety_event=safety_event,
             plan_metadata=plan_metadata,
             reflection_summary=cached_reflection[0],
             reflection_implications=list(cached_reflection[1]),
+            steering_applied=generation.steering_applied,
+            input_ids=list(generation.input_ids),
+            attention_mask=list(generation.attention_mask),
+            generated_ids=list(generation.generated_ids),
+            raw_completion=generation.text,
+            model_id=generation.model_id,
+            model_revision=generation.model_revision,
+            tokenizer_revision=generation.tokenizer_revision,
+            inference_dtype=generation.dtype,
+            quantization=generation.quantization,
+            do_sample=generation.do_sample,
+            sampling_seed=generation.sampling_seed,
+            steering_vector_ids=dict(generation.steering_vector_ids),
+            steering_vector_hashes={
+                trait: dict(layer_hashes)
+                for trait, layer_hashes in generation.steering_vector_hashes.items()
+            },
         )

@@ -29,6 +29,7 @@ from orchestrator.cli import (
     load_trait_vectors,
     shuffle_trait_vectors,
     _load_metadata_file,
+    _active_steering_traits,
     _steering_coefficients,
 )
 from orchestrator.console_logger import ConsoleLogger
@@ -94,18 +95,25 @@ def _prepare_runner(
     vector_metadata = _load_metadata_file(metadata_files.get("vectors"), config_dir=config_path.parent)
     trait_vectors: Dict[str, Dict[int, np.ndarray]] = {}
     vector_norms: Dict[str, Dict[int, float]] = {}
+    vector_artifacts: Dict[str, Dict[str, Any]] = {}
     shuffle_mapping: Mapping[str, str] = {}
     if steering_enabled:
-        trait_vectors, vector_norms = load_trait_vectors(
-            list(steering_base.keys() or TRAIT_KEYS),
+        trait_vectors, vector_norms, vector_artifacts = load_trait_vectors(
+            _active_steering_traits(steering_cfg, vector_metadata),
             vector_dir,
             vector_metadata=vector_metadata,
+            strict=True,
         )
         if steering_mode == "placebo":
             rng = random.Random(placebo_seed)
             trait_vectors, vector_norms, shuffle_mapping = shuffle_trait_vectors(
                 trait_vectors, vector_norms, rng
             )
+            vector_artifacts = {
+                trait: dict(vector_artifacts[source])
+                for trait, source in shuffle_mapping.items()
+                if source in vector_artifacts
+            }
     safety_cfg = config.get("safety", {})
     safety = SafetyGovernor(
         SafetyConfig(
@@ -122,6 +130,7 @@ def _prepare_runner(
         vector_norms,
         mock=config.get("mock_model", False),
         suppress_alphas=not steering_enabled,
+        vector_artifacts=vector_artifacts,
     )
 
     agents = build_agents(

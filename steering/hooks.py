@@ -49,46 +49,85 @@ class SteeringController:
         self.enabled = True
         self._batched_alphas: Optional[List[Dict[str, float]]] = None
         self._batched_cache: Dict[int, torch.Tensor] = {}
-        self._prompt_length: Optional[int] = None
-        self._batched_prompt_lengths: Optional[List[int]] = None
+        self._prompt_mask: Optional[torch.Tensor] = None
+        self._batched_prompt_masks: Optional[torch.Tensor] = None
         self._prompt_hook_calls_remaining = 0
         self._batched_prompt_hook_calls_remaining = 0
 
-    def set_alphas(self, alphas: Dict[str, float], prompt_length: Optional[int] = None) -> None:
+    def set_alphas(
+        self,
+        alphas: Dict[str, float],
+        prompt_length: Optional[int] = None,
+        *,
+        prompt_mask: Optional[torch.Tensor] = None,
+    ) -> None:
+        if prompt_length is not None and prompt_mask is not None:
+            raise ValueError("pass prompt_length or prompt_mask, not both")
         self._batched_alphas = None
         self._batched_cache.clear()
-        self._prompt_length = prompt_length
-        self._batched_prompt_lengths = None
+        if prompt_mask is not None:
+            normalized_mask = torch.as_tensor(prompt_mask, dtype=torch.bool).flatten()
+        elif prompt_length:
+            normalized_mask = torch.ones(int(prompt_length), dtype=torch.bool)
+        else:
+            normalized_mask = None
+        self._prompt_mask = normalized_mask
+        self._batched_prompt_masks = None
         self._batched_prompt_hook_calls_remaining = 0
-        self._prompt_hook_calls_remaining = len(self.needed_layers) if prompt_length else 0
+        self._prompt_hook_calls_remaining = (
+            len(self.needed_layers) if normalized_mask is not None else 0
+        )
         self.alphas.update(alphas)
 
     def set_batched_alphas(
-        self, batched_alphas: List[Dict[str, float]], prompt_lengths: Optional[List[int]] = None
+        self,
+        batched_alphas: List[Dict[str, float]],
+        prompt_lengths: Optional[List[int]] = None,
+        *,
+        prompt_masks: Optional[torch.Tensor] = None,
     ) -> None:
         """Use a different steering vector per batch element."""
 
+        if prompt_lengths is not None and prompt_masks is not None:
+            raise ValueError("pass prompt_lengths or prompt_masks, not both")
         if prompt_lengths is not None and len(prompt_lengths) != len(batched_alphas):
             raise ValueError("prompt_lengths must match the number of batched alpha sets")
+        normalized_masks: Optional[torch.Tensor]
+        if prompt_masks is not None:
+            normalized_masks = torch.as_tensor(prompt_masks, dtype=torch.bool)
+            if normalized_masks.ndim != 2 or normalized_masks.shape[0] != len(
+                batched_alphas
+            ):
+                raise ValueError(
+                    "prompt_masks must have shape [len(batched_alphas), sequence]"
+                )
+        elif prompt_lengths is not None:
+            max_length = max(prompt_lengths, default=0)
+            normalized_masks = torch.zeros(
+                (len(prompt_lengths), max_length), dtype=torch.bool
+            )
+            for idx, length in enumerate(prompt_lengths):
+                normalized_masks[idx, : max(0, int(length))] = True
+        else:
+            normalized_masks = None
         self._batched_alphas = batched_alphas
         self._batched_cache.clear()
-        self._prompt_length = None
-        self._batched_prompt_lengths = list(prompt_lengths) if prompt_lengths is not None else None
-        has_prompt_lengths = bool(self._batched_prompt_lengths) and any(
-            length > 0 for length in (self._batched_prompt_lengths or [])
+        self._prompt_mask = None
+        self._batched_prompt_masks = normalized_masks
+        self._batched_prompt_hook_calls_remaining = (
+            len(self.needed_layers) if normalized_masks is not None else 0
         )
-        self._batched_prompt_hook_calls_remaining = len(self.needed_layers) if has_prompt_lengths else 0
         self._prompt_hook_calls_remaining = 0
 
     def clear_batched_alphas(self) -> None:
         self._batched_alphas = None
         self._batched_cache.clear()
-        self._batched_prompt_lengths = None
+        self._batched_prompt_masks = None
         self._batched_prompt_hook_calls_remaining = 0
 
     def clear_prompt_metadata(self) -> None:
-        self._prompt_length = None
-        self._batched_prompt_lengths = None
+        self._prompt_mask = None
+        self._batched_prompt_masks = None
         self._prompt_hook_calls_remaining = 0
         self._batched_prompt_hook_calls_remaining = 0
 
@@ -160,19 +199,21 @@ class SteeringController:
         return base + delta
 
     def _build_unbatched_mask(self, base: torch.Tensor) -> Optional[torch.Tensor]:
-        if self._prompt_length is None or self._prompt_hook_calls_remaining == 0:
+        if self._prompt_mask is None or self._prompt_hook_calls_remaining == 0:
             return None
         seq_dim = 1 if base.dim() == 3 else 0
         seq_len = base.shape[seq_dim]
-        clip = max(0, min(self._prompt_length, seq_len))
-        if clip == 0:
-            return None
+        prompt_mask = self._prompt_mask.to(base.device)
+        if prompt_mask.numel() < seq_len:
+            prompt_mask = torch.nn.functional.pad(
+                prompt_mask, (0, seq_len - prompt_mask.numel()), value=False
+            )
+        prompt_mask = prompt_mask[:seq_len]
+        addition_mask = (~prompt_mask).to(dtype=base.dtype)
         if base.dim() == 3:
-            mask = torch.ones((1, seq_len, 1), device=base.device, dtype=base.dtype)
-            mask[:, :clip, :] = 0
+            mask = addition_mask.view(1, seq_len, 1)
         elif base.dim() == 2:
-            mask = torch.ones((seq_len, 1), device=base.device, dtype=base.dtype)
-            mask[:clip, :] = 0
+            mask = addition_mask.view(seq_len, 1)
         else:
             return None
         self._prompt_hook_calls_remaining = max(0, self._prompt_hook_calls_remaining - 1)
@@ -180,24 +221,19 @@ class SteeringController:
 
     def _build_batched_mask(self, base: torch.Tensor) -> Optional[torch.Tensor]:
         if (
-            self._batched_prompt_lengths is None
+            self._batched_prompt_masks is None
             or base.dim() != 3
             or self._batched_prompt_hook_calls_remaining == 0
         ):
             return None
         batch_size, seq_len, _ = base.shape
-        mask = torch.ones((batch_size, seq_len, 1), device=base.device, dtype=base.dtype)
-        has_prompt_tokens = False
-        for idx in range(batch_size):
-            length = 0
-            if idx < len(self._batched_prompt_lengths):
-                length = self._batched_prompt_lengths[idx]
-            clip = max(0, min(length, seq_len))
-            if clip > 0:
-                mask[idx, :clip, :] = 0
-                has_prompt_tokens = True
-        if not has_prompt_tokens:
-            return None
+        prompt_masks = self._batched_prompt_masks.to(base.device)
+        if prompt_masks.shape[1] < seq_len:
+            prompt_masks = torch.nn.functional.pad(
+                prompt_masks, (0, seq_len - prompt_masks.shape[1]), value=False
+            )
+        prompt_masks = prompt_masks[:batch_size, :seq_len]
+        mask = (~prompt_masks).to(dtype=base.dtype).unsqueeze(-1)
         self._batched_prompt_hook_calls_remaining = max(
             0, self._batched_prompt_hook_calls_remaining - 1
         )

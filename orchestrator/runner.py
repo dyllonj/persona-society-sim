@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import time
 from dataclasses import dataclass
@@ -26,6 +27,7 @@ from schemas.logs import (
     ProbeLog,
     BehaviorProbeLog,
     PersonaStabilityLog,
+    InferenceEvent,
 )
 from storage.log_sink import LogSink
 from metrics import graphs, social_dynamics
@@ -71,6 +73,7 @@ class SimulationRunner:
         meta_orchestrator: Optional[MetaOrchestrator] = None,
         decision_pipeline: Optional[DecisionPipeline] = None,
         batch_decisions_per_encounter: bool = False,
+        interpretability_config: Optional[Dict[str, object]] = None,
     ):
         self.run_id = run_id
         self.world = world
@@ -91,6 +94,7 @@ class SimulationRunner:
         self.meta_orchestrator = meta_orchestrator
         self.decision_pipeline = decision_pipeline or SerialDecisionPipeline()
         self.batch_decisions_per_encounter = batch_decisions_per_encounter
+        self.interpretability_config = dict(interpretability_config or {})
 
         if self.objective_manager:
             self.objective_manager.register_reward_callback(self._handle_objective_reward)
@@ -340,6 +344,7 @@ class SimulationRunner:
                     action_info = {
                         **base_info,
                         "utterance": decision.utterance,
+                        "steering_applied": decision.steering_applied,
                         "steering_snapshot": decision.steering_snapshot,
                         "persona_coeffs": agent.state.persona_coeffs.model_dump(),
                         "trait_key": trait_meta.trait_key,
@@ -347,8 +352,9 @@ class SimulationRunner:
                         "alpha_value": trait_meta.alpha_value,
                         "alpha_bucket": trait_meta.alpha_bucket,
                     }
+                    action_id = str(uuid4())
                     action_log = ActionLog(
-                        action_id=str(uuid4()),
+                        action_id=action_id,
                         run_id=self.run_id,
                         tick=self.world.tick,
                         agent_id=agent.state.agent_id,
@@ -364,6 +370,12 @@ class SimulationRunner:
                     )
                     tick_logs.append(action_log)
                     self.log_sink.log_action(action_log)
+                    self._log_inference_event(
+                        agent,
+                        decision,
+                        action_id=action_id,
+                        env_action_type=env_result.action_type,
+                    )
                     if probe_assignment:
                         self._log_probe_response(agent, decision, probe_assignment)
                         self.probe_manager.complete_probe(
@@ -459,6 +471,7 @@ class SimulationRunner:
                         top_p=self.top_p,
                         steering_snapshot=decision.steering_snapshot,
                         layers_used=decision.layers_used,
+                        steering_applied=decision.steering_applied,
                     )
                     self.log_sink.log_message(msg_log)
                     try:
@@ -604,6 +617,80 @@ class SimulationRunner:
             trait_band=trait_band,
             alpha_value=alpha_value,
             alpha_bucket=alpha_bucket,
+        )
+
+    def _inference_capture_reason(
+        self,
+        agent: Agent,
+        decision: ActionDecision,
+        env_action_type: str,
+    ) -> Optional[str]:
+        config = self.interpretability_config
+        if not bool(config.get("enabled", False)):
+            return None
+        # A trace without exact token IDs cannot be replayed through a lens.
+        if not decision.model_id or not decision.input_ids:
+            return None
+        if decision.probe_id:
+            return "probe"
+        if decision.safety_event:
+            return "safety_event"
+        if env_action_type == "submit_report":
+            return "report_submission"
+        sample_rate = max(0.0, min(1.0, float(config.get("sample_rate", 0.0))))
+        if sample_rate <= 0.0:
+            return None
+        material = (
+            f"{self.run_id}:{self.world.tick}:{agent.state.agent_id}:"
+            f"{decision.prompt_hash}"
+        )
+        bucket = int.from_bytes(
+            hashlib.sha256(material.encode("utf-8")).digest()[:8], "big"
+        ) / float(2**64)
+        return "deterministic_sample" if bucket < sample_rate else None
+
+    def _log_inference_event(
+        self,
+        agent: Agent,
+        decision: ActionDecision,
+        *,
+        action_id: str,
+        env_action_type: str,
+    ) -> None:
+        reason = self._inference_capture_reason(agent, decision, env_action_type)
+        if reason is None:
+            return
+        include_prompt = bool(
+            self.interpretability_config.get("include_prompt_text", False)
+        )
+        self.log_sink.log_inference(
+            InferenceEvent(
+                trace_id=str(uuid4()),
+                run_id=self.run_id,
+                tick=self.world.tick,
+                agent_id=agent.state.agent_id,
+                action_id=action_id,
+                capture_reason=reason,
+                prompt_hash=decision.prompt_hash,
+                prompt_text=decision.prompt_text if include_prompt else None,
+                input_ids=decision.input_ids,
+                attention_mask=decision.attention_mask,
+                generated_ids=decision.generated_ids,
+                raw_completion=decision.raw_completion,
+                model_id=decision.model_id or "",
+                model_revision=decision.model_revision,
+                tokenizer_revision=decision.tokenizer_revision,
+                inference_dtype=decision.inference_dtype,
+                quantization=decision.quantization,
+                do_sample=bool(decision.do_sample),
+                temperature=self.temperature,
+                top_p=self.top_p,
+                sampling_seed=decision.sampling_seed,
+                effective_alphas=decision.steering_snapshot,
+                steering_applied=decision.steering_applied,
+                steering_vector_ids=decision.steering_vector_ids,
+                steering_vector_hashes=decision.steering_vector_hashes,
+            )
         )
 
     def _alpha_bucket(self, alpha_value: Optional[float]) -> Optional[str]:
