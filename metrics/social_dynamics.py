@@ -7,11 +7,12 @@ from typing import Dict, List, Optional
 from schemas.logs import MetricsSnapshot
 
 
-def cooperation_rate(task_outcomes: List[str]) -> float:
-    if not task_outcomes:
+def cooperation_rate(cooperation_events: List[bool]) -> float:
+    """Share of eligible actions that were successful cooperative actions."""
+
+    if not cooperation_events:
         return 0.0
-    successes = sum(1 for outcome in task_outcomes if outcome == "success")
-    return successes / len(task_outcomes)
+    return sum(bool(event) for event in cooperation_events) / len(cooperation_events)
 
 
 def gini(values: List[float]) -> float:
@@ -42,7 +43,7 @@ def polarization(opinions: Dict[str, float]) -> float:
 def build_metrics_snapshot(
     run_id: str,
     tick: int,
-    cooperation_events: List[str],
+    cooperation_events: List[bool],
     wealth: Dict[str, float],
     opinions: Dict[str, float],
     conflicts: int,

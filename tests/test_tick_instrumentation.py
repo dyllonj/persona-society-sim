@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from metrics.tick_instrumentation import TickInstrumentation
+from metrics.social_dynamics import cooperation_rate
 from orchestrator.runner import SimulationRunner
 
 
@@ -128,3 +129,31 @@ def test_trade_actions_are_ignored_in_metrics():
         opinions={},
     )
     assert all(not m.cooperation_events for m in macros)
+
+
+def test_cooperation_rate_counts_successful_cooperation_over_eligible_actions():
+    instrumentation = TickInstrumentation()
+    instrumentation.on_tick_start(0)
+
+    def record(action_type: str, success: bool) -> None:
+        instrumentation.record_action(
+            agent_id="agent-1",
+            action_type=action_type,
+            success=success,
+            params={},
+            info={},
+            steering_snapshot={},
+            persona_coeffs={"E": 0.0, "A": 0.0, "C": 0.0, "O": 0.0, "N": 0.0},
+            encounter_room="town_square",
+            encounter_participants=("agent-1", "agent-2"),
+            satisfaction=0.0,
+        )
+
+    record("talk", True)
+    record("work", False)
+    record("move", True)
+    macros = instrumentation.macro_inputs({"agent-1": {"credits": 1}}, {})
+    global_macro = next(macro for macro in macros if macro.trait_key is None)
+
+    assert global_macro.cooperation_events == [True, False, False]
+    assert cooperation_rate(global_macro.cooperation_events) == 1 / 3

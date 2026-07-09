@@ -12,20 +12,27 @@ except ModuleNotFoundError:  # pragma: no cover
 from schemas.logs import Edge, GraphSnapshot
 
 
-def build_graph(edges: Iterable[Edge]) -> nx.Graph:
+def build_graph(edges: Iterable[Edge]) -> nx.DiGraph:
     if nx is None:
         raise ModuleNotFoundError("networkx is required for graph snapshots")
-    g = nx.Graph()
+    g = nx.DiGraph()
     for edge in edges:
-        g.add_edge(
-            edge.src,
-            edge.dst,
-            weight=edge.weight,
-            kind=edge.kind,
-            trait_key=edge.trait_key,
-            trait_band=edge.trait_band,
-            alpha_bucket=edge.alpha_bucket,
-        )
+        if g.has_edge(edge.src, edge.dst):
+            data = g[edge.src][edge.dst]
+            data["weight"] = float(data.get("weight", 0.0)) + edge.weight
+            kind_counts = data.setdefault("kind_counts", {})
+            kind_counts[edge.kind] = int(kind_counts.get(edge.kind, 0)) + 1
+        else:
+            g.add_edge(
+                edge.src,
+                edge.dst,
+                weight=edge.weight,
+                kind=edge.kind,
+                kind_counts={edge.kind: 1},
+                trait_key=edge.trait_key,
+                trait_band=edge.trait_band,
+                alpha_bucket=edge.alpha_bucket,
+            )
     return g
 
 

@@ -21,7 +21,7 @@ class GraphInput:
 @dataclass
 class MacroInput:
     trait_key: Optional[str]
-    cooperation_events: List[str]
+    cooperation_events: List[bool]
     conflicts: int
     enforcement_cost: float
     band_metadata: Dict[str, object]
@@ -40,7 +40,7 @@ class TickInstrumentation:
 
     def __init__(self) -> None:
         self._edges: Dict[Optional[str], List[Edge]] = defaultdict(list)
-        self._cooperation_events: Dict[Optional[str], List[str]] = defaultdict(list)
+        self._cooperation_events: Dict[Optional[str], List[bool]] = defaultdict(list)
         self._conflicts: Dict[Optional[str], int] = defaultdict(int)
         self._enforcement_cost: Dict[Optional[str], float] = defaultdict(float)
         self._band_members: Dict[Optional[str], Set[str]] = defaultdict(set)
@@ -100,8 +100,11 @@ class TickInstrumentation:
         elif action_type == "enforce":
             self._record_enforcement(agent_id, params, info, trait_key)
 
-        if success and action_type in self.COOP_ACTIONS:
-            self._record_cooperation(action_type, agent_id, trait_key)
+        if action_type != "trade":
+            self._record_cooperation(
+                success and action_type in self.COOP_ACTIONS,
+                trait_key,
+            )
         if success and action_type in self.CONFLICT_ACTIONS:
             self._increment_conflict(trait_key)
         if action_type == "enforce":
@@ -210,11 +213,10 @@ class TickInstrumentation:
         edge = self._edge_with_metadata(agent_id, target, "sanction", trait_key)
         self._append_edge(edge, trait_key)
 
-    def _record_cooperation(self, action_type: str, agent_id: str, trait_key: Optional[str]) -> None:
-        event = f"{action_type}:{agent_id}"
-        self._cooperation_events[None].append(event)
+    def _record_cooperation(self, cooperated: bool, trait_key: Optional[str]) -> None:
+        self._cooperation_events[None].append(cooperated)
         if trait_key:
-            self._cooperation_events[trait_key].append(event)
+            self._cooperation_events[trait_key].append(cooperated)
 
     def _record_action_type(self, action_type: str, trait_key: Optional[str]) -> None:
         self._action_type_counts[None][action_type] += 1

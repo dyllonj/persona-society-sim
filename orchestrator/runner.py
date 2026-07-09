@@ -433,8 +433,6 @@ class SimulationRunner:
                             total_actions += 1
                             if occupants and occupants > 1:
                                 collab_actions += 1
-                            # Metrics tracker for per-agent summaries
-                            self.metric_tracker.on_action(action_log, occupants)
                         else:
                             # Still feed metrics with current occupancy for visibility
                             room_now = self.world.agent_location(agent.state.agent_id)
@@ -443,7 +441,8 @@ class SimulationRunner:
                                 if room_now in self.world.locations
                                 else 0
                             )
-                        self.metric_tracker.on_action(action_log, occ_now)
+                            occupants = occ_now
+                        self.metric_tracker.on_action(action_log, occupants)
                     except Exception:
                         # Metric collection should never interfere with the run
                         pass
@@ -808,38 +807,37 @@ class SimulationRunner:
 
     def _log_tick_snapshots(self) -> int:
         tick_idx = max(0, self.world.tick - 1)
-        try:
-            for graph_input in self.tick_instrumentation.graph_inputs():
-                snapshot = graphs.snapshot_from_edges(
-                    self.run_id,
-                    tick_idx,
-                    graph_input.edges,
-                    trait_key=graph_input.trait_key,
-                    band_metadata=graph_input.band_metadata,
-                )
-                self.log_sink.log_graph_snapshot(snapshot)
-            wealth_snapshot = self.world.economy.snapshot()
-            macro_inputs = self.tick_instrumentation.macro_inputs(wealth_snapshot, self.agent_satisfaction)
-            for macro in macro_inputs:
-                metrics_snapshot = social_dynamics.build_metrics_snapshot(
-                    self.run_id,
-                    tick_idx,
-                    macro.cooperation_events,
-                    macro.wealth,
-                    macro.opinions,
-                    macro.conflicts,
-                    macro.enforcement_cost,
-                    trait_key=macro.trait_key,
-                    band_metadata=macro.band_metadata,
-                    prompt_duplication_rate=macro.prompt_duplication_rate,
-                    plan_reuse_rate=macro.plan_reuse_rate,
-                    action_type_entropy=macro.action_type_entropy,
-                    population_trait_variance=macro.population_trait_variance,
-                    variance_vs_mean_ratio=macro.variance_vs_mean_ratio,
-                )
-                self.log_sink.log_metrics_snapshot(metrics_snapshot)
-        except Exception:
-            pass
+        for graph_input in self.tick_instrumentation.graph_inputs():
+            snapshot = graphs.snapshot_from_edges(
+                self.run_id,
+                tick_idx,
+                graph_input.edges,
+                trait_key=graph_input.trait_key,
+                band_metadata=graph_input.band_metadata,
+            )
+            self.log_sink.log_graph_snapshot(snapshot)
+        wealth_snapshot = self.world.economy.snapshot()
+        macro_inputs = self.tick_instrumentation.macro_inputs(
+            wealth_snapshot, self.agent_satisfaction
+        )
+        for macro in macro_inputs:
+            metrics_snapshot = social_dynamics.build_metrics_snapshot(
+                self.run_id,
+                tick_idx,
+                macro.cooperation_events,
+                macro.wealth,
+                macro.opinions,
+                macro.conflicts,
+                macro.enforcement_cost,
+                trait_key=macro.trait_key,
+                band_metadata=macro.band_metadata,
+                prompt_duplication_rate=macro.prompt_duplication_rate,
+                plan_reuse_rate=macro.plan_reuse_rate,
+                action_type_entropy=macro.action_type_entropy,
+                population_trait_variance=macro.population_trait_variance,
+                variance_vs_mean_ratio=macro.variance_vs_mean_ratio,
+            )
+            self.log_sink.log_metrics_snapshot(metrics_snapshot)
         return tick_idx
 
     def _warn_prompt_duplication(self, tick_idx: int) -> None:
