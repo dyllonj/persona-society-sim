@@ -50,3 +50,7 @@ env/
 .dmypy.json
 dmypy.json
 .env
+
+# Large, reproducible interpretability binaries (keep manifests/reports instead)
+artifacts/jacobian_lens/**/lens.pt
+artifacts/jacobian_lens/**/checkpoint.pt

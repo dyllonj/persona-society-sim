@@ -22,6 +22,21 @@ and artifact hashes.
 
 ## Export agent traces
 
+Production events come from the simulator's `inference_events` output. For a
+standalone end-to-end GPU validation, capture one structured, CAA-steered agent
+decision with the exact model revision and checked-in vectors:
+
+```bash
+uv run --project interpretability python -m interpretability.capture_pilot_event \
+  --model-revision <immutable-hf-commit> \
+  --vector-metadata configs/steering.layers.yaml \
+  --output artifacts/jacobian_traces/pilot-event.jsonl
+```
+
+The command performs the same per-hook residual smoke test as the simulator,
+then writes exact tokens, effective alphas, vector hashes, and a hashed sidecar
+manifest. It is a validation fixture, not a replacement for simulation capture.
+
 ```bash
 uv run --project interpretability python -m interpretability.export_traces \
   --events storage/dumps/fast_test/inference_events \
