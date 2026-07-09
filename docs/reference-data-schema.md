@@ -87,4 +87,4 @@ Do not assume old Parquet dumps acquire new fields automatically.
 
 - [howto-analyze-runs.md](howto-run-simulations.md#inspecting-a-completed-run) — reading these tables back out.
 - [reference-modules.md](reference-modules.md) — what produces each record kind.
-- [explanation-known-gaps.md](explanation-known-gaps.md) — telemetry failure modes (metrics collection is wrapped in bare `except: pass` throughout the runner, so gaps in these tables can occur silently).
+- [explanation-known-gaps.md](explanation-known-gaps.md) — remaining telemetry and configuration gaps. Tick-level graph and macro snapshot failures are surfaced by the runner; optional per-message tracker updates remain isolated so they cannot abort action execution.

@@ -12,28 +12,6 @@ marked **Status: PARTIALLY RESOLVED** have had partial fixes applied but
 residual concerns remain. Issues marked **Status: N/A** reference files not
 present in the current checkout.
 
-## Gemini persona steering silently no-ops
-
-`Agent.persona_alphas()` returns trait alphas keyed by short codes (`E`, `A`,
-`C`, `O`, `N`). `HFBackend`/`SteeringController` consume these correctly. But
-`GeminiBackend.generate()` forwards the same short-code dict into
-`steering.prompt_steering.get_steering_prompt()`, which looks traits up by
-**full capitalized name** (`trait.capitalize()`) against a table keyed
-`"Extraversion"`, `"Agreeableness"`, etc. Capitalizing `"E"` yields `"E"`,
-which is never in that table, so the `if trait_key not in TRAIT_DESCRIPTIONS`
-branch always fires and no persona instruction text is ever injected.
-
-**Practical effect**: running with `--gemini` through the normal simulation
-loop produces personality-neutral agents regardless of configured
-coefficients. `scripts/verify_gemini_steering.py` doesn't catch this because
-it manually constructs full-name alpha dicts (`{"Extraversion": 2.0}`),
-bypassing `Agent.persona_alphas()` entirely — it verifies that
-`prompt_steering.py` works in isolation, not that it's wired up correctly.
-
-**Fix shape** (not applied here): either have `Agent.persona_alphas()` also
-expose full trait names, or have `GeminiBackend`/`prompt_steering.py` accept
-short codes.
-
 ## Probe preamble is injected twice
 
 **Status: RESOLVED.** `orchestrator/runner.py` previously called
@@ -57,26 +35,24 @@ numbers as a real generalization signal.
 
 ## Steering config describes a model that doesn't match the checked-in vectors
 
-`configs/steering.layers.yaml`'s `defaults.model` names a 64-layer
-Qwen2.5-32B-Instruct model with layer indices sized for that architecture
-(e.g. 60). But `defaults.model` is **never read** by any extraction/eval
-code — `scripts/compute_vectors.sh`, `steering/compute_caa.py`, and every run
-config still default to `meta-llama/Llama-3.1-8B-Instruct` (32 layers). The
-vectors actually present in `data/vectors/*.npy`/`*.meta.json` are Llama-3.1-8B
-vectors at different, in-range layers. Running the extraction script today
-against the checked-in YAML without an explicit `MODEL_NAME` override would
-silently target out-of-range layers on the actual model being used. Treat the
-YAML's trait entries as aspirational (a planned Qwen32B migration) until
-vectors are actually regenerated to match.
+**Status: RESOLVED.** Extraction and evaluation now use
+`configs/steering.layers.yaml::defaults.model` unless explicitly overridden.
+The checked-in E/A/C vector metadata identifies
+`Qwen/Qwen2.5-32B-Instruct`, matches the configured Qwen layers, and uses
+portable artifact paths. Runtime loading verifies artifact IDs and hashes;
+`HFBackend` additionally rejects model-name, layer-range, or hidden-width
+mismatches before generation. An override remains possible for deliberate
+cross-model extraction, but mismatched vectors can no longer enter a run
+silently.
 
 ## `steering.eval`'s trait coverage is narrower than the persona model's
 
 `TRAIT_ALIASES` in `steering/eval.py` (and `--traits`'s default in
 `scripts/eval_vectors.sh`) only cover Extraversion, Agreeableness, and
-Conscientiousness. Openness and Neuroticism are fully supported by
-`PersonaCoeffs`, `prompt_steering.py`, and run-config `steering.coefficients`,
-but there's no way to run `steering.eval`/`eval_vectors.sh` against an O or N
-vector without first extending `TRAIT_ALIASES`.
+Conscientiousness. Openness and Neuroticism are represented by
+`PersonaCoeffs` and run-config `steering.coefficients`, but there are no
+checked-in O/N CAA artifacts and the evaluation aliases must be extended
+before either trait can become an activation-steered experimental arm.
 
 ## `docs/design.md`'s orthogonalization claim doesn't match the code
 
@@ -160,7 +136,7 @@ run config:
 | `steering.vector_norm` | `configs/run.*.yaml` | Never read; actual norms come from vector metadata |
 | `safety.toxicity_threshold` | `configs/run.*.yaml` | Never read; governor is pure substring matching |
 | `optimization.batch_size` | `configs/run.fast.yaml` | Explicitly commented "(future feature)" |
-| `steering.layers.yaml: defaults.model/prompt_masking/extraction/num_hidden_layers` | `configs/steering.layers.yaml` | Documentation-only; not consumed programmatically |
+| `steering.layers.yaml: defaults.prompt_masking/extraction/num_hidden_layers` | `configs/steering.layers.yaml` | Documentation-only; `defaults.model` is now consumed by extraction/evaluation |
 | `personas.bigfive.yaml: ranges/percentiles/sampling.strategy/sampling.seed` | `configs/personas.bigfive.yaml` | Only `sampling.jitter` is actually read |
 | `autonomy_policy.yaml: enabled_by_default/required_candidate_validity/required_human_decision_state/max_capability_regression` | `experiments/autoresearch/autonomy_policy.yaml` | N/A — file not present in current checkout |
 | `matrix.yaml: validity.hard_discard` | `experiments/autoresearch/matrix.yaml` | N/A — file not present in current checkout |

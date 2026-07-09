@@ -8,9 +8,8 @@ with steering at all.
 
 ## Steering
 
-- `steering/hooks.py::SteeringController(model, trait_vectors, vector_norms=None)` — registers PyTorch forward hooks on the decoder layers referenced by any trait vector. `.set_alphas(alphas, prompt_length=None)` / `.set_batched_alphas(...)` set per-trait coefficients for the next generate call; `.register()`/`.remove()` attach/detach the hooks; `.needed_layers` is the sorted union of layers across all loaded traits. Every vector is re-normalized to unit length on construction regardless of what was passed in.
-- `steering/vector_store.py::VectorStore(root).load(vector_store_id, layers=None)` — loads a saved `.npy` + `.meta.json` bundle; raises if the metadata's recorded `vector_store_id` doesn't match what you asked for.
-- `steering/prompt_steering.py::get_steering_prompt(alphas)` — the Gemini-backend fallback; maps full trait names (not short codes — see the integration bug below) with `|alpha| >= 0.1` to canned natural-language descriptions.
+- `steering/hooks.py::SteeringController(model, trait_vectors, vector_norms=None)` — registers PyTorch forward hooks on the decoder layers referenced by any trait vector. `.set_alphas(alphas, prompt_mask=...)` / `.set_batched_alphas(..., prompt_masks=...)` set per-trait coefficients and the exact prompt-token mask for the next generate call; `.register()`/`.remove()` attach/detach the hooks; `.needed_layers` is the sorted union of layers across loaded traits. The controller applies vectors exactly as loaded; unit normalization belongs to extraction, not runtime mutation.
+- `steering/vector_store.py::VectorStore(root).load(vector_store_id, layers=None)` — loads a saved `.npy` + `.meta.json` bundle. The CLI resolves portable relative paths, verifies IDs and file hashes, and fails closed when an enabled artifact is absent or incompatible with the model.
 - `steering/compute_caa.py`, `steering/eval.py`, `steering/layer_sweep.py` — the offline extraction/evaluation/layer-selection scripts; see [howto-compute-steering-vectors.md](howto-compute-steering-vectors.md) for how to run them and [explanation-steering.md](explanation-steering.md) for why they're shaped this way.
 
 ## Agent loop (`agents/`)
@@ -19,12 +18,12 @@ Each `Agent` runs **perceive → reflect/plan → act** once per tick.
 
 ### `agents/agent.py`
 
-- `Agent(run_id, state: AgentState, language_backend, memory: MemoryStore, retriever: MemoryRetriever, planner: Planner, safety_governor: SafetyGovernor, max_new_tokens=120, reflect_every_n_ticks=1, suppress_alphas=False)`
+- `Agent(run_id, state: AgentState, language_backend, memory: MemoryStore, retriever: MemoryRetriever, planner: Planner, safety_governor: SafetyGovernor, max_new_tokens=120, reflect_every_n_ticks=1, suppress_alphas=False, sampling_seed_base=0, persona_prompt_enabled=True, structured_actions_enabled=False)`
 - `.persona_alphas() -> Dict[str, float]` — per-trait alpha = clamp(base persona coefficient + any active override); all zero if `suppress_alphas`.
 - `.perceive(observation: str, tick: int) -> None` — stores the observation in `MemoryStore` with an importance score that is purely a function of text length (`min(1.0, 0.3 + 0.05*len(words))`) — there is no semantic-salience scoring.
 - `.reflect_and_plan(tick, ...) -> PlanSuggestion` — retrieves relevant memories via `MemoryRetriever.summarize()` and asks `Planner.plan()` for a suggested action. Only re-runs on ticks where `tick % reflect_every_n_ticks == 0`; otherwise reuses the cached suggestion if the agent hasn't moved and no more than 1 tick has elapsed since the last plan.
-- `.act(observation, tick, ...) -> ActionDecision` — the main entry point. Builds a prompt that presents the planner's suggestion as a *rejectable heuristic default* ("If this action conflicts with your personality, YOU MUST REJECT IT"), calls the language backend, sanitizes the output, runs it through `SafetyGovernor`, and returns an `ActionDecision` (action type, params, utterance, prompt text/hash, token counts, steering snapshot, safety event, cognitive-trace fields).
-- If the LLM's sanitized output comes back empty, `act()` silently falls back to the planner's heuristic utterance rather than an empty string.
+- `.act(observation, tick, ...) -> ActionDecision` — the main entry point. In structured mode it asks for one JSON object, validates the action and allowed/required params, applies the safety governor, and returns an `ActionDecision` containing the selected action, raw completion, exact token IDs, effective alphas, revisions, vector hashes, `decision_source`, and any fallback parse error. Invalid structured output falls back explicitly to the planner suggestion.
+- Legacy response-only mode remains for older configs and tests; research configs set `persona_prompt: false` and `structured_actions: true` so CAA is not confounded by trait labels and the model selects executable behavior.
 
 ### `agents/memory.py`, `agents/retrieval.py`
 
@@ -44,15 +43,18 @@ Each `Agent` runs **perceive → reflect/plan → act** once per tick.
 6. Role-bias cyclical plan (research/policy/navigation roles cycle through role-appropriate actions)
 7. Fallback: keyword-match against the agent's current goal
 
-The plan is deliberately framed to the acting LLM as *overridable* — see `agents/agent.py` above.
+The plan is advisory. Structured mode makes the model's choice executable only after schema validation; fallback use is recorded rather than silently attributed to the model.
 
-### `agents/language_backend.py`, `agents/gemini_backend.py`
+### `agents/language_backend.py`
 
-- `HFBackend` — local Hugging Face model, steers via `steering.hooks.SteeringController` (activation addition). `generate_batch()` groups requests by `max_new_tokens` and steers the whole batch in one forward pass for throughput.
-- `GeminiBackend` — calls the Gemini API; steers by **prepending natural-language persona instructions** (`steering.prompt_steering.get_steering_prompt`) since activation injection isn't possible against a black-box API. Any API exception is caught and turned into the literal text `"[Error: ...]"` rather than propagating — downstream sanitize/safety code will process that string as if it were agent dialogue.
+- `HFBackend` — local Hugging Face model, steers via `steering.hooks.SteeringController` (activation addition), validates model/layer/vector compatibility at startup, serializes access to the shared controller, and returns exact replay fields. Greedy `generate_batch()` groups requests by `max_new_tokens`; sampled requests run sequentially so each decision retains an independent recorded RNG seed.
 - `MockBackend` — deterministic stub for tests; echoes the alpha values into its output text.
 
-**Known integration bug**: `Agent.persona_alphas()` returns short trait codes (`E`, `A`, `C`, `O`, `N`). `HFBackend`/`SteeringController` consume these correctly. But `GeminiBackend.generate()` passes these same short codes into `prompt_steering.get_steering_prompt()`, which looks keys up by *full capitalized trait names* (`"Extraversion"`, etc. — `trait.capitalize()` on `"E"` yields `"E"`, which is never in the lookup table). **Persona steering silently no-ops for every Gemini-backed run driven through the normal `Agent.act()` pipeline.** `scripts/verify_gemini_steering.py` doesn't catch this because it manually constructs full-name alpha dicts, bypassing `Agent.persona_alphas()` entirely. See [explanation-known-gaps.md](explanation-known-gaps.md#gemini-persona-steering-silently-no-ops).
+## Post-hoc interpretability (`interpretability/`)
+
+- `python -m interpretability.fit_lens` fits a model-level Jacobian Lens in a separately pinned environment and writes `lens.pt` plus a content-hashed manifest.
+- `python -m interpretability.export_traces` consumes exact `InferenceEvent` token IDs, verifies model/lens/vector provenance, replays observed and optional neutral conditions, and writes long-form top-k Parquet traces.
+- This package deliberately does not run in the simulation process because its Transformers requirement differs from the simulator's and lens fitting/replay has substantial GPU memory cost. See [jacobian-lens-integration.md](jacobian-lens-integration.md).
 
 ## World model (`env/`)
 

@@ -7,7 +7,6 @@ want day to day. Full flag semantics live in [reference-cli.md](reference-cli.md
 ## Prerequisites
 
 - Repo installed: `python -m venv .venv && source .venv/bin/activate && pip install -e .[dev]`
-- For `--gemini` runs: `export GEMINI_API_KEY="..."`
 - For `configs/run.medium.yaml`: a reachable Postgres instance matching its `logging.db_url` (small/fast configs need nothing beyond SQLite, which needs no setup)
 
 ## Pick an environment and difficulty
@@ -33,18 +32,9 @@ required checklist fields / discovery tokens per agent) — see
 # No model weights needed — deterministic stub output, fastest iteration loop
 python3 -m orchestrator.cli configs/run.small.yaml --mock-model --env research
 
-# Local HF model with activation-based (CAA) steering — the default if you omit both flags
+# Local HF model with activation-based (CAA) steering — the default
 python3 -m orchestrator.cli configs/run.small.yaml --env research
-
-# Gemini API with prompt-based steering
-export GEMINI_API_KEY="your_api_key_here"
-python3 -m orchestrator.cli configs/run.small.yaml --gemini --env research
 ```
-
-Before relying on `--gemini` for a persona-adherence study, read
-[explanation-known-gaps.md](explanation-known-gaps.md#gemini-persona-steering-silently-no-ops)
-— persona steering currently no-ops on this path when driven through the
-normal simulation loop.
 
 To run agents with neutral (unsteered) personas for a baseline comparison,
 add `--no-steering` to any of the above.
@@ -61,7 +51,7 @@ python3 -m orchestrator.cli configs/run.small.yaml --live --env research
 python3 -m orchestrator.cli configs/run.small.yaml --live --full-messages --env research
 
 # SSH / low-resource: full-screen ASCII dashboard (pip install rich first)
-python3 -m orchestrator.cli configs/run.small.yaml --tui --gemini --env research
+python3 -m orchestrator.cli configs/run.small.yaml --tui --mock-model --env research
 
 # Browser: 3D Three.js viewer at http://127.0.0.1:19123
 python3 -m orchestrator.cli configs/run.small.yaml --mock-model --env research --live --viewer

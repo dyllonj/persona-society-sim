@@ -8,8 +8,7 @@ behind the major structural choices.
 ## Overview
 
 Persona Society Sim hosts 30-300 LLM agents in a text-only town. Each agent
-combines persona steering (CAA vectors or, for API models, prompt-based
-descriptions), a perceive-reflect-plan-act memory loop, and goals derived
+combines CAA persona steering, a perceive-reflect-plan-act memory loop, and goals derived
 from trait coefficients and evolving objectives. Agents live inside a
 lightweight world of locations, resources, and institutions; a scheduler
 samples encounters each tick; every generated token bundle, applied steering
@@ -21,19 +20,21 @@ See [explanation-steering.md](explanation-steering.md) for the full
 rationale. In short: activation-space steering gives a quantitative,
 composable dose knob that doesn't compete with the rest of the prompt for
 attention, which matters when running hundreds of agents that also carry
-memory, dialogue history, and plan suggestions in their context. Local HF
-models get the mechanistic version; the Gemini backend falls back to
-prompt-based trait descriptions since API models expose no internals to hook.
+memory, dialogue history, and plan suggestions in their context. The research
+runtime therefore uses local Hugging Face models whose decoder residual stream
+can be instrumented directly.
 
 ## Why the memory/planning loop is heuristic, not another LLM call
 
 `agents/planner.py::Planner.plan()` is a deterministic rule engine — no LLM
-round-trip. It's presented to the *acting* LLM as an overridable default
-("this is a heuristic suggestion, reject it if it conflicts with your
-personality") rather than the final word. This keeps the planning step free,
-instant, and reproducible for benchmarking objective/role compliance, while
-still letting persona-steered generation have final say over what the agent
-actually says or does. Similarly, "reflection" here means "retrieve and
+round-trip. It is presented to the acting LLM as an advisory candidate. In
+research configs the model must return one JSON object containing `action`,
+`params`, and `utterance`; the agent validates that object against the action
+schema before the runner executes it. Invalid JSON, unsupported actions, or
+bad params fall back to the planner suggestion with `decision_source` and
+`decision_parse_error` recorded. This keeps planning free, instant, and
+reproducible while making the model's behavioral choice explicit. Similarly,
+"reflection" here means "retrieve and
 concatenate relevant memories," not "generate a new abstract insight" the way
 the original Generative Agents paper's LLM-driven reflection worked — a
 deliberate simplification for a system with 3 rooms and modest agent counts,
@@ -115,6 +116,9 @@ configured.
    social/macro metrics.
 6. **Runner CLI** — `python3 -m orchestrator.cli <config>`. See
    [reference-cli.md](reference-cli.md).
+7. **Post-hoc interpretability** — `interpretability/` is a separately pinned
+   environment for fitting and applying Jacobian Lens to exact recorded
+   inference events. See [jacobian-lens-integration.md](jacobian-lens-integration.md).
 
 ## Data flow
 
@@ -126,7 +130,11 @@ trait prompts + configs/steering.layers.yaml
   -> steering hooks (steering/hooks.py)
   -> agent generation
 
-agent observation -> memory store -> scheduler -> env -> logs -> metrics
+agent observation -> memory store -> structured model decision -> env -> logs -> metrics
+                                                            |
+                                                            +-> inference event
+
+inference event + fitted lens -> post-hoc Jacobian trace Parquet
 ```
 
 ## 3D viewer protocol

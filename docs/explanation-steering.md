@@ -27,29 +27,25 @@ registers PyTorch forward hooks on those layers and adds `alpha * vector`
 into the residual stream while the model generates, where `alpha` is the
 agent's persona coefficient for that trait.
 
-This is a deliberate two-tier strategy, not a single design applied
-everywhere: local Hugging Face models get the full activation-space
-treatment; Gemini (a black-box API with no access to internals) falls back to
-`steering/prompt_steering.py`, which maps alpha magnitude/sign to canned
-natural-language trait descriptions prepended to the prompt. The mechanistic
-version is preferred wherever it's available; the prompt-based version is a
-documented, deliberate degradation for API-only models, not an oversight —
-though see [explanation-known-gaps.md](explanation-known-gaps.md#gemini-persona-steering-silently-no-ops)
-for a real bug in how that fallback is currently wired up.
+The documented research runtime is the local Hugging Face path. CAA-only
+conditions set `inference.persona_prompt: false`, so trait labels do not leak
+into the prompt while activation hooks remain active. Prompt-only and hybrid
+conditions must be declared explicitly as separate experimental arms.
 
-## Why vectors are normalized (repeatedly)
+## Why vectors are normalized at extraction
 
-Every trait vector gets normalized to unit length at multiple points:
-once when computed (`compute_trait_vectors`), again defensively when loaded
-into a `SteeringController`, and again in the legacy metadata-file loading
-path in `orchestrator/cli.py`. This isn't redundancy for its own sake — raw
+Every trait vector is normalized to unit length when computed by
+`compute_trait_vectors`. The runtime loader verifies identity, dimensionality,
+layer range, and hashes, then the `SteeringController` applies the stored
+values without silently renormalizing them. Raw
 activation-difference magnitudes vary hugely by layer (in the checked-in
 `E.meta.json`, layer 6's norm is ≈2.4 versus layer 30's ≈38.7), and without
 normalization the same `alpha` value would produce wildly different effective
 steering strength depending on which layer you picked. Normalizing means
 `alpha` is the *only* dose knob, comparable across traits, layers, and (in
 principle) models. The pre-normalization norm is kept purely as diagnostic
-metadata, not as an active parameter.
+metadata, not as an active parameter. Keeping normalization at one explicit
+stage makes a vector's content hash a faithful record of what was injected.
 
 ## Why layer choice is empirical, per trait
 
@@ -98,6 +94,6 @@ gaps between what the docs used to claim and what the code does.
 ## Related
 
 - [reference-modules.md](reference-modules.md#steering) — CAA runtime surface.
-- [reference-config.md](reference-config.md#steering-vector-metadata-configssteeringlayersyaml) — `steering.layers.yaml` schema, including a live model/layer mismatch to check before extracting vectors.
+- [reference-config.md](reference-config.md#steering-vector-metadata-configssteeringlayersyaml) — `steering.layers.yaml` schema and model-locking behavior.
 - [howto-compute-steering-vectors.md](howto-compute-steering-vectors.md) — running the extraction/eval pipeline.
-- [explanation-known-gaps.md](explanation-known-gaps.md) — the Gemini steering bug, the held-out-eval-file gap, and other steering-adjacent issues.
+- [explanation-known-gaps.md](explanation-known-gaps.md) — held-out evaluation and other steering-adjacent gaps.

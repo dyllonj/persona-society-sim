@@ -7,10 +7,10 @@ Agents still follow the perceive → reflect → plan → act loop described in 
 
 1. **Perceive** — `Agent.perceive` stores observations inside `MemoryStore` with a length-derived importance score (`agents/memory.py`). Recency isn't stored at this point; it's recomputed fresh from `current_tick - event.tick` whenever memories are scored during retrieval.
 2. **Reflect** — `reflect_and_plan` queries `MemoryRetriever`, produces a natural-language summary plus referenced memory IDs, and caches that bundle on the agent object for later logging (`agents/agent.py`).
-3. **Plan** — `Planner.plan` (and the objective heuristics therein) returns the action type, params, and utterance guidance that will be used for inference (`agents/planner.py`).
-4. **Act** — `_build_prompt` turns the observation + plan into the final prompt, the language backend injects persona steering vectors, and the result is sanitized before the env action executes.
+3. **Plan** — `Planner.plan` returns a deterministic, advisory action suggestion with params and utterance guidance (`agents/planner.py`). It is context for inference, not the action that is automatically executed.
+4. **Act** — `_build_prompt` asks the model for a structured JSON action, the language backend injects persona steering vectors, and the agent validates the selected action and params before execution. Invalid or unparsable model output falls back to the planner suggestion and records the fallback reason.
 
-The cached summary, referenced events, plan suggestion, prompt text, token counts, and a `prompt_hash` all travel alongside every `ActionDecision`. `SimulationRunner` writes these “cognitive trace” fields into `ActionLog` rows and Parquet dumps, giving reviewers a full breadcrumb trail for each utterance without rerunning the LLM.
+The cached summary, referenced events, plan suggestion, prompt text, token counts, `prompt_hash`, raw completion, decision source, and parse error all travel alongside every `ActionDecision`. `SimulationRunner` writes the cognitive fields into `ActionLog`; when interpretability capture is enabled it also writes replay-safe `InferenceEvent` rows with exact token IDs, immutable model/tokenizer revisions, sampling state, effective alphas, and vector hashes.
 
 ## Persona steering & safety
 Agents derive trait alphas from their `PersonaCoeffs`, clamp them via `SafetyGovernor`, and hand them to `SteeringController` so the residual additions happen in the specified decoder layers (`agents/language_backend.py`, `steering/hooks.py`). The global `steering.strength` scalar in each run config multiplies every trait coefficient before the controller applies prompt-aware masking, keeping instructions/system messages untouched while the generated continuation receives the residuals. Layer choices, vector-store IDs, and training prompt files now live in `configs/steering.layers.yaml`; both the extraction script and runtime loader read the same metadata so there is no hidden `[12, 16, 20]` default.
@@ -56,6 +56,5 @@ This file is a supplement focused on the agent/telemetry angle. For complete
 reference and how-to material, see [docs/README.md](docs/README.md) — in
 particular [docs/reference-modules.md](docs/reference-modules.md) (full
 agent/world/viewer public surface) and
-[docs/explanation-known-gaps.md](docs/explanation-known-gaps.md) (a real bug
-where Gemini-backed runs silently lose persona steering, plus other known
-gaps worth knowing about before debugging unexpected behavior).
+[docs/explanation-known-gaps.md](docs/explanation-known-gaps.md) (known gaps
+worth knowing about before debugging unexpected behavior).

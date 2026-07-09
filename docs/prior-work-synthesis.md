@@ -18,11 +18,11 @@ layer. Llama-3.1-8B (4096-dim) and Qwen2.5-32B (5120-dim) are dimensionally inco
 Even within the same family, steerability is idiosyncratic and optimal layer depth shifts
 with training method (RL models peak at 70-85% depth vs 50-65% for distilled).
 **Resolution:** Vectors MUST be recomputed from scratch on Qwen2.5-32B. Layer indices must
-be re-tuned via layer sweep. Treat Llama vectors and `configs/steering.layers.yaml` as
-throwaway. Run `scripts/compute_vectors.sh` + `steering/layer_sweep.py` on the A100 before
-any persona trial.
-**Status in our codebase:** `steering.layers.yaml` already names Qwen2.5-32B (Issue #4 in
-known-gaps) but vectors are Llama-3.1-8B. The YAML config is aspirational, not operational.
+be re-tuned via layer sweep; vectors from another model remain unusable.
+**Status in our codebase (updated 2026-07-09):** **RESOLVED for E/A/C.** The checked-in
+metadata and artifacts identify Qwen2.5-32B, extraction defaults to the configured model,
+and runtime loading fails closed on model, layer, width, ID, or hash disagreement. The
+layer-sweep and behavioral-validation requirements still apply before a causal claim.
 
 ### B2. Evaluation metrics overestimate steering effectiveness
 **Source:** Pres et al. MINT@NeurIPS 2024; Ayyub 2026; Braun et al. 2024/2025

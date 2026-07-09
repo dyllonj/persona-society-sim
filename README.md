@@ -10,11 +10,12 @@ Social town simulator where 30–300 activation-steered LLM agents live, convers
 
 ## Architecture snapshot
 1. **Steering vectors** — `steering/compute_caa.py` builds trait vectors from JSONL prompt pairs and saves per-layer `.npy` blobs; `steering/hooks.py` adds them to model residuals with per-agent coefficients.
-2. **Agents & memory** — `agents/agent.py` wires the perceive→reflect→plan loop; `agents/memory.py` implements observation/reflection/planning stores inspired by Generative Agents; `agents/planner.py` converts goals + world state into next actions or utterances.
+2. **Agents & memory** — `agents/agent.py` wires the perceive→reflect→plan loop and validates model-selected structured actions; `agents/memory.py` implements observation/reflection/planning stores inspired by Generative Agents; `agents/planner.py` supplies a deterministic advisory fallback.
 3. **World & scheduler** — `env/world.py`, `env/actions.py`, and `env/economy.py` encode the text town, actions, and civic exchanges; `orchestrator/scheduler.py` samples encounters; `orchestrator/runner.py` executes multi-agent ticks and logs outputs.
 4. **Storage & metrics** — `schemas/*.py` define Pydantic models mirrored in SQL; `storage/db.py` wraps SQLite/Postgres; `storage/log_sink.py` streams logs to DB + Parquet; `metrics/*.py` compute graph, cooperation, and polarization metrics for notebooks in `metrics/` and reports in `docs/`.
 5. **Instrumentation & probes** — every `ActionLog` now carries cognitive traces (reflection summaries, plan suggestions, prompt hashes) so persona steering can be audited; `metrics/graphs.py` + `metrics/social_dynamics.py` emit graph snapshots and macro metrics each tick; `metrics/tracker.py` joins persona coefficients and per-message steering alphas; the ProbeManager injects self-report + behavioral probes; research telemetry (facts, citations, report grades) is stored in first-class tables for downstream analysis.
 6. **Data & configs** — `data/prompts/*.jsonl` host IPIP-derived multiple-choice contrast pairs; `configs/run.*.yaml` store reproducible run configs (population, steps, steering, safety bounds).
+7. **Interpretability** — sampled decisions are persisted as replay-safe `InferenceEvent` records; the separately pinned `interpretability/` environment fits Anthropic's Jacobian Lens and exports layer-by-position trace Parquet without changing simulator dependencies or timing.
 
 ## Getting started
 ```bash
@@ -39,23 +40,6 @@ python3 -m orchestrator.cli configs/run.small.yaml --live --full-messages --env 
 pytest  # optional
 ```
 
-### Using Gemini API (New)
-You can now run the simulation using Google's Gemini models via the API. This uses prompt-based steering instead of activation engineering.
-
-1. **Set your API key**:
-   ```bash
-   export GEMINI_API_KEY="your_api_key_here"
-   ```
-
-2. **Run with Gemini backend**:
-   ```bash
-   python3 -m orchestrator.cli configs/run.small.yaml --gemini --env research
-   ```
-
-**Note on Steering**: When using the Gemini backend, the "alphas" (trait coefficients) are mapped to natural language system instructions (e.g., "You are highly extraverted...") rather than being injected into model activations. This allows for "black-box" steering of API models. - *Note: Costs vary based on population size and event density.*
-
-> **Known issue**: as currently wired, persona steering silently produces no effect when `--gemini` is driven through the normal simulation loop (a trait-key mismatch between `Agent.persona_alphas()` and `steering/prompt_steering.py`). See [docs/explanation-known-gaps.md](docs/explanation-known-gaps.md#gemini-persona-steering-silently-no-ops) before relying on Gemini runs for a persona-adherence study.
-
 ### ASCII TUI Mode
 For a retro, terminal-based visualization (great for SSH or low-resource environments):
 
@@ -66,7 +50,7 @@ For a retro, terminal-based visualization (great for SSH or low-resource environ
 
 2. **Run with `--tui`**:
    ```bash
-   python3 -m orchestrator.cli configs/run.small.yaml --tui --gemini --env research
+   python3 -m orchestrator.cli configs/run.small.yaml --tui --mock-model --env research
    ```
    This replaces the web viewer with a split-screen terminal view showing the map and dialogue log.
 
@@ -154,6 +138,8 @@ Key scripts:
 
 ### Instrumentation & probes
 - **Cognitive traces**: `agents/agent.py` caches reflection summaries, planner suggestions, prompt text, and prompt hashes per action, and `orchestrator/runner.py` writes them into `ActionLog` + Parquet for replay/debugging without re-running the LLM.
+- **Replay manifests**: with `interpretability.enabled: true`, ordinary decisions are sampled deterministically and probes, safety events, and report submissions are always written to `inference_events`. Rows include exact input/output token IDs, raw completions, model/tokenizer revisions, decoding seeds, effective alphas, and vector hashes.
+- **Jacobian traces**: use the isolated commands in [`docs/jacobian-lens-integration.md`](docs/jacobian-lens-integration.md) to fit a pinned lens and export top-k observed/neutral-replay traces. Lens fitting and trace replay do not run inside the simulation process.
 - **Graph & macro metrics**: every tick `SimulationRunner` feeds per-action edges into `metrics/graphs.py` and aggregates economy/conflict data via `metrics/social_dynamics.py`, producing `graph_snapshot` + `metrics_snapshot` tables plus Parquet dumps (`storage/log_sink.py`).
 - **Persona-aware tracker**: `metrics/tracker.py` now registers each agent’s baseline `PersonaCoeffs` and ingests `MsgLog.steering_snapshot` values so efficiency/collab stats can be sliced by trait bands or alpha magnitudes.
 - **Probe scheduling**: the ProbeManager (see `configs/probes.yaml`) injects periodic self-report questionnaires and scripted behavioral probes that log the injected prompt bundle plus Likert/rubric scores to the new `probe_log`/`behavior_probe_log` tables, giving direct coverage of RQ1 behavioral adherence.
@@ -175,6 +161,7 @@ persona-society-sim/
 ├── data/             # IPIP multiple-choice prompt pairs and saved vectors
 ├── docs/             # design notes, evaluation plan
 ├── env/              # world model, actions, economy, institutions
+├── interpretability/ # isolated Jacobian Lens fit and replay tools
 ├── metrics/          # network + social dynamics analytics
 ├── orchestrator/     # scheduler + runner
 ├── schemas/          # pydantic models mirroring DB schemas

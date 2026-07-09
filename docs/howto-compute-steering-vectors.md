@@ -8,7 +8,7 @@ steps to go from prompt files to vectors your simulation runs can load.
 
 - A trait's forced-choice prompt file under `data/prompts/<trait>.jsonl` (schema: `data/prompts/schema.py`)
 - A GPU-capable environment if extracting from a real model (CPU works but is slow)
-- Know which model you're extracting from — see the warning below before trusting `configs/steering.layers.yaml` as-is
+- Confirm the model and layers in `configs/steering.layers.yaml`; vectors are model- and layer-specific
 
 ## 1. Validate or convert your prompt files
 
@@ -23,33 +23,26 @@ python -m data.prompts.schema validate data/prompts/*.jsonl
 Validation enforces that every record has exactly one `option_a_is_high` /
 `option_b_is_high` flag set to `true`.
 
-## 2. Check `configs/steering.layers.yaml` matches the model you'll actually use
+## 2. Confirm `configs/steering.layers.yaml` matches the intended model
 
-**Read this before running the next step.** The checked-in
-`configs/steering.layers.yaml` currently documents a Qwen2.5-32B-Instruct
-layout (64 layers, indices like 60) that the extraction scripts do **not**
-default to — they default to `meta-llama/Llama-3.1-8B-Instruct` (32 layers)
-unless you override `MODEL_NAME`. If you extract against the file as-is
-without an explicit model override, you risk asking a 32-layer model for
-layer 60, which doesn't exist. Either:
-
-- Pass `MODEL_NAME=meta-llama/Llama-3.1-8B-Instruct` explicitly and use layer
-  indices that exist in that model (the vectors already in `data/vectors/`
-  were extracted this way), or
-- Update the YAML's layer indices to match whatever model you're actually
-  targeting before running extraction.
-
-See [explanation-known-gaps.md](explanation-known-gaps.md#steering-config-describes-a-model-that-doesnt-match-the-checked-in-vectors)
-for the full detail.
+The checked-in metadata targets `Qwen/Qwen2.5-32B-Instruct`, and the extraction
+scripts now use its `defaults.model` automatically. The checked-in E/A/C
+vectors were extracted for that same model. If you intentionally set
+`MODEL_NAME` to another checkpoint, change the layer map and vector-store IDs
+too; the runtime will reject artifacts whose model, layer, width, or hashes do
+not match.
 
 ## 3. Extract vectors
 
 ```bash
 # All traits declared in configs/steering.layers.yaml
-MODEL_NAME=meta-llama/Llama-3.1-8B-Instruct ./scripts/compute_vectors.sh
+./scripts/compute_vectors.sh
 
 # Just specific traits
-MODEL_NAME=meta-llama/Llama-3.1-8B-Instruct TRAITS=A,C ./scripts/compute_vectors.sh
+TRAITS=A,C ./scripts/compute_vectors.sh
+
+# Deliberate model override (also update the metadata layers and artifact IDs)
+MODEL_NAME=<hf-model-id> TRAITS=A ./scripts/compute_vectors.sh
 ```
 
 This writes `data/vectors/<vector_store_id>_layer<N>.npy` per layer and
@@ -63,8 +56,7 @@ what you expect.
 STEERING_ALPHA=1.0 DELTA_THRESHOLD=0.1 SIGN_THRESHOLD=0.55 ./scripts/eval_vectors.sh
 ```
 
-This regenerates vectors (same as step 3, so it will also hit the model/layer
-mismatch above if unset) and runs `steering.eval`, writing
+This regenerates vectors from the configured model and runs `steering.eval`, writing
 `artifacts/steering_eval/report.json` and `.md`. Set `STEERING_ALPHA` to the
 same value as `steering.strength` in the run config you plan to use, so the
 evaluated dose matches what agents will actually receive.

@@ -15,11 +15,13 @@ files (or your own file following the same schema — see
 | Flag | Type / default | Effect |
 |---|---|---|
 | `--mock-model` | flag, off | Use `MockBackend` (deterministic, no model weights) instead of a real language backend. Fastest way to smoke-test a config. |
-| `--gemini` | flag, off | Use `agents.gemini_backend.GeminiBackend` (hardcoded `gemini-1.5-flash`) instead of a local HF model. Requires `GEMINI_API_KEY` in the environment. Steering is applied as prepended natural-language instructions, not activation addition — see [explanation-known-gaps.md](explanation-known-gaps.md#gemini-persona-steering-silently-no-ops) for a live bug affecting this path. |
 | `--no-steering` | flag, off | Disable persona steering entirely. Sets effective alpha strength to `0.0`, skips loading vectors from disk, and runs every agent with neutral (zeroed) trait coefficients. Overrides `steering.enabled` in the config either way. |
 | `--vector-dir` | path, `data/vectors` | Root directory to search for `.npy`/`.meta.json` steering vector bundles when steering is enabled. |
 
-If neither `--mock-model` nor `--gemini` is passed, the CLI loads a local Hugging Face model (`model_name` from the config) and steers it via activation addition (CAA) — see [reference-modules.md](reference-modules.md#steering) and [explanation-steering.md](explanation-steering.md).
+If `--mock-model` is not passed, the CLI loads a local Hugging Face model
+(`model_name` from the config) and steers it via activation addition (CAA) —
+see [reference-modules.md](reference-modules.md#steering) and
+[explanation-steering.md](explanation-steering.md).
 
 ## Scenario and environment
 

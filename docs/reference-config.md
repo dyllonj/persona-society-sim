@@ -10,7 +10,9 @@ Loaded as `schemas/run.py::RunConfig`. Top-level shape:
 ```yaml
 run_id: str                    # defaults to "run-<uuid6>" if absent
 git_commit: str
-model_name: str                # HF model id; ignored under --mock-model/--gemini
+model_name: str                # HF model id; ignored under --mock-model
+model_revision: str            # optional immutable HF commit; resolved commit is logged
+tokenizer_revision: str        # optional immutable tokenizer commit; defaults to model revision
 population: int                # agent count
 steps: int                     # tick count for this run
 scenario: str                  # freeform label, not consumed by the CLI
@@ -18,7 +20,11 @@ seed: int                      # drives scheduler RNG, base persona sampling
 
 steering:
   enabled: bool                # default true; also gated by --no-steering
+  active_traits: [str, ...]    # required subset to load when steering is enabled
   strength: float               # global alpha multiplier ("dose"), default 1.0
+  per_trait_strength:           # multiplier after the global strength
+    fallback: float
+    E: float
   coefficients: {E,A,C,O,N: float}   # base persona trait means before per-agent jitter
   vector_norm: {E,A,C,O,N: float}    # NOT READ by any code path — see note below
   metadata_files:
@@ -42,9 +48,17 @@ safety:
   governor_backoff: float       # fraction each flagged generation nudges alphas toward 0
 
 inference:
+  do_sample: bool              # false means deterministic greedy decoding
+  persona_prompt: bool         # false for CAA-only arms; omits derived trait labels
+  structured_actions: bool     # model selects validated action/params as JSON
   temperature: float
   top_p: float
   max_new_tokens: int
+
+interpretability:
+  enabled: bool                # persist replay-safe inference events
+  sample_rate: float           # deterministic fraction of ordinary decisions
+  include_prompt_text: bool    # IDs/hashes are always kept; plaintext is optional
 
 optimization:
   reflect_every_n_ticks: int    # planner cache lifetime; see reference-modules.md#planner
@@ -76,7 +90,7 @@ behavior.
 
 | Field | `run.small.yaml` (`debug32`) | `run.medium.yaml` (`study100`) | `run.fast.yaml` (`fast_test`) |
 |---|---|---|---|
-| `model_name` | Llama-3.1-8B-Instruct | Llama-3-70b-instruct | Llama-3.1-8B-Instruct |
+| `model_name` | Qwen2.5-32B-Instruct | Qwen2.5-32B-Instruct | Qwen2.5-32B-Instruct |
 | `population` | 32 | 100 | 32 |
 | `steps` | 200 | 500 | 200 |
 | `logging.db_url` | sqlite | **postgresql** (needs a running Postgres instance) | sqlite |
@@ -84,7 +98,10 @@ behavior.
 | `safety.governor_backoff` | 0.2 | 0.15 (gentler — a fixed fraction compounds over more ticks/agents at scale) | 0.2 |
 | `inference.max_new_tokens` | 128 | 160 | **48** (explicit throughput optimization) |
 | `optimization.reflect_every_n_ticks` | 10 | 10 | 5 |
-| `optimization.use_quantization` | — | — | `true` |
+| `optimization.use_quantization` | `false` | inherited `true` | `true` |
+| `inference.structured_actions` | `true` (inherited) | `true` | `true` |
+| `inference.persona_prompt` | `false` (inherited) | `false` | `false` |
+| `interpretability.sample_rate` | `0.05` (inherited) | `0.05` | `0.05` |
 
 `run.medium.yaml` is the only shipped config that needs a live Postgres
 instance reachable at its `db_url` before you run it — `small`/`fast` use
@@ -98,10 +115,10 @@ defaults:
   layers: [int, ...]                # fallback decoder layers if a trait entry omits `layers`
   prompt_dir: ../data/prompts
   prompt_masking: true               # documentation only — masking is always applied
-                                      # whenever prompt_length is passed to SteeringController,
+                                      # from the exact prompt_masks passed to SteeringController;
                                       # this flag is not read to decide that
   extraction: caa_ab_normalized       # documentation only
-  model: str                          # documentation only — see warning below
+  model: str                          # extraction/evaluation default model
   num_hidden_layers: int               # documentation only
   notes: str
 traits:
@@ -117,19 +134,13 @@ Consumed by `scripts/compute_vectors.sh` (extraction), `scripts/eval_vectors.sh`
 (evaluation), and `orchestrator.cli.load_trait_vectors` (runtime loading, via
 `steering.metadata_files.vectors` in the run config).
 
-**Live inconsistency to check before you extract vectors**: this file's
-`defaults.model` field currently names a 64-layer Qwen2.5-32B model with layer
-indices (12/36/60, 16/40/58, 20/44/60) sized for that model, but no code
-actually reads `defaults.model` — the real model used is `$MODEL_NAME`
-(`scripts/compute_vectors.sh`) or `--model` (`steering.compute_caa`), which
-both default to `meta-llama/Llama-3.1-8B-Instruct` (32 layers). Running
-`compute_vectors.sh` today with the checked-in YAML and no `MODEL_NAME`
-override would ask Llama-3.1-8B for out-of-range layers like 60. The vectors
-actually present in `data/vectors/*.npy` are Llama-3.1-8B vectors at
-different (in-range) layers than the YAML currently describes. Always pass
-an explicit `MODEL_NAME` matching the layer indices you intend to extract, and
-treat the YAML's layer/vector-store-id values as aspirational until you've
-regenerated vectors from it. See [explanation-known-gaps.md](explanation-known-gaps.md#steering-config-describes-a-model-that-doesnt-match-the-checked-in-vectors).
+`scripts/compute_vectors.sh`, `scripts/eval_vectors.sh`, and
+`steering.compute_caa` now resolve `defaults.model` when no explicit model is
+given. The checked-in metadata and E/A/C vector artifacts all identify
+`Qwen/Qwen2.5-32B-Instruct`; the runtime loader verifies that identity, layer
+range, hidden width, artifact ID, and content hash and fails before inference
+on a mismatch. Use `MODEL_NAME` only for a deliberate extraction against a
+different model, and update layer metadata at the same time.
 
 ## Role/reminder playbook (`configs/meta.playbook.yaml`)
 
