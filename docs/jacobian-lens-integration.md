@@ -216,7 +216,8 @@ small preregistered token set for hypothesis-driven concept tracking.
   different declared representation.
 - 100 generic, pretraining-like sequences.
 - 128 tokens per sequence.
-- Seven to ten layers including every CAA intervention layer.
+- Start with the late intervention layers needed for the engineering trace;
+  expand to all intervention layers only after the pilot memory profile is known.
 - Checkpoint every five to ten prompts.
 
 ### Final artifact
@@ -280,11 +281,11 @@ model's internal computation.
 The initial external GPU budget is approximately USD 20. Automation must:
 
 1. Query offers without renting anything.
-2. Select an interruptible instance with sufficient VRAM and a declared
-   maximum hourly rate.
+2. Select a fixed-price on-demand instance with sufficient VRAM. Bid,
+   interruptible, and preemptible offers are prohibited for this project.
 3. Calculate the maximum runtime from the remaining budget before creation.
 4. Refuse offers with unexpected storage, bandwidth, or on-demand charges.
-5. Write checkpoints to persistent storage frequently.
+5. Write resumable checkpoints frequently and recover them before teardown.
 6. Stop on a fixed wall-clock timeout or cost threshold.
 7. Download and hash artifacts before destroying the instance.
 8. Destroy the instance in a `finally` path even when fitting fails.
