@@ -11,6 +11,22 @@ def test_world_move():
     assert "agent-1" in world.locations["community_center"].occupants
 
 
+def test_execute_turns_invalid_model_params_into_failed_action():
+    world = World()
+    world.add_agent("agent-1", "town_square")
+
+    result = actions.execute(
+        world,
+        "agent-1",
+        "move",
+        {"destination": "not-a-real-location"},
+    )
+
+    assert not result.success
+    assert result.action_type == "move"
+    assert result.info["error"] == "invalid_params"
+
+
 def test_recent_room_context_tracks_messages():
     world = World()
     world.add_agent("agent-1", "town_square")

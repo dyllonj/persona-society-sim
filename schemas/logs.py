@@ -77,6 +77,9 @@ class InferenceEvent(BaseModel):
     tick: int
     agent_id: str
     action_id: str
+    selected_action_type: str
+    decision_source: str
+    decision_parse_error: Optional[str] = None
     cognitive_phase: str = "action_generation"
     capture_reason: str
     prompt_hash: str

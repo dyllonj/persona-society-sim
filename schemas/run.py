@@ -46,6 +46,8 @@ class RunSafetyConfig(BaseModel):
 
 class InferenceConfig(BaseModel):
     do_sample: bool = False
+    persona_prompt: bool = True
+    structured_actions: bool = False
     temperature: float = 0.7
     top_p: float = 0.9
     max_new_tokens: int = 120

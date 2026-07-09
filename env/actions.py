@@ -19,6 +19,12 @@ MAX_BROADCAST_CHARS = 280
 
 
 def move(world: World, agent_id: str, destination: str) -> ActionResult:
+    if destination not in world.locations:
+        return ActionResult(
+            "move",
+            False,
+            {"error": "invalid_params", "detail": f"unknown destination: {destination}"},
+        )
     # Suppress no-op moves
     current = world.agent_location(agent_id)
     if current == destination:
@@ -164,7 +170,17 @@ def execute(world: World, agent_id: str, action_type: str, params: Dict[str, str
     handler = ACTION_ROUTER.get(action_type)
     if not handler:
         return ActionResult(action_type, False, {"error": "unsupported"})
-    return handler(world, agent_id, **params)
+    try:
+        return handler(world, agent_id, **params)
+    except (KeyError, TypeError, ValueError) as exc:
+        # Model-selected parameters are untrusted simulation inputs. Convert
+        # validation failures into observable failed actions instead of
+        # terminating an entire research run.
+        return ActionResult(
+            action_type,
+            False,
+            {"error": "invalid_params", "detail": str(exc)},
+        )
 
 
 # ---- Research Sprint actions ----

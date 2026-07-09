@@ -43,6 +43,8 @@ safety:
   governor_backoff: 0.15
 inference:
   do_sample: true
+  persona_prompt: false
+  structured_actions: true
   temperature: 0.65
   top_p: 0.92
   max_new_tokens: 160

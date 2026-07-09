@@ -570,6 +570,10 @@ def build_agents(
             reflect_every_n_ticks=reflect_every_n,
             suppress_alphas=suppress_alphas,
             sampling_seed_base=config.get("seed", 7),
+            persona_prompt_enabled=bool(inference.get("persona_prompt", True)),
+            structured_actions_enabled=bool(
+                inference.get("structured_actions", False)
+            ),
         )
         agents.append(agent)
     return agents

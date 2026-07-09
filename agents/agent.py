@@ -8,6 +8,7 @@ prompts.
 from __future__ import annotations
 
 import hashlib
+import json
 import re
 from dataclasses import dataclass, field as dataclass_field
 from typing import Dict, List, Optional, TYPE_CHECKING, Sequence, Tuple
@@ -28,6 +29,21 @@ else:  # pragma: no cover - runtime fallback for optional dependency
     Objective = object
     AlignmentContext = object
 from schemas.logs import SafetyEvent
+
+
+ACTION_PARAMETER_SPEC: Dict[str, Tuple[Tuple[str, ...], Tuple[str, ...]]] = {
+    "move": (("destination",), ("destination",)),
+    "talk": ((), ("topic",)),
+    "work": ((), ("task",)),
+    "gift": (("recipient",), ("recipient", "item", "qty")),
+    "scan": ((), ()),
+    "fill_field": (("field_name", "value"), ("field_name", "value")),
+    "propose_plan": ((), ("summary",)),
+    "submit_plan": ((), ()),
+    "research": ((), ("query", "doc_id")),
+    "cite": ((), ("doc_id",)),
+    "submit_report": ((), ()),
+}
 
 
 @dataclass
@@ -61,6 +77,8 @@ class ActionDecision:
     steering_vector_hashes: Dict[str, Dict[str, str]] = dataclass_field(
         default_factory=dict
     )
+    decision_source: str = "planner"
+    decision_parse_error: Optional[str] = None
     probe_id: Optional[str] = None
     probe_kind: Optional[str] = None
 
@@ -79,6 +97,8 @@ class Agent:
         reflect_every_n_ticks: int = 1,
         suppress_alphas: bool = False,
         sampling_seed_base: int = 0,
+        persona_prompt_enabled: bool = True,
+        structured_actions_enabled: bool = False,
     ):
         self.run_id = run_id
         self.state = state
@@ -91,6 +111,8 @@ class Agent:
         self.reflect_every_n_ticks = reflect_every_n_ticks
         self._suppress_alphas = suppress_alphas
         self._sampling_seed_base = int(sampling_seed_base)
+        self._persona_prompt_enabled = bool(persona_prompt_enabled)
+        self._structured_actions_enabled = bool(structured_actions_enabled)
         self._last_plan_suggestion: Optional[PlanSuggestion] = None
         self._last_reflection: Optional[Tuple[str, List[str]]] = None
         self._last_recalled_dialogue_lines: List[str] = []
@@ -391,14 +413,15 @@ class Agent:
             highlight_lines = ["Key observation highlights:"] + [f"- {item}" for item in highlights]
             highlight_section = "\n".join(highlight_lines) + "\n\n"
         
-        # Personality Override Section
-        alphas = self.persona_alphas()
-        trait_summary = []
-        for trait, val in alphas.items():
-            if abs(val) > 0.3:
-                level = "High" if val > 0 else "Low"
-                trait_summary.append(f"{level} {trait}")
-        persona_text = ", ".join(trait_summary) if trait_summary else "Neutral"
+        persona_text: Optional[str] = None
+        if self._persona_prompt_enabled:
+            alphas = self.persona_alphas()
+            trait_summary = []
+            for trait, val in alphas.items():
+                if abs(val) > 0.3:
+                    level = "High" if val > 0 else "Low"
+                    trait_summary.append(f"{level} {trait}")
+            persona_text = ", ".join(trait_summary) if trait_summary else "Neutral"
 
         alignment_section = ""
         if alignment_context:
@@ -418,13 +441,46 @@ class Agent:
                 alignment_lines.append(f"- {reminder}")
             alignment_section = "\n".join(alignment_lines) + "\n\n"
         param_text = ", ".join(f"{k}={v}" for k, v in suggestion.params.items()) or "none"
+        if self._structured_actions_enabled:
+            persona_line = (
+                f"Persona cue: {persona_text}.\n" if persona_text is not None else ""
+            )
+            supported_actions = "; ".join(
+                f"{action}(params: {', '.join(allowed) or 'none'}; "
+                f"required: {', '.join(required) or 'none'})"
+                for action, (required, allowed) in ACTION_PARAMETER_SPEC.items()
+            )
+            return (
+                f"System: You are {agent_name}. Decide and perform exactly one action.\n"
+                f"Role context: {self.state.system_prompt}\n"
+                "Return ONLY one JSON object with keys action, params, and utterance.\n"
+                f"Supported actions: {supported_actions}.\n"
+                "Use only the parameters appropriate for the selected action. "
+                "The utterance must be a concise first-person sentence.\n"
+                f"{persona_line}"
+                f"Heuristic suggestion: action={suggestion.action_type}; "
+                f"params={param_text}; utterance={suggestion.utterance}\n"
+                "The suggestion is advisory; select the action yourself from the supported list.\n\n"
+                + alignment_section
+                + highlight_section
+                + f"Current location: {location_text}\n"
+                + f"Current goals: {goals_text}\n"
+                + f"Observation: {observation}\n"
+                + dialogue_section
+                + recalled_dialogue_section
+                + "JSON:"
+            )
+
+        # Legacy response-only mode. This is retained for backwards-compatible
+        # tests and old configs; research configs use structured actions.
+        legacy_persona = persona_text or "Neutral"
         action_directives = [
             "SUGGESTED COURSE OF ACTION (Heuristic):",
             f"- Action type: {suggestion.action_type}",
             f"- Parameters: {param_text}",
             f"- Utterance guidance: {suggestion.utterance}",
             "",
-            f"You are {agent_name} ({persona_text}).",
+            f"You are {agent_name} ({legacy_persona}).",
             "CRITICAL INSTRUCTION: The suggestion above is a default heuristic.",
             "If this action conflicts with your personality, YOU MUST REJECT IT and choose an action that fits you better.",
             "Otherwise, follow the suggestion."
@@ -456,6 +512,63 @@ class Agent:
             f"{recalled_dialogue_section}"
             f"{agent_name}'s response:"
         )
+
+    def _parse_structured_action(
+        self,
+        text: str,
+        suggestion: PlanSuggestion,
+    ) -> Tuple[str, Dict[str, str], str, str, Optional[str]]:
+        """Return validated action data or a planner fallback with a reason."""
+
+        if not self._structured_actions_enabled:
+            return (
+                suggestion.action_type,
+                dict(suggestion.params),
+                text,
+                "planner",
+                None,
+            )
+        try:
+            start = text.index("{")
+            payload, _ = json.JSONDecoder().raw_decode(text[start:])
+            if not isinstance(payload, dict):
+                raise ValueError("top-level JSON value must be an object")
+            action_type = payload.get("action")
+            if not isinstance(action_type, str) or action_type not in ACTION_PARAMETER_SPEC:
+                raise ValueError(f"unsupported action: {action_type!r}")
+            raw_params = payload.get("params", {})
+            if not isinstance(raw_params, dict):
+                raise ValueError("params must be an object")
+            required, allowed = ACTION_PARAMETER_SPEC[action_type]
+            unexpected = sorted(set(raw_params) - set(allowed))
+            if unexpected:
+                raise ValueError(f"unexpected params for {action_type}: {unexpected}")
+            params: Dict[str, str] = {}
+            for key, value in raw_params.items():
+                if isinstance(value, (dict, list)) or value is None:
+                    raise ValueError(f"param {key} must be a scalar")
+                params[str(key)] = str(value)
+            missing = [key for key in required if not params.get(key)]
+            if missing and action_type == suggestion.action_type:
+                for key in missing:
+                    fallback_value = suggestion.params.get(key)
+                    if fallback_value:
+                        params[key] = str(fallback_value)
+                missing = [key for key in required if not params.get(key)]
+            if missing:
+                raise ValueError(f"missing params for {action_type}: {missing}")
+            raw_utterance = payload.get("utterance", "")
+            if not isinstance(raw_utterance, str):
+                raise ValueError("utterance must be a string")
+            return action_type, params, raw_utterance, "model", None
+        except (ValueError, json.JSONDecodeError) as exc:
+            return (
+                suggestion.action_type,
+                dict(suggestion.params),
+                suggestion.utterance,
+                "planner_fallback",
+                str(exc),
+            )
 
     def generate(
         self, prompt: str, alphas: Dict[str, float], *, sampling_seed: int
@@ -543,26 +656,39 @@ class Agent:
             sampling_seed=self._sampling_seed(tick, prompt_hash),
         )
         effective_alphas = generation.effective_alphas or alphas
-        cleaned_text = sanitize_agent_output(generation.text)
+        (
+            action_type,
+            params,
+            raw_utterance,
+            decision_source,
+            decision_parse_error,
+        ) = self._parse_structured_action(generation.text, suggestion)
+        cleaned_text = sanitize_agent_output(raw_utterance)
         # Fallback if cleaning removed everything
         if not cleaned_text:
             cleaned_text = suggestion.utterance or ""
         safety_event = self.safety_governor.evaluate(
             run_id=self.run_id,
             agent_id=self.state.agent_id,
-            text=generation.text,
+            text=raw_utterance,
             tick=tick,
             current_alphas=effective_alphas,
         )
         if safety_event:
             self.apply_alpha_delta(safety_event.applied_alpha_delta)
-        params = dict(suggestion.params)
-        if suggestion.action_type == "talk":
+        if action_type == "talk":
             params["utterance"] = cleaned_text
         plan_metadata = suggestion.to_metadata()
+        plan_metadata.update(
+            {
+                "decision_source": decision_source,
+                "selected_action_type": action_type,
+                "decision_parse_error": decision_parse_error,
+            }
+        )
         cached_reflection = self._last_reflection or ("", [])
         return ActionDecision(
-            action_type=suggestion.action_type,
+            action_type=action_type,
             params=params,
             utterance=cleaned_text,
             prompt_text=prompt,
@@ -592,4 +718,6 @@ class Agent:
                 trait: dict(layer_hashes)
                 for trait, layer_hashes in generation.steering_vector_hashes.items()
             },
+            decision_source=decision_source,
+            decision_parse_error=decision_parse_error,
         )

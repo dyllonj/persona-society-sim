@@ -43,6 +43,8 @@ safety:
   governor_backoff: 0.2
 inference:
   do_sample: true
+  persona_prompt: false
+  structured_actions: true
   temperature: 0.7
   top_p: 0.9
   max_new_tokens: 48  # Reduced from 128 to 48 (3x faster)

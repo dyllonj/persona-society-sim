@@ -55,6 +55,8 @@ def _make_agent(
     agent_id: str = "agent-1",
     planner: Optional[StubPlanner] = None,
     language_backend: Optional[StubLanguageBackend] = None,
+    persona_prompt_enabled: bool = True,
+    structured_actions_enabled: bool = False,
 ):
     state = AgentState(
         agent_id=agent_id,
@@ -88,8 +90,69 @@ def _make_agent(
         planner=planner_obj,
         safety_governor=SafetyGovernor(SafetyConfig()),
         reflect_every_n_ticks=reflect_every,
+        persona_prompt_enabled=persona_prompt_enabled,
+        structured_actions_enabled=structured_actions_enabled,
     )
     return agent, planner_obj
+
+
+def test_structured_model_output_selects_executed_action():
+    backend = StubLanguageBackend(
+        '{"action":"work","params":{"task":"repair bridge"},'
+        '"utterance":"I will repair the bridge."}'
+    )
+    agent, _ = _make_agent(
+        language_backend=backend,
+        structured_actions_enabled=True,
+        persona_prompt_enabled=False,
+    )
+
+    decision = agent.act(
+        "The bridge needs repairs.",
+        tick=1,
+        current_location="town_square",
+    )
+
+    assert decision.action_type == "work"
+    assert decision.params == {"task": "repair bridge"}
+    assert decision.utterance == "I will repair the bridge."
+    assert decision.decision_source == "model"
+    assert decision.decision_parse_error is None
+    assert decision.plan_metadata["action_type"] == "talk"
+    assert decision.plan_metadata["selected_action_type"] == "work"
+
+
+def test_invalid_structured_output_falls_back_and_records_reason():
+    backend = StubLanguageBackend(
+        '{"action":"teleport","params":{},"utterance":"I vanish."}'
+    )
+    agent, _ = _make_agent(
+        language_backend=backend,
+        structured_actions_enabled=True,
+        persona_prompt_enabled=False,
+    )
+
+    decision = agent.act("Wait here.", tick=1, current_location="town_square")
+
+    assert decision.action_type == "talk"
+    assert decision.params["utterance"] == "sync"
+    assert decision.decision_source == "planner_fallback"
+    assert "unsupported action" in (decision.decision_parse_error or "")
+
+
+def test_activation_only_prompt_omits_trait_labels():
+    agent, _ = _make_agent(
+        structured_actions_enabled=True,
+        persona_prompt_enabled=False,
+    )
+    agent.state.persona_coeffs = PersonaCoeffs(E=0.9, A=-0.8)
+
+    decision = agent.act("A neighbor arrives.", tick=1, current_location="town_square")
+
+    assert "High E" not in decision.prompt_text
+    assert "Low A" not in decision.prompt_text
+    assert "Persona cue" not in decision.prompt_text
+    assert decision.steering_snapshot["E"] == 0.9
 
 
 def test_agent_plan_cache_expires_after_two_ticks():

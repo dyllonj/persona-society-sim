@@ -81,6 +81,9 @@ CREATE TABLE IF NOT EXISTS inference_event (
   tick INT,
   agent_id TEXT,
   action_id TEXT,
+  selected_action_type TEXT,
+  decision_source TEXT,
+  decision_parse_error TEXT,
   cognitive_phase TEXT,
   capture_reason TEXT,
   prompt_hash TEXT,
@@ -288,6 +291,11 @@ class Database:
         migrations = {
             "msg_log": {
                 "steering_applied": "BOOLEAN DEFAULT FALSE",
+            },
+            "inference_event": {
+                "selected_action_type": "TEXT",
+                "decision_source": "TEXT",
+                "decision_parse_error": "TEXT",
             },
             "metrics_snapshot": {
                 "action_type_entropy": "FLOAT DEFAULT 0.0",
