@@ -6,6 +6,7 @@ steps: 500
 seed: 42
 steering:
   enabled: true
+  startup_smoke_test: true  # fail before simulation if any configured hook has zero effect
   active_traits: [E, A, C]
   strength: 1.0
   per_trait_strength:

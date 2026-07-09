@@ -116,3 +116,36 @@ def test_batched_prompt_masks_support_different_padding_layouts():
     assert torch.allclose(out[1, 1], torch.full((4,), 2.0))
     assert torch.allclose(out[1, 2], torch.zeros(4))
     assert torch.allclose(out[1, 3], torch.full((4,), 2.0))
+
+
+def test_runtime_delta_smoke_test_measures_each_trait_layer():
+    model = DummyModel()
+    controller = SteeringController(
+        model,
+        {
+            "E": {0: torch.ones(4)},
+            "A": {1: torch.full((4,), 2.0)},
+        },
+    )
+    controller.register()
+
+    measurements = controller.measure_runtime_deltas(
+        lambda: model(inputs_embeds=torch.zeros(1, 2, 4))
+    )
+
+    controller.remove()
+    assert measurements["E"][0] > 0
+    assert measurements["A"][1] > 0
+
+
+def test_runtime_delta_smoke_test_rejects_zero_effect_hook():
+    model = DummyModel()
+    controller = SteeringController(model, {"E": {0: torch.zeros(4)}})
+    controller.register()
+
+    with pytest.raises(RuntimeError, match="trait=E layer=0"):
+        controller.measure_runtime_deltas(
+            lambda: model(inputs_embeds=torch.zeros(1, 1, 4))
+        )
+
+    controller.remove()

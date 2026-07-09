@@ -477,6 +477,7 @@ def build_language_backend(
         model_revision=config.get("model_revision"),
         tokenizer_revision=config.get("tokenizer_revision"),
         do_sample=do_sample,
+        startup_smoke_test=bool(steering_cfg.get("startup_smoke_test", True)),
     )
 
 

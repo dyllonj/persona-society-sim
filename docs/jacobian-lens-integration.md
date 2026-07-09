@@ -2,8 +2,9 @@
 
 ## Status
 
-Implemented locally through the fit/replay toolchain and full regression
-suite. The external GPU pilot remains the final validation gate.
+Implemented locally through the fit/replay toolchain, runtime steering smoke
+test, and full regression suite. The fixed-price on-demand GPU pilot remains
+the final validation gate.
 
 This document is the implementation contract for adding Anthropic's Jacobian
 Lens to the simulator. The integration is intentionally split into two

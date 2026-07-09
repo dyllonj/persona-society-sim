@@ -20,6 +20,7 @@ seed: int                      # drives scheduler RNG, base persona sampling
 
 steering:
   enabled: bool                # default true; also gated by --no-steering
+  startup_smoke_test: bool     # default true; require nonzero hook delta on a real forward
   active_traits: [str, ...]    # required subset to load when steering is enabled
   strength: float               # global alpha multiplier ("dose"), default 1.0
   per_trait_strength:           # multiplier after the global strength

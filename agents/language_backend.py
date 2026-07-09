@@ -120,6 +120,7 @@ class HFBackend(LanguageBackend):
         model_revision: Optional[str] = None,
         tokenizer_revision: Optional[str] = None,
         do_sample: bool = False,
+        startup_smoke_test: bool = True,
     ):
         if torch is None or AutoModelForCausalLM is None or AutoTokenizer is None:
             raise ModuleNotFoundError("torch and transformers are required for HFBackend")
@@ -135,6 +136,7 @@ class HFBackend(LanguageBackend):
         self.model_revision = model_revision
         self.tokenizer_revision = tokenizer_revision or model_revision
         self.use_quantization = bool(use_quantization)
+        self.startup_smoke_test = bool(startup_smoke_test)
         self._generation_lock = RLock()
         self.tokenizer = AutoTokenizer.from_pretrained(
             model_name,
@@ -204,6 +206,7 @@ class HFBackend(LanguageBackend):
             trait: dict(per_layer) for trait, per_layer in provided_norms.items()
         }
         self.controller: Optional[SteeringController]
+        self.steering_runtime_deltas: Dict[str, Dict[int, float]] = {}
         if suppress_alphas or not trait_vectors:
             self.controller = None
         else:
@@ -213,6 +216,24 @@ class HFBackend(LanguageBackend):
                 vector_norms=self.vector_norms,
             )
             self.controller.register()
+            if self.startup_smoke_test:
+                self.steering_runtime_deltas = self._verify_steering_runtime()
+
+    def _verify_steering_runtime(self) -> Dict[str, Dict[int, float]]:
+        """Fail startup unless every configured steering hook changes a real forward."""
+
+        if self.controller is None:
+            return {}
+        tokens = self.tokenizer(
+            "Verify activation steering hooks.",
+            return_tensors="pt",
+        ).to(self.model.device)
+
+        def forward() -> object:
+            with torch.inference_mode():
+                return self.model(**tokens, use_cache=False)
+
+        return self.controller.measure_runtime_deltas(forward)
 
     def _validate_trait_vectors(
         self, trait_vectors: Dict[str, Dict[int, torch.Tensor]]

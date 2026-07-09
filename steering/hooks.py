@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+import math
+from typing import Any, Callable, Dict, List, Optional
 
 try:  # pragma: no cover - optional dependency for inference
     import torch
@@ -53,6 +54,7 @@ class SteeringController:
         self._batched_prompt_masks: Optional[torch.Tensor] = None
         self._prompt_hook_calls_remaining = 0
         self._batched_prompt_hook_calls_remaining = 0
+        self._runtime_delta_sink: Optional[Dict[int, float]] = None
 
     def set_alphas(
         self,
@@ -146,6 +148,64 @@ class SteeringController:
             handle.remove()
         self._handles.clear()
 
+    def measure_runtime_deltas(
+        self,
+        forward: Callable[[], Any],
+        *,
+        tolerance: float = 1e-7,
+    ) -> Dict[str, Dict[int, float]]:
+        """Run one forward per trait and verify every configured hook changes its output.
+
+        The measurement is taken inside the registered hook from the norm of
+        ``steered_output - original_output``. This avoids mistaking a change
+        propagated from an earlier layer for proof that a later hook fired.
+        Controller state is restored even when the smoke test fails.
+        """
+
+        if not self._handles:
+            raise RuntimeError("register steering hooks before measuring runtime deltas")
+        if tolerance < 0:
+            raise ValueError("tolerance must be non-negative")
+
+        previous_enabled = self.enabled
+        previous_alphas = dict(self.alphas)
+        previous_batched_alphas = self._batched_alphas
+        previous_batched_cache = dict(self._batched_cache)
+        previous_prompt_mask = self._prompt_mask
+        previous_batched_prompt_masks = self._batched_prompt_masks
+        previous_prompt_calls = self._prompt_hook_calls_remaining
+        previous_batched_prompt_calls = self._batched_prompt_hook_calls_remaining
+        measurements: Dict[str, Dict[int, float]] = {}
+        try:
+            self.enabled = True
+            self.clear_batched_alphas()
+            self.clear_prompt_metadata()
+            for trait, by_layer in self.trait_vectors.items():
+                self.alphas = {name: 0.0 for name in self.trait_vectors}
+                self.alphas[trait] = 1.0
+                per_layer: Dict[int, float] = {}
+                self._runtime_delta_sink = per_layer
+                forward()
+                for layer in by_layer:
+                    delta_norm = per_layer.get(layer, 0.0)
+                    if not math.isfinite(delta_norm) or delta_norm <= tolerance:
+                        raise RuntimeError(
+                            "Steering startup smoke test observed no residual change "
+                            f"for trait={trait} layer={layer}: norm={delta_norm}"
+                        )
+                measurements[trait] = dict(per_layer)
+        finally:
+            self._runtime_delta_sink = None
+            self.enabled = previous_enabled
+            self.alphas = previous_alphas
+            self._batched_alphas = previous_batched_alphas
+            self._batched_cache = previous_batched_cache
+            self._prompt_mask = previous_prompt_mask
+            self._batched_prompt_masks = previous_batched_prompt_masks
+            self._prompt_hook_calls_remaining = previous_prompt_calls
+            self._batched_prompt_hook_calls_remaining = previous_batched_prompt_calls
+        return measurements
+
     @property
     def needed_layers(self) -> List[int]:
         needed = set()
@@ -158,6 +218,7 @@ class SteeringController:
             if not self.enabled:
                 return output
             base = output[0] if isinstance(output, tuple) else output
+            original_base = base
             if self._batched_alphas is not None:
                 delta = self._batched_delta(layer_idx, base)
                 if delta is None:
@@ -168,6 +229,14 @@ class SteeringController:
                 if delta is None:
                     return output
                 base = self._apply_unbatched_delta(base, delta)
+            if self._runtime_delta_sink is not None:
+                delta_norm = float(
+                    torch.linalg.vector_norm((base - original_base).float()).item()
+                )
+                self._runtime_delta_sink[layer_idx] = max(
+                    delta_norm,
+                    self._runtime_delta_sink.get(layer_idx, 0.0),
+                )
             if isinstance(output, tuple):
                 return (base,) + output[1:]
             return base

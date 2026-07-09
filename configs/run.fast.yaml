@@ -6,6 +6,7 @@ steps: 200
 seed: 7
 max_events_per_tick: 12
 steering:
+  startup_smoke_test: true  # fail before simulation if any configured hook has zero effect
   active_traits: [E, A, C]
   strength: 1.0  # global alpha multiplier used by steering hooks and eval harness
   per_trait_strength:

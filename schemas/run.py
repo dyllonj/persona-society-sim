@@ -26,7 +26,10 @@ class SteeringMetadataFiles(BaseModel):
 
 
 class SteeringConfig(BaseModel):
+    enabled: bool = True
+    startup_smoke_test: bool = True
     strength: float = 1.0
+    per_trait_strength: Dict[str, float] = Field(default_factory=dict)
     coefficients: Dict[str, float] = Field(default_factory=dict)
     vector_norm: Dict[str, float] = Field(default_factory=dict)
     metadata_files: SteeringMetadataFiles = Field(default_factory=SteeringMetadataFiles)
@@ -78,8 +81,11 @@ class RunConfig(BaseModel):
     run_id: str
     git_commit: str
     model_name: str
+    model_revision: Optional[str] = None
+    tokenizer_revision: Optional[str] = None
     population: int
     steps: int
+    max_events_per_tick: Optional[int] = None
     scenario: str
     seed: int
     steering: SteeringConfig
@@ -87,6 +93,7 @@ class RunConfig(BaseModel):
     safety: Optional[RunSafetyConfig] = None
     inference: Optional[InferenceConfig] = None
     interpretability: Optional[InterpretabilityConfig] = None
+    meta_orchestrator: Optional[Dict[str, Any]] = None
     optimization: Optional[OptimizationConfig] = None
     objectives: Optional[ObjectivesConfig] = None
     probes: Optional[Dict[str, Any]] = None
