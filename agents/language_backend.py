@@ -179,6 +179,14 @@ class HFBackend(LanguageBackend):
             model_kwargs["torch_dtype"] = torch.float16
 
         self.model = AutoModelForCausalLM.from_pretrained(model_name, **model_kwargs)
+        self.model_revision = (
+            getattr(self.model.config, "_commit_hash", None) or self.model_revision
+        )
+        self.tokenizer_revision = (
+            self.tokenizer.init_kwargs.get("_commit_hash")
+            or self.tokenizer_revision
+            or self.model_revision
+        )
 
         if not suppress_alphas and not trait_vectors:
             raise ValueError(

@@ -1,0 +1,31 @@
+[project]
+name = "persona-society-interpretability"
+version = "0.1.0"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+  "accelerate>=1.8,<2",
+  "datasets>=3.6,<5",
+  "jlens @ git+https://github.com/anthropics/jacobian-lens.git@581d398613e5602a5af361e1c34d3a92ea82ba8e",
+  "numpy>=2,<3",
+  "pyarrow>=20,<24",
+  "pyyaml>=6,<7",
+  "torch>=2.7,<3",
+  "transformers>=5.5,<6",
+  "bitsandbytes>=0.46,<1; platform_system == 'Linux'",
+]
+
+[dependency-groups]
+dev = [
+  "pytest>=8,<10",
+  "ruff>=0.11,<1",
+]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
