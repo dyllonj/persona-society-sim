@@ -1,0 +1,21 @@
+{
+  "conditions": [
+    "neutral_replay",
+    "observed"
+  ],
+  "created_at": "2026-07-09T23:14:38.396200+00:00",
+  "events": 1,
+  "input_event_files": [
+    "/workspace/artifacts/qwen32-alltraits-n100/pilot-event.jsonl"
+  ],
+  "lens_id": "jlens-0162010f99a5fc5a",
+  "lens_sha256": "0162010f99a5fc5a513e015798661d7423beeebc811af8b4db88afdc3e1b4068",
+  "output": "pilot-trace.parquet",
+  "output_sha256": "21002228033f6a8ec13b9c181e35a419a0e28777f14b9f843a431c538c7501f6",
+  "rows": 3780,
+  "schema_version": "1.0",
+  "top_k": 10,
+  "trace_ids": [
+    "pilot-7f7546027f0832e5"
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "corpus_name": "wikitext-103-v1",
+  "corpus_path": "fit_prompts.jsonl",
+  "corpus_sha256": "230d5b93dcf759354ad21f288af3f97f6931f800319a4ad780710da8107f5e50",
+  "created_at": "2026-07-09T23:13:42.671999+00:00",
+  "d_model": 5120,
+  "dim_batch": 4,
+  "dtype": "bf16",
+  "fit_seconds": 6350.803217090666,
+  "jlens_git_commit": "581d398613e5602a5af361e1c34d3a92ea82ba8e",
+  "jlens_version": "0.1.0",
+  "lens_id": "jlens-0162010f99a5fc5a",
+  "lens_sha256": "0162010f99a5fc5a513e015798661d7423beeebc811af8b4db88afdc3e1b4068",
+  "max_seq_len": 128,
+  "model_config_sha256": "741cb95752449724264aced6c359070cc5318d8019133cfa452783cf259dc972",
+  "model_id": "Qwen/Qwen2.5-32B-Instruct",
+  "model_revision": "5ede1c97bbab6ce5cda5812749b4c0bdf79b18dd",
+  "n_layers": 64,
+  "n_prompts": 100,
+  "n_prompts_requested": 100,
+  "quantization": null,
+  "schema_version": "1.0",
+  "skip_first": 16,
+  "source_layers": [
+    36,
+    58,
+    62
+  ],
+  "target_layer": 63,
+  "tokenizer_revision": "5ede1c97bbab6ce5cda5812749b4c0bdf79b18dd",
+  "torch_version": "2.7.1+cu128",
+  "transformers_version": "5.13.0"
+}

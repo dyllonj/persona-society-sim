@@ -1,0 +1,226 @@
+2026-07-09 21:27:38,196 INFO HTTP Request: HEAD https://huggingface.co/datasets/Salesforce/wikitext/resolve/main/README.md "HTTP/1.1 307 Temporary Redirect"
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+2026-07-09 21:27:38,197 WARNING Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+2026-07-09 21:27:38,235 INFO HTTP Request: HEAD https://huggingface.co/api/resolve-cache/datasets/Salesforce/wikitext/b08601e04326c79dfdd32d625aee71d232d685c3/README.md "HTTP/1.1 200 OK"
+2026-07-09 21:27:38,290 INFO HTTP Request: HEAD https://huggingface.co/datasets/Salesforce/wikitext/resolve/b08601e04326c79dfdd32d625aee71d232d685c3/wikitext.py "HTTP/1.1 404 Not Found"
+2026-07-09 21:27:38,421 INFO HTTP Request: HEAD https://s3.amazonaws.com/datasets.huggingface.co/datasets/datasets/Salesforce/wikitext/Salesforce/wikitext.py "HTTP/1.1 404 Not Found"
+2026-07-09 21:27:38,500 INFO HTTP Request: GET https://huggingface.co/api/datasets/Salesforce/wikitext/revision/b08601e04326c79dfdd32d625aee71d232d685c3 "HTTP/1.1 200 OK"
+2026-07-09 21:27:38,550 INFO HTTP Request: HEAD https://huggingface.co/datasets/Salesforce/wikitext/resolve/b08601e04326c79dfdd32d625aee71d232d685c3/.huggingface.yaml "HTTP/1.1 404 Not Found"
+2026-07-09 21:27:38,644 INFO HTTP Request: GET https://datasets-server.huggingface.co/info?dataset=Salesforce/wikitext "HTTP/1.1 200 OK"
+2026-07-09 21:27:38,701 INFO HTTP Request: GET https://huggingface.co/api/datasets/Salesforce/wikitext/tree/b08601e04326c79dfdd32d625aee71d232d685c3/wikitext-103-raw-v1?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-07-09 21:27:38,754 INFO HTTP Request: GET https://huggingface.co/api/datasets/Salesforce/wikitext/tree/b08601e04326c79dfdd32d625aee71d232d685c3?recursive=false&expand=false "HTTP/1.1 200 OK"
+2026-07-09 21:27:38,816 INFO HTTP Request: HEAD https://huggingface.co/datasets/Salesforce/wikitext/resolve/b08601e04326c79dfdd32d625aee71d232d685c3/dataset_infos.json "HTTP/1.1 404 Not Found"
+2026-07-09 21:27:38,874 INFO HTTP Request: GET https://huggingface.co/datasets/Salesforce/wikitext/resolve/b08601e04326c79dfdd32d625aee71d232d685c3/wikitext-103-raw-v1/train-00000-of-00002.parquet "HTTP/1.1 302 Found"
+2026-07-09 21:27:39,154 INFO HTTP Request: GET https://us.aws.cdn.hf.co/xet-bridge-us/621ffdd236468d709f18200d/8d76dead9d8253b6b8ec0ebefbd6882c9f7894b6c227791c44a9f2db8bd20882?response-content-disposition=inline%3B+filename*%3DUTF-8%27%27train-00000-of-00002.parquet%3B+filename%3D%22train-00000-of-00002.parquet%22%3B&X-Xet-Cas-Uid=public&user_id=public&Expires=1783636058&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly91cy5hd3MuY2RuLmhmLmNvL3hldC1icmlkZ2UtdXMvNjIxZmZkZDIzNjQ2OGQ3MDlmMTgyMDBkLzhkNzZkZWFkOWQ4MjUzYjZiOGVjMGViZWZiZDY4ODJjOWY3ODk0YjZjMjI3NzkxYzQ0YTlmMmRiOGJkMjA4ODJcXD9yZXNwb25zZS1jb250ZW50LWRpc3Bvc2l0aW9uPWlubGluZSUzQitmaWxlbmFtZSUyQSUzRFVURi04JTI3JTI3dHJhaW4tMDAwMDAtb2YtMDAwMDIucGFycXVldCUzQitmaWxlbmFtZSUzRCUyMnRyYWluLTAwMDAwLW9mLTAwMDAyLnBhcnF1ZXQlMjIlM0ImWC1YZXQtQ2FzLVVpZD1wdWJsaWMmdXNlcl9pZD1wdWJsaWMiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkVwb2NoVGltZSI6MTc4MzYzNjA1OH0sIkJ5dGVSYW5nZSI6eyJFeHBlY3RlZEhlYWRlciI6ImJ5dGVzPTE1NjkyMjI3Mi0xNTY5ODc4MDcifX19XX0_&Signature=MEYCIQCM7JJhyv3ubEuRnd6hFjS0t5riOk3%7EwH2ZdDzFvUmh3wIhAOA0R8SrwngKiK%7Edjw9cwOyQ4xZs75BLyaihb3raY09P&Key-Pair-Id=01KAYHXK2CBJSW0YZTMNXK9W1M "HTTP/1.1 206 Partial Content"
+2026-07-09 21:27:39,275 INFO HTTP Request: GET https://huggingface.co/datasets/Salesforce/wikitext/resolve/b08601e04326c79dfdd32d625aee71d232d685c3/wikitext-103-raw-v1/train-00000-of-00002.parquet "HTTP/1.1 302 Found"
+2026-07-09 21:27:39,374 INFO HTTP Request: GET https://us.aws.cdn.hf.co/xet-bridge-us/621ffdd236468d709f18200d/8d76dead9d8253b6b8ec0ebefbd6882c9f7894b6c227791c44a9f2db8bd20882?X-Xet-Cas-Uid=public&response-content-disposition=inline%3B+filename*%3DUTF-8%27%27train-00000-of-00002.parquet%3B+filename%3D%22train-00000-of-00002.parquet%22%3B&user_id=public&Expires=1783636059&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly91cy5hd3MuY2RuLmhmLmNvL3hldC1icmlkZ2UtdXMvNjIxZmZkZDIzNjQ2OGQ3MDlmMTgyMDBkLzhkNzZkZWFkOWQ4MjUzYjZiOGVjMGViZWZiZDY4ODJjOWY3ODk0YjZjMjI3NzkxYzQ0YTlmMmRiOGJkMjA4ODJcXD9YLVhldC1DYXMtVWlkPXB1YmxpYyZyZXNwb25zZS1jb250ZW50LWRpc3Bvc2l0aW9uPWlubGluZSUzQitmaWxlbmFtZSUyQSUzRFVURi04JTI3JTI3dHJhaW4tMDAwMDAtb2YtMDAwMDIucGFycXVldCUzQitmaWxlbmFtZSUzRCUyMnRyYWluLTAwMDAwLW9mLTAwMDAyLnBhcnF1ZXQlMjIlM0ImdXNlcl9pZD1wdWJsaWMiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkVwb2NoVGltZSI6MTc4MzYzNjA1OX0sIkJ5dGVSYW5nZSI6eyJFeHBlY3RlZEhlYWRlciI6ImJ5dGVzPTE1NjU5OTQ0My0xNTY5ODc4MDcifX19XX0_&Signature=MEYCIQC2mu9TmeeTgqKqEC8paw%7EXdSXAB5ReGdV0gtdHzq5yvwIhAMtTm6IX-u269vvKa5eCspbP5KpcoOt7v-GxouoJSd-L&Key-Pair-Id=01KAYHXK2CBJSW0YZTMNXK9W1M "HTTP/1.1 206 Partial Content"
+2026-07-09 21:27:39,527 INFO HTTP Request: GET https://huggingface.co/datasets/Salesforce/wikitext/resolve/b08601e04326c79dfdd32d625aee71d232d685c3/wikitext-103-raw-v1/train-00000-of-00002.parquet "HTTP/1.1 302 Found"
+2026-07-09 21:27:39,632 INFO HTTP Request: GET https://us.aws.cdn.hf.co/xet-bridge-us/621ffdd236468d709f18200d/8d76dead9d8253b6b8ec0ebefbd6882c9f7894b6c227791c44a9f2db8bd20882?response-content-disposition=inline%3B+filename*%3DUTF-8%27%27train-00000-of-00002.parquet%3B+filename%3D%22train-00000-of-00002.parquet%22%3B&user_id=public&X-Xet-Cas-Uid=public&Expires=1783636059&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly91cy5hd3MuY2RuLmhmLmNvL3hldC1icmlkZ2UtdXMvNjIxZmZkZDIzNjQ2OGQ3MDlmMTgyMDBkLzhkNzZkZWFkOWQ4MjUzYjZiOGVjMGViZWZiZDY4ODJjOWY3ODk0YjZjMjI3NzkxYzQ0YTlmMmRiOGJkMjA4ODJcXD9yZXNwb25zZS1jb250ZW50LWRpc3Bvc2l0aW9uPWlubGluZSUzQitmaWxlbmFtZSUyQSUzRFVURi04JTI3JTI3dHJhaW4tMDAwMDAtb2YtMDAwMDIucGFycXVldCUzQitmaWxlbmFtZSUzRCUyMnRyYWluLTAwMDAwLW9mLTAwMDAyLnBhcnF1ZXQlMjIlM0ImdXNlcl9pZD1wdWJsaWMmWC1YZXQtQ2FzLVVpZD1wdWJsaWMiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkVwb2NoVGltZSI6MTc4MzYzNjA1OX0sIkJ5dGVSYW5nZSI6eyJFeHBlY3RlZEhlYWRlciI6ImJ5dGVzPTQtMzg2NDYxNzQifX19XX0_&Signature=MEYCIQDnPEa9DnMD35KFqG%7EdCROizMG%7EJI8m7qu6um1oGudVUwIhAOqP5w498jaToq-g4gRh4EbUJ92GAb5LDShwmu%7ERwHs4&Key-Pair-Id=01KAYHXK2CBJSW0YZTMNXK9W1M "HTTP/1.1 206 Partial Content"
+2026-07-09 21:27:40,393 INFO HTTP Request: GET https://huggingface.co/api/models/Qwen/Qwen2.5-32B-Instruct/tree/5ede1c97bbab6ce5cda5812749b4c0bdf79b18dd/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-07-09 21:27:40,453 INFO HTTP Request: GET https://huggingface.co/api/models/Qwen/Qwen2.5-32B-Instruct/tree/5ede1c97bbab6ce5cda5812749b4c0bdf79b18dd?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-07-09 21:27:40,808 INFO HTTP Request: GET https://huggingface.co/api/models/Qwen/Qwen2.5-32B-Instruct "HTTP/1.1 200 OK"
+
+Loading weights:   0%|          | 0/771 [00:00<?, ?it/s]
+Loading weights:   0%|          | 2/771 [00:00<01:18,  9.77it/s]
+Loading weights:   2%|▏         | 16/771 [00:00<00:13, 57.96it/s]
+Loading weights:   3%|▎         | 24/771 [00:00<00:12, 61.72it/s]
+Loading weights:   4%|▍         | 31/771 [00:00<00:12, 61.03it/s]
+Loading weights:   5%|▌         | 42/771 [00:00<00:10, 67.44it/s]
+Loading weights:   7%|▋         | 54/771 [00:00<00:09, 75.41it/s]
+Loading weights:   9%|▊         | 66/771 [00:00<00:08, 80.57it/s]
+Loading weights:  10%|█         | 78/771 [00:01<00:08, 83.26it/s]
+Loading weights:  12%|█▏        | 90/771 [00:01<00:07, 85.77it/s]
+Loading weights:  13%|█▎        | 102/771 [00:01<00:07, 87.53it/s]
+Loading weights:  15%|█▍        | 114/771 [00:01<00:07, 88.14it/s]
+Loading weights:  16%|█▋        | 126/771 [00:01<00:07, 88.77it/s]
+Loading weights:  18%|█▊        | 138/771 [00:01<00:07, 89.50it/s]
+Loading weights:  19%|█▉        | 150/771 [00:01<00:06, 90.29it/s]
+Loading weights:  21%|██        | 162/771 [00:02<00:06, 90.19it/s]
+Loading weights:  23%|██▎       | 174/771 [00:02<00:06, 89.85it/s]
+Loading weights:  24%|██▍       | 186/771 [00:02<00:06, 90.42it/s]
+Loading weights:  26%|██▌       | 198/771 [00:02<00:06, 93.99it/s]
+Loading weights:  27%|██▋       | 210/771 [00:02<00:05, 97.60it/s]
+Loading weights:  29%|██▉       | 222/771 [00:02<00:05, 95.21it/s]
+Loading weights:  30%|███       | 234/771 [00:02<00:05, 92.99it/s]
+Loading weights:  32%|███▏      | 246/771 [00:02<00:05, 92.56it/s]
+Loading weights:  33%|███▎      | 257/771 [00:03<00:05, 89.49it/s]
+Loading weights:  35%|███▌      | 270/771 [00:03<00:05, 91.77it/s]
+Loading weights:  37%|███▋      | 282/771 [00:03<00:05, 91.68it/s]
+Loading weights:  38%|███▊      | 294/771 [00:03<00:05, 90.97it/s]
+Loading weights:  40%|███▉      | 306/771 [00:03<00:05, 90.54it/s]
+Loading weights:  41%|████      | 318/771 [00:03<00:04, 90.63it/s]
+Loading weights:  43%|████▎     | 330/771 [00:03<00:04, 91.23it/s]
+Loading weights:  44%|████▍     | 342/771 [00:03<00:04, 90.77it/s]
+Loading weights:  46%|████▌     | 354/771 [00:04<00:04, 95.49it/s]
+Loading weights:  47%|████▋     | 366/771 [00:04<00:04, 98.18it/s]
+Loading weights:  49%|████▉     | 377/771 [00:04<00:04, 93.09it/s]
+Loading weights:  51%|█████     | 390/771 [00:04<00:04, 94.20it/s]
+Loading weights:  52%|█████▏    | 402/771 [00:04<00:03, 92.60it/s]
+Loading weights:  54%|█████▎    | 414/771 [00:04<00:03, 92.52it/s]
+Loading weights:  55%|█████▌    | 426/771 [00:04<00:03, 91.74it/s]
+Loading weights:  57%|█████▋    | 438/771 [00:04<00:03, 94.72it/s]
+Loading weights:  58%|█████▊    | 450/771 [00:05<00:03, 96.60it/s]
+Loading weights:  60%|█████▉    | 462/771 [00:05<00:03, 98.84it/s]
+Loading weights:  61%|██████▏   | 474/771 [00:05<00:03, 98.34it/s]
+Loading weights:  63%|██████▎   | 486/771 [00:05<00:02, 98.12it/s]
+Loading weights:  65%|██████▍   | 498/771 [00:05<00:02, 98.44it/s]
+Loading weights:  66%|██████▌   | 510/771 [00:05<00:02, 99.99it/s]
+Loading weights:  68%|██████▊   | 521/771 [00:05<00:02, 94.85it/s]
+Loading weights:  69%|██████▉   | 533/771 [00:05<00:02, 98.15it/s]
+Loading weights:  71%|███████   | 546/771 [00:06<00:02, 102.60it/s]
+Loading weights:  72%|███████▏  | 558/771 [00:06<00:02, 104.43it/s]
+Loading weights:  74%|███████▍  | 570/771 [00:06<00:01, 103.92it/s]
+Loading weights:  76%|███████▌  | 586/771 [00:06<00:01, 117.71it/s]
+Loading weights:  78%|███████▊  | 598/771 [00:06<00:01, 111.03it/s]
+Loading weights:  79%|███████▉  | 610/771 [00:06<00:01, 107.01it/s]
+Loading weights:  81%|████████  | 621/771 [00:06<00:01, 106.11it/s]
+Loading weights:  82%|████████▏ | 632/771 [00:06<00:01, 99.37it/s]
+Loading weights:  83%|████████▎ | 643/771 [00:06<00:01, 97.23it/s]
+Loading weights:  85%|████████▍ | 654/771 [00:07<00:01, 98.05it/s]
+Loading weights:  86%|████████▋ | 666/771 [00:07<00:01, 101.60it/s]
+Loading weights:  88%|████████▊ | 677/771 [00:07<00:00, 95.58it/s]
+Loading weights:  89%|████████▉ | 690/771 [00:07<00:00, 96.42it/s]
+Loading weights:  91%|█████████ | 702/771 [00:07<00:00, 94.46it/s]
+Loading weights:  93%|█████████▎| 714/771 [00:07<00:00, 96.02it/s]
+Loading weights:  94%|█████████▍| 726/771 [00:07<00:00, 98.87it/s]
+Loading weights:  96%|█████████▌| 738/771 [00:07<00:00, 101.96it/s]
+Loading weights:  97%|█████████▋| 750/771 [00:08<00:00, 103.83it/s]
+Loading weights:  99%|█████████▉| 762/771 [00:08<00:00, 104.34it/s]
+Loading weights: 100%|██████████| 771/771 [00:08<00:00, 94.11it/s]
+2026-07-09 21:27:51,868 INFO fit: n_layers=64 d_model=5120, fitting 3 source layers (target=L63) on 100 prompts
+/opt/conda/lib/python3.11/site-packages/torch/autograd/graph.py:824: UserWarning: Attempting to run cuBLAS, but there was no current CUDA context! Attempting to set the primary context... (Triggered internally at /pytorch/aten/src/ATen/cuda/CublasHandlePool.cpp:181.)
+  return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+2026-07-09 21:28:55,073 INFO   prompt 1/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.278  max_d_mean=nan
+2026-07-09 21:29:58,099 INFO   prompt 2/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.355  max_d_mean=6.12e-01
+2026-07-09 21:31:01,321 INFO   prompt 3/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.430  max_d_mean=4.09e-01
+2026-07-09 21:32:04,686 INFO   prompt 4/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.597  max_d_mean=3.91e-01
+2026-07-09 21:33:07,947 INFO   prompt 5/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.265  max_d_mean=2.20e-01
+2026-07-09 21:34:11,266 INFO   prompt 6/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.265  max_d_mean=1.89e-01
+2026-07-09 21:35:14,561 INFO   prompt 7/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.425  max_d_mean=2.05e-01
+2026-07-09 21:36:17,713 INFO   prompt 8/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.338  max_d_mean=1.58e-01
+2026-07-09 21:37:20,895 INFO   prompt 9/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.305  max_d_mean=1.39e-01
+2026-07-09 21:38:24,232 INFO   prompt 10/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.667  max_d_mean=1.79e-01
+2026-07-09 21:39:27,825 INFO   prompt 11/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.267  max_d_mean=1.05e-01
+2026-07-09 21:40:31,067 INFO   prompt 12/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.400  max_d_mean=1.21e-01
+2026-07-09 21:41:34,338 INFO   prompt 13/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.221  max_d_mean=8.42e-02
+2026-07-09 21:42:37,681 INFO   prompt 14/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.427  max_d_mean=1.00e-01
+2026-07-09 21:43:41,133 INFO   prompt 15/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.233  max_d_mean=7.83e-02
+2026-07-09 21:44:44,712 INFO   prompt 16/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.241  max_d_mean=8.74e-02
+2026-07-09 21:45:48,181 INFO   prompt 17/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.388  max_d_mean=9.49e-02
+2026-07-09 21:46:51,660 INFO   prompt 18/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.565  max_d_mean=1.03e-01
+2026-07-09 21:47:55,102 INFO   prompt 19/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.260  max_d_mean=7.37e-02
+2026-07-09 21:48:58,559 INFO   prompt 20/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.391  max_d_mean=8.21e-02
+2026-07-09 21:50:02,507 INFO   prompt 21/100  seq_len=128 n_valid=111  64s  max||J||/sqrt(d)=1.246  max_d_mean=6.81e-02
+2026-07-09 21:51:06,244 INFO   prompt 22/100  seq_len=128 n_valid=111  64s  max||J||/sqrt(d)=1.288  max_d_mean=6.62e-02
+2026-07-09 21:52:09,698 INFO   prompt 23/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.229  max_d_mean=5.35e-02
+2026-07-09 21:53:13,264 INFO   prompt 24/100  seq_len=128 n_valid=111  64s  max||J||/sqrt(d)=1.294  max_d_mean=6.06e-02
+2026-07-09 21:54:16,734 INFO   prompt 25/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.312  max_d_mean=5.83e-02
+2026-07-09 21:55:20,310 INFO   prompt 26/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.381  max_d_mean=6.17e-02
+2026-07-09 21:56:23,791 INFO   prompt 27/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.432  max_d_mean=6.32e-02
+2026-07-09 21:57:27,303 INFO   prompt 28/100  seq_len=128 n_valid=111  64s  max||J||/sqrt(d)=1.422  max_d_mean=5.81e-02
+2026-07-09 21:58:30,960 INFO   prompt 29/100  seq_len=128 n_valid=111  64s  max||J||/sqrt(d)=1.219  max_d_mean=4.21e-02
+2026-07-09 21:59:34,532 INFO   prompt 30/100  seq_len=128 n_valid=111  64s  max||J||/sqrt(d)=1.254  max_d_mean=4.70e-02
+2026-07-09 22:00:38,139 INFO   prompt 31/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.587  max_d_mean=6.03e-02
+2026-07-09 22:01:41,584 INFO   prompt 32/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.289  max_d_mean=4.43e-02
+2026-07-09 22:02:45,064 INFO   prompt 33/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.285  max_d_mean=4.30e-02
+2026-07-09 22:03:48,584 INFO   prompt 34/100  seq_len=128 n_valid=111  64s  max||J||/sqrt(d)=1.456  max_d_mean=4.98e-02
+2026-07-09 22:04:52,100 INFO   prompt 35/100  seq_len=128 n_valid=111  64s  max||J||/sqrt(d)=1.395  max_d_mean=4.59e-02
+2026-07-09 22:05:55,871 INFO   prompt 36/100  seq_len=128 n_valid=111  64s  max||J||/sqrt(d)=1.437  max_d_mean=4.77e-02
+2026-07-09 22:06:59,413 INFO   prompt 37/100  seq_len=128 n_valid=111  64s  max||J||/sqrt(d)=1.314  max_d_mean=3.92e-02
+2026-07-09 22:08:02,951 INFO   prompt 38/100  seq_len=128 n_valid=111  64s  max||J||/sqrt(d)=1.443  max_d_mean=4.87e-02
+2026-07-09 22:09:06,476 INFO   prompt 39/100  seq_len=128 n_valid=111  64s  max||J||/sqrt(d)=1.247  max_d_mean=3.96e-02
+2026-07-09 22:10:09,990 INFO   prompt 40/100  seq_len=128 n_valid=111  64s  max||J||/sqrt(d)=1.353  max_d_mean=4.12e-02
+2026-07-09 22:11:13,604 INFO   prompt 41/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.253  max_d_mean=3.64e-02
+2026-07-09 22:12:16,909 INFO   prompt 42/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.631  max_d_mean=4.93e-02
+2026-07-09 22:13:20,376 INFO   prompt 43/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.615  max_d_mean=4.94e-02
+2026-07-09 22:14:23,987 INFO   prompt 44/100  seq_len=128 n_valid=111  64s  max||J||/sqrt(d)=1.209  max_d_mean=2.86e-02
+2026-07-09 22:15:27,587 INFO   prompt 45/100  seq_len=128 n_valid=111  64s  max||J||/sqrt(d)=1.327  max_d_mean=3.48e-02
+2026-07-09 22:16:31,283 INFO   prompt 46/100  seq_len=128 n_valid=111  64s  max||J||/sqrt(d)=1.343  max_d_mean=3.53e-02
+2026-07-09 22:17:34,855 INFO   prompt 47/100  seq_len=128 n_valid=111  64s  max||J||/sqrt(d)=1.252  max_d_mean=2.72e-02
+2026-07-09 22:18:38,422 INFO   prompt 48/100  seq_len=128 n_valid=111  64s  max||J||/sqrt(d)=1.403  max_d_mean=3.68e-02
+2026-07-09 22:19:41,867 INFO   prompt 49/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.669  max_d_mean=4.30e-02
+2026-07-09 22:20:45,332 INFO   prompt 50/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.333  max_d_mean=3.21e-02
+2026-07-09 22:21:49,030 INFO   prompt 51/100  seq_len=128 n_valid=111  64s  max||J||/sqrt(d)=1.511  max_d_mean=3.96e-02
+2026-07-09 22:22:52,469 INFO   prompt 52/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.323  max_d_mean=3.09e-02
+2026-07-09 22:23:55,962 INFO   prompt 53/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.630  max_d_mean=3.94e-02
+2026-07-09 22:24:59,219 INFO   prompt 54/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.394  max_d_mean=3.34e-02
+2026-07-09 22:26:02,751 INFO   prompt 55/100  seq_len=128 n_valid=111  64s  max||J||/sqrt(d)=1.528  max_d_mean=3.27e-02
+2026-07-09 22:27:06,315 INFO   prompt 56/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.265  max_d_mean=2.56e-02
+2026-07-09 22:28:09,856 INFO   prompt 57/100  seq_len=128 n_valid=111  64s  max||J||/sqrt(d)=1.267  max_d_mean=2.53e-02
+2026-07-09 22:29:13,320 INFO   prompt 58/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.230  max_d_mean=2.08e-02
+2026-07-09 22:30:16,881 INFO   prompt 59/100  seq_len=128 n_valid=111  64s  max||J||/sqrt(d)=1.213  max_d_mean=2.16e-02
+2026-07-09 22:31:20,234 INFO   prompt 60/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.632  max_d_mean=3.49e-02
+2026-07-09 22:32:23,692 INFO   prompt 61/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.408  max_d_mean=2.70e-02
+2026-07-09 22:33:27,011 INFO   prompt 62/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.491  max_d_mean=2.99e-02
+2026-07-09 22:34:30,495 INFO   prompt 63/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.299  max_d_mean=2.44e-02
+2026-07-09 22:35:33,854 INFO   prompt 64/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.594  max_d_mean=3.08e-02
+2026-07-09 22:36:37,179 INFO   prompt 65/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.765  max_d_mean=3.47e-02
+2026-07-09 22:37:40,830 INFO   prompt 66/100  seq_len=128 n_valid=111  64s  max||J||/sqrt(d)=1.444  max_d_mean=2.69e-02
+2026-07-09 22:38:44,101 INFO   prompt 67/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.254  max_d_mean=2.08e-02
+2026-07-09 22:39:47,327 INFO   prompt 68/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.363  max_d_mean=2.54e-02
+2026-07-09 22:40:50,830 INFO   prompt 69/100  seq_len=128 n_valid=111  64s  max||J||/sqrt(d)=1.439  max_d_mean=2.61e-02
+2026-07-09 22:41:54,181 INFO   prompt 70/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.354  max_d_mean=2.25e-02
+2026-07-09 22:42:57,782 INFO   prompt 71/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.313  max_d_mean=2.20e-02
+2026-07-09 22:44:01,276 INFO   prompt 72/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.430  max_d_mean=2.27e-02
+2026-07-09 22:45:04,801 INFO   prompt 73/100  seq_len=128 n_valid=111  64s  max||J||/sqrt(d)=1.437  max_d_mean=2.35e-02
+2026-07-09 22:46:08,319 INFO   prompt 74/100  seq_len=128 n_valid=111  64s  max||J||/sqrt(d)=1.436  max_d_mean=2.39e-02
+2026-07-09 22:47:11,569 INFO   prompt 75/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.540  max_d_mean=2.50e-02
+2026-07-09 22:48:15,249 INFO   prompt 76/100  seq_len=128 n_valid=111  64s  max||J||/sqrt(d)=1.710  max_d_mean=2.80e-02
+2026-07-09 22:49:18,691 INFO   prompt 77/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.308  max_d_mean=2.01e-02
+2026-07-09 22:50:22,074 INFO   prompt 78/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.298  max_d_mean=2.12e-02
+2026-07-09 22:51:25,601 INFO   prompt 79/100  seq_len=128 n_valid=111  64s  max||J||/sqrt(d)=1.299  max_d_mean=1.87e-02
+2026-07-09 22:52:29,463 INFO   prompt 80/100  seq_len=128 n_valid=111  64s  max||J||/sqrt(d)=1.440  max_d_mean=2.14e-02
+2026-07-09 22:53:33,330 INFO   prompt 81/100  seq_len=128 n_valid=111  64s  max||J||/sqrt(d)=1.326  max_d_mean=2.10e-02
+2026-07-09 22:54:37,027 INFO   prompt 82/100  seq_len=128 n_valid=111  64s  max||J||/sqrt(d)=1.395  max_d_mean=1.96e-02
+2026-07-09 22:55:40,715 INFO   prompt 83/100  seq_len=128 n_valid=111  64s  max||J||/sqrt(d)=1.719  max_d_mean=2.50e-02
+2026-07-09 22:56:44,378 INFO   prompt 84/100  seq_len=128 n_valid=111  64s  max||J||/sqrt(d)=1.287  max_d_mean=1.82e-02
+2026-07-09 22:57:48,021 INFO   prompt 85/100  seq_len=128 n_valid=111  64s  max||J||/sqrt(d)=1.363  max_d_mean=1.89e-02
+2026-07-09 22:58:51,789 INFO   prompt 86/100  seq_len=128 n_valid=111  64s  max||J||/sqrt(d)=1.483  max_d_mean=1.99e-02
+2026-07-09 22:59:55,371 INFO   prompt 87/100  seq_len=128 n_valid=111  64s  max||J||/sqrt(d)=1.286  max_d_mean=1.90e-02
+2026-07-09 23:00:58,996 INFO   prompt 88/100  seq_len=128 n_valid=111  64s  max||J||/sqrt(d)=1.175  max_d_mean=1.79e-02
+2026-07-09 23:02:02,592 INFO   prompt 89/100  seq_len=128 n_valid=111  64s  max||J||/sqrt(d)=1.421  max_d_mean=1.94e-02
+2026-07-09 23:03:06,209 INFO   prompt 90/100  seq_len=128 n_valid=111  64s  max||J||/sqrt(d)=1.215  max_d_mean=1.59e-02
+2026-07-09 23:04:10,026 INFO   prompt 91/100  seq_len=128 n_valid=111  64s  max||J||/sqrt(d)=1.281  max_d_mean=1.69e-02
+2026-07-09 23:05:13,742 INFO   prompt 92/100  seq_len=128 n_valid=111  64s  max||J||/sqrt(d)=1.242  max_d_mean=1.71e-02
+2026-07-09 23:06:17,336 INFO   prompt 93/100  seq_len=128 n_valid=111  64s  max||J||/sqrt(d)=1.291  max_d_mean=1.49e-02
+2026-07-09 23:07:20,898 INFO   prompt 94/100  seq_len=128 n_valid=111  64s  max||J||/sqrt(d)=1.221  max_d_mean=1.44e-02
+2026-07-09 23:08:24,452 INFO   prompt 95/100  seq_len=128 n_valid=111  64s  max||J||/sqrt(d)=1.282  max_d_mean=1.62e-02
+2026-07-09 23:09:28,112 INFO   prompt 96/100  seq_len=128 n_valid=111  64s  max||J||/sqrt(d)=1.389  max_d_mean=1.67e-02
+2026-07-09 23:10:31,630 INFO   prompt 97/100  seq_len=128 n_valid=111  64s  max||J||/sqrt(d)=1.337  max_d_mean=1.55e-02
+2026-07-09 23:11:35,123 INFO   prompt 98/100  seq_len=128 n_valid=111  63s  max||J||/sqrt(d)=1.245  max_d_mean=1.63e-02
+2026-07-09 23:12:38,645 INFO   prompt 99/100  seq_len=128 n_valid=111  64s  max||J||/sqrt(d)=1.421  max_d_mean=1.73e-02
+2026-07-09 23:13:42,157 INFO   prompt 100/100  seq_len=128 n_valid=111  64s  max||J||/sqrt(d)=1.318  max_d_mean=1.51e-02
+2026-07-09 23:13:42,455 INFO fit: done, 100 prompts
+{
+  "corpus_name": "wikitext-103-v1",
+  "corpus_path": "fit_prompts.jsonl",
+  "corpus_sha256": "230d5b93dcf759354ad21f288af3f97f6931f800319a4ad780710da8107f5e50",
+  "created_at": "2026-07-09T23:13:42.671999+00:00",
+  "d_model": 5120,
+  "dim_batch": 4,
+  "dtype": "bf16",
+  "fit_seconds": 6350.803217090666,
+  "jlens_git_commit": "581d398613e5602a5af361e1c34d3a92ea82ba8e",
+  "jlens_version": "0.1.0",
+  "lens_id": "jlens-0162010f99a5fc5a",
+  "lens_sha256": "0162010f99a5fc5a513e015798661d7423beeebc811af8b4db88afdc3e1b4068",
+  "max_seq_len": 128,
+  "model_config_sha256": "741cb95752449724264aced6c359070cc5318d8019133cfa452783cf259dc972",
+  "model_id": "Qwen/Qwen2.5-32B-Instruct",
+  "model_revision": "5ede1c97bbab6ce5cda5812749b4c0bdf79b18dd",
+  "n_layers": 64,
+  "n_prompts": 100,
+  "n_prompts_requested": 100,
+  "quantization": null,
+  "schema_version": "1.0",
+  "skip_first": 16,
+  "source_layers": [
+    36,
+    58,
+    62
+  ],
+  "target_layer": 63,
+  "tokenizer_revision": "5ede1c97bbab6ce5cda5812749b4c0bdf79b18dd",
+  "torch_version": "2.7.1+cu128",
+  "transformers_version": "5.13.0"
+}

@@ -2,9 +2,11 @@
 
 ## Status
 
-Implemented locally through the fit/replay toolchain, runtime steering smoke
-test, and full regression suite. The fixed-price on-demand GPU pilot remains
-the final validation gate.
+Implemented through the fit/replay toolchain, runtime steering smoke test,
+full regression suite, and a fixed-price on-demand Qwen32 GPU pilot. See the
+[pilot report](jacobian-lens-pilot-report.md) for hashes, timing, trace
+validation, cost estimate, and limitations. A broader confirmatory research
+run remains future work.
 
 This document is the implementation contract for adding Anthropic's Jacobian
 Lens to the simulator. The integration is intentionally split into two
