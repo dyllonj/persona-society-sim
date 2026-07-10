@@ -1,0 +1,100 @@
+schema_version: "1.0"
+study_id: society-caa-factorial-v1
+base_config: configs/run.fast.yaml
+environment: research
+difficulty: 3
+population: 30
+steps: 100
+max_events_per_tick: 12
+seeds: [101, 202, 303, 404, 505]
+vector_dir: data/vectors
+
+# Immutable Hugging Face revisions used by the Jacobian Lens pilot.
+model:
+  id: Qwen/Qwen2.5-32B-Instruct
+  revision: 5ede1c97bbab6ce5cda5812749b4c0bdf79b18dd
+  tokenizer_revision: 5ede1c97bbab6ce5cda5812749b4c0bdf79b18dd
+
+common_overrides:
+  inference:
+    do_sample: true
+    persona_prompt: false
+    structured_actions: true
+    temperature: 0.7
+    top_p: 0.9
+    max_new_tokens: 48
+  interpretability:
+    enabled: true
+    sample_rate: 0.05
+    include_prompt_text: false
+  steering:
+    enabled: true
+    startup_smoke_test: true
+    strength: 1.0
+    per_trait_strength:
+      fallback: 1.0
+      E: 1.0
+      A: 1.0
+      C: 1.0
+      O: 1.0
+      N: 1.0
+
+arms:
+  neutral:
+    steering_mode: disabled
+    active_traits: [E, A, C]
+    coefficients: {E: 0.0, A: 0.0, C: 0.0, O: 0.0, N: 0.0}
+  e_only:
+    steering_mode: targeted
+    active_traits: [E]
+    coefficients: {E: 0.8, A: 0.0, C: 0.0, O: 0.0, N: 0.0}
+  a_only:
+    steering_mode: targeted
+    active_traits: [A]
+    coefficients: {E: 0.0, A: 0.5, C: 0.0, O: 0.0, N: 0.0}
+  c_only:
+    steering_mode: targeted
+    active_traits: [C]
+    coefficients: {E: 0.0, A: 0.0, C: 0.6, O: 0.0, N: 0.0}
+  e_a_c:
+    steering_mode: targeted
+    active_traits: [E, A, C]
+    coefficients: {E: 0.8, A: 0.5, C: 0.6, O: 0.0, N: 0.0}
+  placebo:
+    steering_mode: placebo
+    active_traits: [E, A, C]
+    coefficients: {E: 0.8, A: 0.5, C: 0.6, O: 0.0, N: 0.0}
+    shuffle: seeded_trait_label_derangement
+
+# These are transparent planning assumptions, not benchmark claims. Replace
+# them with measured throughput before budgeting a production execution.
+estimation:
+  mean_input_tokens_per_generation: 900
+  mean_output_tokens_per_generation: 48
+  seconds_per_generation: 2.0
+
+analysis:
+  unit: simulation_run
+  within_run_tick_aggregation: mean
+  confidence_level: 0.95
+  reference_arm: neutral
+  outcomes:
+    - cooperation_rate
+    - gini_wealth
+    - polarization_modularity
+    - conflicts_total
+    - rule_enforcement_cost_total
+    - action_success_rate
+    - task_completions
+    - research_fact_accuracy
+    - citations_total
+    - report_reward_mean
+    - tokens_total
+  paired_contrasts:
+    - [e_only, neutral]
+    - [a_only, neutral]
+    - [c_only, neutral]
+    - [e_a_c, neutral]
+    - [placebo, neutral]
+    - [e_a_c, placebo]
+    - [a_only, c_only]

@@ -319,18 +319,18 @@ def shuffle_trait_vectors(
     vector_norms: Dict[str, Dict[int, float]],
     rng: random.Random,
 ) -> Tuple[Dict[str, Dict[int, np.ndarray]], Dict[str, Dict[int, float]], Dict[str, str]]:
-    """Shuffle trait-to-vector assignments to create a placebo steering map.
+    """Derange trait-to-vector assignments to create an active-control map.
 
     Returns the shuffled vectors, shuffled norms, and the mapping from trait ->
-    source trait used for the reassignment.
+    source trait used for the reassignment. No trait may retain its own vector;
+    an ordinary shuffle leaves fixed points often enough to contaminate a
+    three-trait placebo arm.
     """
 
     traits = list(trait_vectors.keys())
     if not traits:
         return trait_vectors, vector_norms, {}
-    shuffled = traits[:]
-    rng.shuffle(shuffled)
-    mapping = dict(zip(traits, shuffled))
+    mapping = deranged_trait_mapping(traits, rng)
 
     shuffled_vectors: Dict[str, Dict[int, np.ndarray]] = {}
     shuffled_norms: Dict[str, Dict[int, float]] = {}
@@ -339,6 +339,25 @@ def shuffle_trait_vectors(
         if source in vector_norms:
             shuffled_norms[trait] = dict(vector_norms[source])
     return shuffled_vectors, shuffled_norms, mapping
+
+
+def deranged_trait_mapping(
+    traits: List[str], rng: random.Random
+) -> Dict[str, str]:
+    """Return a seeded permutation with no fixed points."""
+
+    if len(traits) < 2:
+        raise ValueError("placebo trait derangement requires at least two active traits")
+    if len(set(traits)) != len(traits):
+        raise ValueError("placebo trait derangement requires unique trait names")
+    shuffled = traits[:]
+    for _ in range(100):
+        rng.shuffle(shuffled)
+        if all(trait != source for trait, source in zip(traits, shuffled, strict=True)):
+            return dict(zip(traits, shuffled, strict=True))
+    # Deterministic total fallback; reachable only under a pathological RNG.
+    rotated = traits[1:] + traits[:1]
+    return dict(zip(traits, rotated, strict=True))
 
 
 def _load_vectors_from_meta_files(
