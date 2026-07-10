@@ -211,11 +211,36 @@ class HFContrastScorer(OptionScorer):
             or tokenizer_revision
             or self.model_revision
         )
+        self._validate_trait_vectors(trait_vectors)
         self.trait_vectors = trait_vectors
         self.controller: Optional[SteeringController] = None
         if trait_vectors:
             self.controller = SteeringController(self.model, trait_vectors)
             self.controller.register()
+
+    def _validate_trait_vectors(
+        self,
+        trait_vectors: Dict[str, Dict[int, TorchTensor]],
+    ) -> None:
+        config = self.model.config
+        get_text_config = getattr(config, "get_text_config", None)
+        text_config = get_text_config() if callable(get_text_config) else config
+        hidden_size = int(getattr(text_config, "hidden_size"))
+        layer_count = int(getattr(text_config, "num_hidden_layers"))
+        for trait, per_layer in trait_vectors.items():
+            if not per_layer:
+                raise ValueError(f"Trait {trait} has no evaluation vectors")
+            for layer, vector in per_layer.items():
+                if not 0 <= int(layer) < layer_count:
+                    raise ValueError(
+                        f"Trait {trait} layer {layer} is outside model range "
+                        f"[0, {layer_count - 1}]"
+                    )
+                if vector.ndim != 1 or int(vector.shape[0]) != hidden_size:
+                    raise ValueError(
+                        f"Trait {trait} layer {layer} vector shape {tuple(vector.shape)} "
+                        f"does not match hidden size {hidden_size}"
+                    )
 
     def _set_alphas(self, trait_code: Optional[str], alpha: float, prompt_length: int) -> None:
         if not self.controller:
@@ -405,7 +430,10 @@ def evaluate_trait_dataset(
 
 
 def _load_trait_vectors(
-    metadata_root: Path, traits: Sequence[Tuple[str, str]]
+    metadata_root: Path,
+    traits: Sequence[Tuple[str, str]],
+    *,
+    model_name: str | None = None,
 ) -> Tuple[Dict[str, Dict[int, torch.Tensor]], Dict[str, dict]]:
     from steering.vector_store import VectorStore  # Local import to avoid heavy deps at import time
 
@@ -419,6 +447,12 @@ def _load_trait_vectors(
         if not meta_path.exists():
             raise FileNotFoundError(f"Missing metadata for trait {trait_code}: {meta_path}")
         metadata = json.loads(meta_path.read_text())
+        artifact_model = metadata.get("model_name")
+        if model_name and artifact_model and str(artifact_model) != model_name:
+            raise ValueError(
+                f"Trait {trait_code} vector model mismatch: "
+                f"artifact={artifact_model!r}, runtime={model_name!r}"
+            )
         vector_store_id = metadata.get("vector_store_id") or trait_code
         preferred = metadata.get("preferred_layers") or []
         bundle = store.load(vector_store_id, layers=preferred or None)
@@ -1016,7 +1050,11 @@ def _cli(argv: Optional[Sequence[str]] = None) -> int:
         prompt_records[trait_name] = _load_prompt_records(prompt_path)
         prompt_paths[trait_name] = prompt_path
 
-    vectors, metadata_map = _load_trait_vectors(args.metadata_root, trait_specs)
+    vectors, metadata_map = _load_trait_vectors(
+        args.metadata_root,
+        trait_specs,
+        model_name=args.model,
+    )
     scorer = HFContrastScorer(
         args.model,
         vectors,
