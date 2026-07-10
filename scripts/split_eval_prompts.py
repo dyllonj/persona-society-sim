@@ -284,6 +284,28 @@ def _print_result(result: SplitResult) -> None:
     )
 
 
+def verify_existing_splits(
+    prompt_dir: Path,
+    traits: Sequence[str],
+    *,
+    train_suffix: str = "_train",
+    eval_suffix: str = "_eval",
+) -> dict[str, SplitVerification]:
+    """Load existing train/eval files and enforce the leakage checks."""
+
+    results: dict[str, SplitVerification] = {}
+    for trait in traits:
+        train_path = prompt_dir / f"{trait}{train_suffix}.jsonl"
+        eval_path = prompt_dir / f"{trait}{eval_suffix}.jsonl"
+        train_records = load_prompt_items(train_path)
+        eval_records = load_prompt_items(eval_path)
+        verification = verify_disjoint(train_records, eval_records)
+        if not verification.ok:
+            raise ValueError(f"Existing split verification failed for {trait}: {verification}")
+        results[trait] = verification
+    return results
+
+
 def _cli(argv: Iterable[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Split data/prompts/{trait}.jsonl into train/eval JSONL files"
@@ -297,6 +319,11 @@ def _cli(argv: Iterable[str] | None = None) -> int:
     parser.add_argument("--eval-suffix", default="_eval")
     parser.add_argument("--overwrite", action="store_true")
     parser.add_argument(
+        "--verify-existing",
+        action="store_true",
+        help="Verify existing *_train/*_eval files without constructing a new split",
+    )
+    parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Validate and report planned split sizes without writing files",
@@ -306,6 +333,20 @@ def _cli(argv: Iterable[str] | None = None) -> int:
     traits = list(args.traits) or _discover_traits(args.prompt_dir)
     if not traits:
         raise FileNotFoundError(f"No prompt JSONL files found in {args.prompt_dir}")
+
+    if args.verify_existing:
+        results = verify_existing_splits(
+            args.prompt_dir,
+            traits,
+            train_suffix=args.train_suffix,
+            eval_suffix=args.eval_suffix,
+        )
+        for trait, verification in results.items():
+            print(
+                f"{trait}: train={verification.train_count}; "
+                f"eval={verification.eval_count}; disjoint=true"
+            )
+        return 0
 
     for trait in traits:
         source = args.prompt_dir / f"{trait}.jsonl"

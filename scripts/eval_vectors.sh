@@ -23,6 +23,8 @@ print((config.get("defaults") or {}).get("model") or "meta-llama/Llama-3.1-8B-In
 PY
 )"
 model="${MODEL_NAME:-$model_default}"
+model_revision="${MODEL_REVISION:-}"
+tokenizer_revision="${TOKENIZER_REVISION:-$model_revision}"
 vector_root_default="$(VECTOR_METADATA_PATH="$vector_metadata" "$python_bin" <<'PY'
 from pathlib import Path
 import os
@@ -84,6 +86,13 @@ eval_args=(
   --json-output "$artifact_dir/report.json"
   --markdown-output "$artifact_dir/report.md"
 )
+
+if [ -n "$model_revision" ]; then
+  eval_args+=(--model-revision "$model_revision")
+fi
+if [ -n "$tokenizer_revision" ]; then
+  eval_args+=(--tokenizer-revision "$tokenizer_revision")
+fi
 
 if [ -n "$alpha_grid" ]; then
   eval_args+=(--alpha-grid "$alpha_grid")

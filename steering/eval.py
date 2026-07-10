@@ -181,20 +181,36 @@ class HFContrastScorer(OptionScorer):
         self,
         model_name: str,
         trait_vectors: Dict[str, Dict[int, TorchTensor]],
+        *,
+        model_revision: Optional[str] = None,
+        tokenizer_revision: Optional[str] = None,
     ) -> None:
         if torch is None or AutoTokenizer is None or AutoModelForCausalLM is None:
             raise ModuleNotFoundError(
                 "torch and transformers are required for HFContrastScorer"
             )
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        tokenizer_revision = tokenizer_revision or model_revision
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            model_name,
+            revision=tokenizer_revision,
+        )
         if self.tokenizer.pad_token is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
         self.model = AutoModelForCausalLM.from_pretrained(
             model_name,
+            revision=model_revision,
             torch_dtype=torch.float16 if hasattr(torch, "float16") else None,
             device_map="auto",
         )
         self.model.eval()
+        self.model_revision = (
+            getattr(self.model.config, "_commit_hash", None) or model_revision
+        )
+        self.tokenizer_revision = (
+            self.tokenizer.init_kwargs.get("_commit_hash")
+            or tokenizer_revision
+            or self.model_revision
+        )
         self.trait_vectors = trait_vectors
         self.controller: Optional[SteeringController] = None
         if trait_vectors:
@@ -220,8 +236,6 @@ class HFContrastScorer(OptionScorer):
     ) -> List[float]:
         prompt_ids = self.tokenizer(prompt_text, add_special_tokens=False)["input_ids"]
         prompt_len = len(prompt_ids)
-        if self.controller:
-            self._set_alphas(trait_code, alpha, prompt_len)
         scores: List[float] = []
         for option in option_texts:
             option_ids = self.tokenizer(option, add_special_tokens=False)["input_ids"]
@@ -231,8 +245,14 @@ class HFContrastScorer(OptionScorer):
             combined = prompt_ids + option_ids
             inputs = torch.tensor([combined], device=self.model.device)
             attn = torch.ones_like(inputs)
-            with torch.no_grad():
-                logits = self.model(input_ids=inputs, attention_mask=attn).logits
+            if self.controller:
+                self._set_alphas(trait_code, alpha, prompt_len)
+            try:
+                with torch.no_grad():
+                    logits = self.model(input_ids=inputs, attention_mask=attn).logits
+            finally:
+                if self.controller:
+                    self.controller.clear_prompt_metadata()
             log_probs = torch.log_softmax(logits, dim=-1)
             score = 0.0
             for position in range(prompt_len, len(combined)):
@@ -243,8 +263,6 @@ class HFContrastScorer(OptionScorer):
                 token_logprob = log_probs[0, prev_idx, token_id]
                 score += float(token_logprob.item())
             scores.append(score)
-        if self.controller:
-            self.controller.clear_prompt_metadata()
         return scores
 
     def generate_text(
@@ -262,16 +280,23 @@ class HFContrastScorer(OptionScorer):
         inputs = {key: value.to(self.model.device) for key, value in inputs.items()}
         if self.controller:
             self._set_alphas(trait_code, alpha, prompt_len)
-        with torch.no_grad():
-            generated = self.model.generate(
-                **inputs,
-                max_new_tokens=max_new_tokens,
-                temperature=temperature,
-                top_p=top_p,
-            )
-        if self.controller:
-            self.controller.clear_prompt_metadata()
-        return self.tokenizer.decode(generated[0], skip_special_tokens=True)
+        try:
+            with torch.no_grad():
+                generated = self.model.generate(
+                    **inputs,
+                    max_new_tokens=max_new_tokens,
+                    do_sample=True,
+                    temperature=temperature,
+                    top_p=top_p,
+                    pad_token_id=self.tokenizer.pad_token_id,
+                )
+        finally:
+            if self.controller:
+                self.controller.clear_prompt_metadata()
+        return self.tokenizer.decode(
+            generated[0, prompt_len:],
+            skip_special_tokens=True,
+        )
 
     def close(self) -> None:
         if self.controller:
@@ -948,6 +973,8 @@ def _parse_prompt_overrides(values: Optional[Sequence[str]]) -> Dict[str, Path]:
 def _cli(argv: Optional[Sequence[str]] = None) -> int:
     parser = argparse.ArgumentParser(description="Evaluate steering vectors.")
     parser.add_argument("--model", default="meta-llama/Llama-3.1-8B-Instruct")
+    parser.add_argument("--model-revision")
+    parser.add_argument("--tokenizer-revision")
     parser.add_argument("--traits", nargs="*", default=["extraversion", "agreeableness", "conscientiousness"])
     parser.add_argument("--metadata-root", type=Path, default=Path("data/vectors"))
     parser.add_argument("--prompt-dir", type=Path, default=Path("data/prompts"))
@@ -990,7 +1017,12 @@ def _cli(argv: Optional[Sequence[str]] = None) -> int:
         prompt_paths[trait_name] = prompt_path
 
     vectors, metadata_map = _load_trait_vectors(args.metadata_root, trait_specs)
-    scorer = HFContrastScorer(args.model, vectors)
+    scorer = HFContrastScorer(
+        args.model,
+        vectors,
+        model_revision=args.model_revision,
+        tokenizer_revision=args.tokenizer_revision,
+    )
 
     def evaluate_all(alpha_value: float) -> List[TraitEvaluation]:
         rows: List[TraitEvaluation] = []
@@ -1114,6 +1146,8 @@ def _cli(argv: Optional[Sequence[str]] = None) -> int:
         alpha_grid_results=alpha_grid_results,
         bleed_matrix=bleed_matrix,
     )
+    report["model_revision"] = scorer.model_revision
+    report["tokenizer_revision"] = scorer.tokenizer_revision
 
     failures = _summarize_failures(
         evaluations,

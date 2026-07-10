@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import torch
+
 from steering import eval as steering_eval
 from steering.llm_judge import StaticJudgeClient
 
@@ -15,6 +17,54 @@ class FakeScorer(steering_eval.OptionScorer):
 
     def generate_text(self, prompt_text, *, trait_code, alpha, max_new_tokens, temperature, top_p):
         return f"{prompt_text}::{trait_code or 'none'}::{alpha}"
+
+
+class _RecordingController:
+    def __init__(self):
+        self.set_calls = []
+        self.clear_calls = 0
+
+    def set_alphas(self, payload, prompt_length=None):
+        self.set_calls.append((dict(payload), prompt_length))
+
+    def clear_prompt_metadata(self):
+        self.clear_calls += 1
+
+
+class _TinyTokenizer:
+    pad_token_id = 0
+
+    def __call__(self, text, add_special_tokens=False):
+        del add_special_tokens
+        return {"input_ids": [1, 2] if text == "prompt" else [3]}
+
+
+class _TinyModel:
+    device = torch.device("cpu")
+
+    def __call__(self, *, input_ids, attention_mask):
+        del attention_mask
+        logits = torch.zeros((1, input_ids.shape[1], 8), dtype=torch.float32)
+        return type("Output", (), {"logits": logits})()
+
+
+def test_hf_option_scorer_resets_prompt_mask_for_every_option():
+    scorer = object.__new__(steering_eval.HFContrastScorer)
+    scorer.tokenizer = _TinyTokenizer()
+    scorer.model = _TinyModel()
+    scorer.trait_vectors = {"E": {0: torch.ones(1)}}
+    scorer.controller = _RecordingController()
+
+    scores = scorer.score_options(
+        "prompt",
+        ["first", "second"],
+        trait_code="E",
+        alpha=0.75,
+    )
+
+    assert len(scores) == 2
+    assert scorer.controller.set_calls == [({"E": 0.75}, 2), ({"E": 0.75}, 2)]
+    assert scorer.controller.clear_calls == 2
 
 
 def test_evaluate_trait_dataset_computes_metrics():

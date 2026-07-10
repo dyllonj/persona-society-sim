@@ -9,6 +9,7 @@ from scripts.split_eval_prompts import (
     split_prompt_file,
     split_prompt_items,
     verify_disjoint,
+    verify_existing_splits,
 )
 
 
@@ -90,3 +91,14 @@ def test_split_prompt_file_refuses_existing_outputs(tmp_path: Path) -> None:
 
     with pytest.raises(FileExistsError):
         split_prompt_file(source, eval_count=1)
+
+
+def test_verify_existing_splits_reads_declared_files(tmp_path: Path) -> None:
+    _write_jsonl(tmp_path / "trait_train.jsonl", [_item(1)])
+    _write_jsonl(tmp_path / "trait_eval.jsonl", [_item(2)])
+
+    results = verify_existing_splits(tmp_path, ["trait"])
+
+    assert results["trait"].ok
+    assert results["trait"].train_count == 1
+    assert results["trait"].eval_count == 1
