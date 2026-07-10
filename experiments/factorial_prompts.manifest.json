@@ -1,0 +1,30 @@
+{
+  "created_at": "2026-07-10T00:27:26.267398+00:00",
+  "expected_per_stratum": 20,
+  "manifest_content_sha256": "54e6ca796e3295ca953d71917c3ed5177bd2f2555b345b34e51003302ed44122",
+  "output": "factorial_prompts.jsonl",
+  "output_sha256": "2eb90751d3a542f98ece14ca14d697eddf01fbb5c58c3f277329bfb72541d880",
+  "prompt_hashes_sha256": "6fe266dbb3aea076cd436f33a62a538e41bafce72c8bbb8a17adb7cdd3dea501",
+  "prompt_ids_sha256": "55a0e14d57ba79520fd182b902366d67f393721f6a0fc74196fc34f987b5f645",
+  "prompts": 60,
+  "schema_version": "factorial-prompts-1.0",
+  "script_sha256": "d73a4d0a8649f9bcd8acb28d00599028d5279f9ac8dc50f7cf8bdc6ca81ee8f6",
+  "sources": {
+    "A": {
+      "path": "data/prompts/agreeableness_eval.jsonl",
+      "records": 20,
+      "sha256": "520af4b5a11dd8dd22266c768be18e982c5c31c29a1207ef64550ab8eb704746"
+    },
+    "C": {
+      "path": "data/prompts/conscientiousness_eval.jsonl",
+      "records": 20,
+      "sha256": "9db9ca4d75cd654dd04eb4cb2a908496e0e67d0b9a8d4ab97f466f4678020891"
+    },
+    "E": {
+      "path": "data/prompts/extraversion_eval.jsonl",
+      "records": 20,
+      "sha256": "c7d2782c1ab13647a20e23460662cfb6069fcb34c79ed4fcb278db378d003353"
+    }
+  },
+  "template_sha256": "d792ffcd63dd45547ceba08b9a288db473933b577bb43b6d97e2f855ad9e7aac"
+}
