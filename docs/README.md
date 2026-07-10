@@ -12,6 +12,7 @@ clarifies why.
 
 - [howto-run-simulations.md](howto-run-simulations.md) — environments, backends, viewing modes, throughput flags.
 - [howto-compute-steering-vectors.md](howto-compute-steering-vectors.md) — extract and evaluate CAA persona vectors.
+- [jacobian-lens-phase-two.md](jacobian-lens-phase-two.md) — run the seven-component trait report, paired live factorial, and replicated society study.
 - [howto-migrate-legacy-data.md](howto-migrate-legacy-data.md) — convert old prompt schemas; clean up pre-removal `trade` records.
 - [experiments/autoresearch/RUNBOOK.md](../experiments/autoresearch/RUNBOOK.md) — operating the autoresearch candidate/eval/promotion pipeline.
 

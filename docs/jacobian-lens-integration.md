@@ -289,17 +289,20 @@ model's internal computation.
 
 ### P0 before a confirmatory study
 
-1. Add truly held-out trait evaluation prompts. The current steering harness
-   falls back to its training items, so its quality estimates are optimistic.
+1. Score the checked-in held-out E/A/C sets on the exact research checkpoint
+   and archive the report. Data separation is implemented; the live score is
+   still an execution gate.
 2. Fit a lens that includes every active intervention layer. A three-layer
    engineering pilot can validate the pipeline but cannot characterize all
    seven E/A/C injection sites.
 3. Match the numerical condition. The fast simulation config uses NF4 while
    the primary pilot lens is BF16; either run the research arm in BF16 or fit
    and report a quantization-matched sensitivity artifact.
-4. Run multiple independently seeded simulations per arm. Actions are nested
-   observations; treating thousands of actions from one world as independent
-   would be pseudoreplication.
+4. Execute the preregistered five-seed matrix in
+   `experiments/society_study/matrix.yaml`. Its runner and run-level analyzer
+   are implemented and mock-validated; the real 90,000-generation study still
+   requires a separately approved compute budget. Actions are nested
+   observations and are never treated as independent replicates.
 5. Add preregistered token/concept export. Top-k tokens discovered after seeing
    the traces are useful for hypothesis generation, not confirmatory evidence.
 6. Report planner-fallback rate by arm and exclude or model fallback decisions

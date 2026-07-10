@@ -154,9 +154,9 @@ failures).
 ## Extensibility hooks
 
 - Add new traits by appending prompt JSONL + a `configs/steering.layers.yaml`
-  entry — but note `steering/eval.py`'s `TRAIT_ALIASES` currently only covers
-  E/A/C, so evaluating a new O/N trait needs a small code change too (see
-  [explanation-known-gaps.md](explanation-known-gaps.md)).
+  entry. `steering.eval.py` recognizes all five aliases, but O/N still need
+  extraction prompts, held-out sets, and vector artifacts before evaluation
+  (see [explanation-known-gaps.md](explanation-known-gaps.md)).
 - Validate prompt files with `python -m data.prompts.schema validate data/prompts/*.jsonl`;
   convert legacy `situation`/`positive`/`negative` files with the `convert` sub-command.
 - Plug alternative environments by extending `env/world.py::World.configure_environment`.

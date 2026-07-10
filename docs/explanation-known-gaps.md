@@ -21,17 +21,20 @@ and non-batched decision paths, duplicating the entire probe preamble
 The duplicate `.inject()` call has been removed from both code paths; each
 path now calls `.inject()` exactly once.
 
-## `steering.eval` currently evaluates on training data, not held-out data
+## `steering.eval` previously evaluated on training data
 
-`steering/eval.py::_resolve_prompt_path` falls back to the training prompt
-file (with a logged warning) when a `{trait}_eval.jsonl` file doesn't exist.
-No `*_eval.jsonl` files currently exist under `data/prompts/`, so
-`scripts/eval_vectors.sh` always hits this fallback — every accuracy/sign-
-consistency number the harness reports today is measured against the same
-prompts the vector was extracted from, which inflates apparent quality
-relative to a genuine held-out check. Add `<trait>_eval.jsonl` files (same
-schema as the training files, disjoint items) before trusting the harness's
-numbers as a real generalization signal.
+**Status: RESOLVED for E/A/C.** Each supported trait now has 20 authored
+`*_eval.jsonl` items that are disjoint from its eight extraction items. The
+split verifier checks IDs, exact content fingerprints, normalized text, and
+near-duplicate question stems. `scripts/eval_vectors.sh` fails instead of
+silently accepting train/eval overlap.
+
+The evaluator also resets the continuation mask independently for both answer
+options, decodes only newly generated tokens in transcript mode, and records
+immutable model/tokenizer revisions. These sets are construct-grounded held-out
+scenarios, not a separately normed psychometric instrument; they establish
+data separation, not external validity. Openness and Neuroticism still lack
+both vectors and held-out evaluation sets.
 
 ## Steering config describes a model that doesn't match the checked-in vectors
 
@@ -47,12 +50,13 @@ silently.
 
 ## `steering.eval`'s trait coverage is narrower than the persona model's
 
-`TRAIT_ALIASES` in `steering/eval.py` (and `--traits`'s default in
-`scripts/eval_vectors.sh`) only cover Extraversion, Agreeableness, and
-Conscientiousness. Openness and Neuroticism are represented by
-`PersonaCoeffs` and run-config `steering.coefficients`, but there are no
-checked-in O/N CAA artifacts and the evaluation aliases must be extended
-before either trait can become an activation-steered experimental arm.
+`steering.eval` accepts all five trait aliases, but its CLI and
+`scripts/eval_vectors.sh` deliberately default to Extraversion,
+Agreeableness, and Conscientiousness. Openness and Neuroticism are represented
+by `PersonaCoeffs` and run-config `steering.coefficients`, but there are no
+checked-in O/N extraction prompts, held-out sets, or CAA artifacts. Those data
+and vectors—not another alias—are required before either trait can become an
+activation-steered experimental arm.
 
 ## `docs/design.md`'s orthogonalization claim doesn't match the code
 

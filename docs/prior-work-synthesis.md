@@ -32,7 +32,11 @@ behavior change. CAA is "less effective than previously reported" under rigorous
 **Resolution:** Add a generation-based eval: have steered models produce free text, judge
 with a separate LLM on Big Five Likert items. Do not launch a trait on logit-diff alone.
 Keep eval prompt corpus fixed across migration for comparability.
-**Status:** Our eval harness (Issue #3 in known-gaps) doesn't even have held-out prompts yet.
+**Status in our codebase (updated 2026-07-09):** E/A/C now have 20 disjoint
+held-out items each plus automated leakage checks. The paired live-generation
+factorial covers neutral, single-trait, combined, and coordinate-permuted
+placebo paths. A prespecified external behavioral rubric is still required for
+confirmatory trait-effect claims; token divergence alone is not personality.
 
 ### B3. Steering degrades fluency (inverted-U curve)
 **Source:** Bas & Novak 2026; Stickland et al. 2024; Bhandari et al. 2026
@@ -209,7 +213,7 @@ Verify `_build_prompt` doesn't include growing raw transcript. (c) Add per-tick 
 | Action | Effort | Impact | Category |
 |--------|--------|--------|----------|
 | Recompute vectors + layer sweep on Qwen | High (GPU) | Critical | P0-B1 |
-| Add held-out eval prompts | Medium | Critical | P0-B2 |
+| Add held-out eval prompts | Complete for E/A/C | Critical | P0-B2 |
 | Add generation-based eval (LLM-judge) | Medium | Critical | P0-B2 |
 | Grid-search per-trait steering strength | Medium | Critical | P0-B3 |
 | Add anti-steerable fraction to eval | Low | High | P0-B4 |

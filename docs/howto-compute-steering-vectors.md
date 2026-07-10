@@ -61,16 +61,23 @@ This regenerates vectors from the configured model and runs `steering.eval`, wri
 same value as `steering.strength` in the run config you plan to use, so the
 evaluated dose matches what agents will actually receive.
 
-**Caveat**: no `<trait>_eval.jsonl` held-out files exist in this repo today,
-so the harness silently falls back to evaluating on the training prompts
-(logged as a warning). Treat current accuracy/sign-consistency numbers as
-optimistic until you add real held-out files — see
-[explanation-known-gaps.md](explanation-known-gaps.md#steeringeval-currently-evaluates-on-training-data-not-held-out-data).
+The checked-in E/A/C evaluation files contain 20 items per trait and are
+disjoint from the eight extraction items. Verify that separation after any
+prompt edit:
 
-`steering.eval`'s `--traits` currently only supports `extraversion`,
-`agreeableness`, `conscientiousness` by default (its `TRAIT_ALIASES` table
-doesn't cover Openness/Neuroticism yet) — extending it is a small code change
-in `steering/eval.py`, not a config change.
+```bash
+uv run python scripts/split_eval_prompts.py --verify-existing
+```
+
+The verifier rejects shared IDs, exact/normalized-text leakage, and highly
+similar question stems. These are authored held-out behavioral scenarios, not
+an independently normed Big Five instrument, so report them as an internal
+generalization check.
+
+`steering.eval` accepts all five Big Five aliases, but the CLI defaults to E/A/C
+because only those traits have checked-in extraction prompts, held-out sets,
+and Qwen32 vector artifacts. O/N require those data and artifacts before they
+can be added to a real evaluation arm.
 
 ## 5. (Optional) Sweep layers empirically
 

@@ -132,6 +132,8 @@ Combine with `--no-color` if your terminal cannot render ANSI sequences.
 
 Key scripts:
 - `scripts/compute_vectors.sh` — run CAA extraction for all traits.
+- `uv run python scripts/split_eval_prompts.py --verify-existing` — prove E/A/C held-out prompt separation.
+- `scripts/run_society_study.py` / `scripts/analyze_society_study.py` — materialize the replicated matrix and analyze one row per simulation.
 - `scripts/run_small.sh` — launch a 32-agent, 200-step smoke test.
 - `scripts/analyze_run.sh` — aggregate logs into metric snapshots.
 - `scripts/verify_steering.py` & `scripts/analyze_simulation.py` — validate persona application and visualize steering, cognitive traces, and the new graph/macro metrics dumps.
