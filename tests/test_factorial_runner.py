@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 
 import numpy as np
@@ -12,6 +13,7 @@ from interpretability.run_factorial import (
     TRAITS,
     build_conditions,
     condition_vector_provenance,
+    load_factorial_prompts,
     load_vector_bundle,
     parse_base_alphas,
     placebo_permutation_seed,
@@ -91,6 +93,32 @@ def test_factorial_prompts_reject_explicit_persona_labels():
         validate_neutral_prompts(["Act with high agreeableness and answer the request."])
     with pytest.raises(ValueError, match="forbidden persona label"):
         validate_neutral_prompts(["Use this personality trait when deciding."])
+
+
+def test_factorial_prompt_loader_preserves_ids_and_hidden_strata(tmp_path):
+    prompt_path = tmp_path / "prompts.jsonl"
+    text = "Choose one action in response to a scheduling conflict."
+    prompt_path.write_text(
+        json.dumps(
+            {
+                "prompt_id": "stable-prompt",
+                "text": text,
+                "prompt_sha256": hashlib.sha256(text.encode()).hexdigest(),
+                "origin_stratum": "C",
+                "source_id": "C101",
+                "source_file": "conscientiousness_eval.jsonl",
+                "source_record_index": 0,
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    prompts = load_factorial_prompts(prompt_path)
+
+    assert prompts[0].prompt_id == "stable-prompt"
+    assert prompts[0].origin_stratum == "C"
+    assert prompts[0].source_id == "C101"
 
 
 def test_vector_bundle_enforces_model_and_polarity_and_builds_hashed_placebos(tmp_path):

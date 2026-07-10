@@ -82,6 +82,18 @@ class VectorBundle:
     index_sha256: str
 
 
+@dataclass(frozen=True)
+class FactorialPrompt:
+    """One condition-blind prompt plus analysis-only stratum provenance."""
+
+    prompt_id: str
+    text: str
+    origin_stratum: str | None = None
+    source_id: str | None = None
+    source_file: str | None = None
+    source_record_index: int | None = None
+
+
 def parse_base_alphas(value: str) -> dict[str, float]:
     """Parse exactly one finite, nonzero magnitude for each experimental trait."""
 
@@ -188,6 +200,81 @@ def validate_neutral_prompts(prompts: Sequence[str]) -> None:
                 f"prompt {index} contains forbidden persona label {match.group(0)!r}; "
                 "factorial prompts must be condition-blind"
             )
+
+
+def load_factorial_prompts(
+    path: Path,
+    *,
+    limit: int | None = None,
+) -> list[FactorialPrompt]:
+    """Load prompts while preserving stable IDs and hidden analysis strata."""
+
+    if path.suffix.lower() != ".jsonl":
+        texts = load_prompts(path, limit=limit)
+        return [
+            FactorialPrompt(prompt_id=f"prompt-{index:04d}", text=value)
+            for index, value in enumerate(texts)
+        ]
+
+    prompts: list[FactorialPrompt] = []
+    seen_ids: set[str] = set()
+    for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        if not line.strip():
+            continue
+        payload = json.loads(line)
+        if isinstance(payload, str):
+            payload = {"text": payload}
+        if not isinstance(payload, dict):
+            raise ValueError(f"{path}:{line_number} must contain a string or object")
+        text = next(
+            (
+                payload[key]
+                for key in ("text", "prompt", "content")
+                if isinstance(payload.get(key), str)
+            ),
+            None,
+        )
+        if not text:
+            raise ValueError(f"{path}:{line_number} has no text/prompt/content string")
+        prompt_id = str(payload.get("prompt_id") or f"prompt-{len(prompts):04d}")
+        if not prompt_id or prompt_id in seen_ids:
+            raise ValueError(f"{path}:{line_number} has a duplicate or empty prompt_id")
+        expected_hash = payload.get("prompt_sha256")
+        actual_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()
+        if expected_hash is not None and str(expected_hash) != actual_hash:
+            raise ValueError(
+                f"{path}:{line_number} prompt hash mismatch: "
+                f"record={expected_hash}, actual={actual_hash}"
+            )
+        raw_index = payload.get("source_record_index")
+        prompts.append(
+            FactorialPrompt(
+                prompt_id=prompt_id,
+                text=text,
+                origin_stratum=(
+                    str(payload["origin_stratum"])
+                    if payload.get("origin_stratum") is not None
+                    else None
+                ),
+                source_id=(
+                    str(payload["source_id"])
+                    if payload.get("source_id") is not None
+                    else None
+                ),
+                source_file=(
+                    str(payload["source_file"])
+                    if payload.get("source_file") is not None
+                    else None
+                ),
+                source_record_index=int(raw_index) if raw_index is not None else None,
+            )
+        )
+        seen_ids.add(prompt_id)
+        if limit is not None and len(prompts) >= limit:
+            break
+    if not prompts:
+        raise ValueError(f"no prompts loaded from {path}")
+    return prompts
 
 
 def _tensor_sha256(tensor: torch.Tensor) -> str:
@@ -480,8 +567,8 @@ def main() -> None:
     _validate_args(args)
     base_alphas = parse_base_alphas(args.alphas)
     conditions = build_conditions(base_alphas)
-    prompts = load_prompts(args.prompts, limit=args.limit)
-    validate_neutral_prompts(prompts)
+    prompts = load_factorial_prompts(args.prompts, limit=args.limit)
+    validate_neutral_prompts([prompt.text for prompt in prompts])
     tokenizer_revision = args.tokenizer_revision or args.model_revision
     dtype = {"bf16": torch.bfloat16, "fp16": torch.float16, "fp32": torch.float32}[
         args.dtype
@@ -541,7 +628,10 @@ def main() -> None:
         "temperature": None if args.greedy else args.temperature,
         "top_p": None if args.greedy else args.top_p,
         "max_new_tokens": args.max_new_tokens,
-        "prompt_hashes": [hashlib.sha256(prompt.encode()).hexdigest() for prompt in prompts],
+        "prompt_ids": [prompt.prompt_id for prompt in prompts],
+        "prompt_hashes": [
+            hashlib.sha256(prompt.text.encode()).hexdigest() for prompt in prompts
+        ],
         "vector_metadata_sha256": bundle.metadata_sha256,
         "vector_index_sha256": bundle.index_sha256,
         "vector_ids": bundle.vector_ids,
@@ -553,7 +643,8 @@ def main() -> None:
     run_id = f"factorial-{sha256_json(run_spec)[:16]}"
     rows: list[dict[str, Any]] = []
     try:
-        for prompt_index, prompt in enumerate(prompts):
+        for prompt_index, prompt_record in enumerate(prompts):
+            prompt = prompt_record.text
             tokens = tokenizer(prompt, return_tensors="pt").to(model.device)
             input_ids = tokens["input_ids"][0].detach().cpu().tolist()
             attention_mask = tokens["attention_mask"][0].detach().cpu().tolist()
@@ -596,8 +687,12 @@ def main() -> None:
                         "schema_version": "factorial-event-1.0",
                         "trace_id": trace_id,
                         "run_id": run_id,
-                        "prompt_id": f"prompt-{prompt_index:04d}",
+                        "prompt_id": prompt_record.prompt_id,
                         "prompt_index": prompt_index,
+                        "origin_stratum": prompt_record.origin_stratum,
+                        "source_id": prompt_record.source_id,
+                        "source_file": prompt_record.source_file,
+                        "source_record_index": prompt_record.source_record_index,
                         "condition": condition.name,
                         "condition_index": condition_index,
                         "prompt_hash": prompt_hash,
