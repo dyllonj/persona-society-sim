@@ -1,24 +1,51 @@
-name: Steering Evaluation
+name: Steering Evaluation Checks
 
 on:
   push:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: steering-evaluation-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   steering-eval:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
-      - name: Install dependencies
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v8
+        with:
+          version: "0.9.7"
+          enable-cache: true
+      - name: Install locked dependencies
+        run: uv sync --frozen --extra dev
+      - name: Verify held-out prompt separation
+        run: uv run python scripts/split_eval_prompts.py --verify-existing
+      - name: Run steering and factorial tests
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt -r requirements-dev.txt
-      - name: Evaluate steering vectors
+          uv run pytest -q \
+            tests/test_steering_eval.py \
+            tests/test_eval_held_out.py \
+            tests/test_prompt_schema.py \
+            tests/test_factorial_runner.py \
+            tests/test_factorial_analysis.py
+      - name: Lint research harness
         run: |
-          bash scripts/eval_vectors.sh
+          bash -n scripts/eval_vectors.sh
+          uv run ruff check \
+            steering/eval.py \
+            interpretability/run_factorial.py \
+            interpretability/analyze_factorial.py \
+            tests/test_steering_eval.py \
+            tests/test_factorial_runner.py \
+            tests/test_factorial_analysis.py
