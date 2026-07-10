@@ -47,8 +47,34 @@ overlap.
 Use the same fitting corpus recovered with the pilot. Do not sample a new
 corpus, change prompt order, or change numerical settings.
 
+Do not let `uv` sync or upgrade this run. The current interpretability lockfile
+can resolve a newer Torch build, while the pilot manifest records and the
+merger requires `torch==2.7.1+cu128`, `transformers==5.13.0`, and
+`jlens==0.1.0` from commit
+`581d398613e5602a5af361e1c34d3a92ea82ba8e`. Point `JACOBIAN_PYTHON` at the
+preserved pilot-compatible virtual environment and verify it before fitting:
+
 ```bash
-uv run --project interpretability python -m interpretability.fit_lens \
+export JACOBIAN_PYTHON=/path/to/pilot-compatible-venv/bin/python
+
+"$JACOBIAN_PYTHON" - <<'PY'
+import importlib.metadata
+import torch
+import transformers
+
+assert torch.__version__ == "2.7.1+cu128"
+assert transformers.__version__ == "5.13.0"
+assert importlib.metadata.version("jlens") == "0.1.0"
+print(torch.__version__, transformers.__version__, importlib.metadata.version("jlens"))
+PY
+```
+
+The exact dependency versions are part of lens identity, not incidental
+environment details. Never relax the merger's compatibility check to get past
+a mismatch.
+
+```bash
+"$JACOBIAN_PYTHON" -m interpretability.fit_lens \
   --model-id Qwen/Qwen2.5-32B-Instruct \
   --model-revision 5ede1c97bbab6ce5cda5812749b4c0bdf79b18dd \
   --prompts artifacts/jacobian_lens/qwen32-alltraits-n100/fit_prompts.jsonl \
@@ -61,8 +87,7 @@ uv run --project interpretability python -m interpretability.fit_lens \
   --skip-first 16 \
   --dim-batch 4 \
   --checkpoint-every 5 \
-  --dtype bf16 \
-  --no-resume
+  --dtype bf16
 ```
 
 The existing E@36, A@58, and C@62 matrices are not recomputed.
@@ -70,12 +95,12 @@ The existing E@36, A@58, and C@62 matrices are not recomputed.
 ## 3. Merge and report the seven components
 
 ```bash
-uv run --project interpretability python -m interpretability.merge_lenses \
+"$JACOBIAN_PYTHON" -m interpretability.merge_lenses \
   --input artifacts/jacobian_lens/qwen32-alltraits-n100 \
   --input artifacts/jacobian_lens/qwen32-missing-layers-n100 \
   --output-dir artifacts/jacobian_lens/qwen32-seven-layers-n100
 
-uv run --project interpretability python -m interpretability.trait_report \
+"$JACOBIAN_PYTHON" -m interpretability.trait_report \
   --lens artifacts/jacobian_lens/qwen32-seven-layers-n100/lens.pt \
   --lens-manifest artifacts/jacobian_lens/qwen32-seven-layers-n100/manifest.json \
   --vector-metadata configs/steering.layers.yaml \
@@ -96,15 +121,19 @@ evaluation run:
 SKIP_VECTOR_REGEN=1 \
 MODEL_REVISION=5ede1c97bbab6ce5cda5812749b4c0bdf79b18dd \
 TOKENIZER_REVISION=5ede1c97bbab6ce5cda5812749b4c0bdf79b18dd \
-STEERING_ALPHA=1.0 \
+TRAIT_ALPHAS=E=0.8,A=0.5,C=0.6 \
+INFERENCE_DTYPE=bf16 \
+MEASURE_BLEED=1 \
 ARTIFACT_DIR=artifacts/steering_eval/qwen32-heldout-v1 \
 ./scripts/eval_vectors.sh
 ```
 
 Archive prompt-level gaps as well as aggregate accuracy, directional
 improvement, sign consistency, anti-steerable fraction, and per-sample
-variance. This is a forced-choice intervention check, not the behavioral
-factorial.
+variance. Mean conditional log-probability per continuation token is primary;
+summed log-probability is secondary. The report's provenance block and content
+hash bind the result to the BF16 runtime and every prompt/vector/config input.
+This is a forced-choice intervention check, not the behavioral factorial.
 
 ## 5. Run and analyze the live factorial
 
@@ -112,7 +141,7 @@ The checked-in `experiments/factorial_prompts.jsonl` contains 60 neutral
 structured-action scenarios, 20 from each held-out origin stratum.
 
 ```bash
-uv run --project interpretability python -m interpretability.run_factorial \
+"$JACOBIAN_PYTHON" -m interpretability.run_factorial \
   --model-revision 5ede1c97bbab6ce5cda5812749b4c0bdf79b18dd \
   --tokenizer-revision 5ede1c97bbab6ce5cda5812749b4c0bdf79b18dd \
   --prompts experiments/factorial_prompts.jsonl \
@@ -127,6 +156,13 @@ uv run python -m interpretability.analyze_factorial \
   --prompt-metadata experiments/factorial_prompts.jsonl \
   --output-prefix artifacts/jacobian_factorial/analysis
 ```
+
+The factorial runner checkpoints each complete six-arm prompt block. It refuses
+pre-existing artifacts unless `--resume` is explicit; a resume invocation must
+otherwise use the identical command and environment. The progress sidecar
+hashes the complete run specification and durable JSONL prefix, and recovery
+fails closed on partial blocks or any prompt, model, vector, code, input, or
+sampling mismatch.
 
 Primary diagnostic outputs are structured-action validity, action choice,
 length, and exact token-path divergence relative to neutral. Confirmatory

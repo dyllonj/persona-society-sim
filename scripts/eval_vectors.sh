@@ -52,11 +52,20 @@ print((config.get("defaults") or {}).get("eval_alpha") or 1.0)
 PY
 )"
 alpha="${STEERING_ALPHA:-$alpha_default}"
+trait_alphas="${TRAIT_ALPHAS:-}"
 alpha_grid="${ALPHA_GRID:-}"
+inference_dtype="${INFERENCE_DTYPE:-bf16}"
 delta_threshold="${DELTA_THRESHOLD:-0.1}"
 sign_threshold="${SIGN_THRESHOLD:-0.55}"
 anti_threshold="${ANTI_STEERABLE_THRESHOLD:-0.5}"
 artifact_dir="${ARTIFACT_DIR:-artifacts/steering_eval}"
+
+if [ "${OVERWRITE:-0}" != "1" ] && {
+  [ -e "$artifact_dir/report.json" ] || [ -e "$artifact_dir/report.md" ];
+}; then
+  printf '[vector-eval] Refusing to overwrite %s/report.{json,md}; set OVERWRITE=1 deliberately.\n' "$artifact_dir" >&2
+  exit 2
+fi
 
 if [ "${SKIP_VECTOR_REGEN:-0}" != "1" ]; then
   printf '[vector-eval] Regenerating steering vectors using %s...\n' "$vector_metadata"
@@ -76,16 +85,22 @@ printf '[vector-eval] Evaluating traits %s with model %s\n' "${traits[*]}" "$mod
 eval_args=(
   --model "$model"
   --metadata-root "$vector_root"
+  --vector-config "$vector_metadata"
   --prompt-dir "$prompt_dir"
   --eval-suffix "_eval"
   --traits "${traits[@]}"
   --alpha "$alpha"
+  --dtype "$inference_dtype"
   --delta-threshold "$delta_threshold"
   --sign-threshold "$sign_threshold"
   --anti-steerable-threshold "$anti_threshold"
   --json-output "$artifact_dir/report.json"
   --markdown-output "$artifact_dir/report.md"
 )
+
+if [ -n "$trait_alphas" ]; then
+  eval_args+=(--trait-alpha "$trait_alphas")
+fi
 
 if [ -n "$model_revision" ]; then
   eval_args+=(--model-revision "$model_revision")

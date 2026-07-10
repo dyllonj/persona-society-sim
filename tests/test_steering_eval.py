@@ -1,3 +1,4 @@
+import math
 from pathlib import Path
 
 import torch
@@ -34,10 +35,23 @@ class _RecordingController:
 
 class _TinyTokenizer:
     pad_token_id = 0
+    calls = []
 
-    def __call__(self, text, add_special_tokens=False):
+    def __call__(self, text, add_special_tokens=False, return_offsets_mapping=False):
         del add_special_tokens
-        return {"input_ids": [1, 2] if text == "prompt" else [3]}
+        self.calls.append(text)
+        assert return_offsets_mapping
+        if text == "prompt\nfirst":
+            return {
+                "input_ids": [1, 2, 3, 4],
+                "offset_mapping": [(0, 6), (6, 7), (7, 9), (9, 12)],
+            }
+        if text == "prompt\nsecond":
+            return {
+                "input_ids": [1, 2, 5],
+                "offset_mapping": [(0, 6), (6, 7), (7, 13)],
+            }
+        raise AssertionError(f"unexpected separately tokenized input: {text!r}")
 
 
 class _TinyModel:
@@ -66,6 +80,12 @@ def test_hf_option_scorer_resets_prompt_mask_for_every_option():
     assert len(scores) == 2
     assert scorer.controller.set_calls == [({"E": 0.75}, 2), ({"E": 0.75}, 2)]
     assert scorer.controller.clear_calls == 2
+    assert scorer.tokenizer.calls == ["prompt\nfirst", "prompt\nsecond"]
+    assert scores[0].token_count == 2
+    assert scores[1].token_count == 1
+    assert scores[0].sum_logprob == pytest.approx(-2 * math.log(8))
+    assert scores[1].sum_logprob == pytest.approx(-math.log(8))
+    assert scores[0].mean_logprob == pytest.approx(scores[1].mean_logprob)
 
 
 def test_evaluate_trait_dataset_computes_metrics():
@@ -99,6 +119,104 @@ def test_evaluate_trait_dataset_computes_metrics():
     assert result.per_sample_variance > 0.0
     assert len(result.prompt_results) == 2
     assert result.prompt_results[1].high_option == "B"
+    assert result.alpha == 1.0
+
+
+def test_evaluate_trait_dataset_uses_mean_logprob_as_primary_and_reports_sums():
+    prompt = steering_eval.PromptRecord(
+        prompt_id="p1",
+        question="Question",
+        option_a="Long high option",
+        option_b="Short low option",
+        option_a_is_high=True,
+        option_b_is_high=False,
+    )
+    scorer = FakeScorer(
+        [
+            [
+                steering_eval.ConditionalLogprob(-10.0, -1.0, 10),
+                steering_eval.ConditionalLogprob(-2.0, -0.5, 4),
+            ],
+            [
+                steering_eval.ConditionalLogprob(-6.0, -0.3, 20),
+                steering_eval.ConditionalLogprob(-2.0, -0.5, 4),
+            ],
+        ]
+    )
+
+    result = steering_eval.evaluate_trait_dataset(
+        "extraversion",
+        "E",
+        Path("heldout.jsonl"),
+        [prompt],
+        scorer,
+        alpha=0.8,
+        vector_store_id="E-v1",
+        metadata_path=Path("E.meta.json"),
+    )
+
+    assert result.accuracy_baseline == 0.0
+    assert result.accuracy_steered == 1.0
+    assert result.logprob_gap_baseline == pytest.approx(-0.5)
+    assert result.logprob_gap_steered == pytest.approx(0.2)
+    assert result.summed_logprob_gap_baseline == pytest.approx(-8.0)
+    assert result.summed_logprob_gap_steered == pytest.approx(-4.0)
+    assert result.prompt_results[0].high_option_token_count == 10
+    assert result.alpha == 0.8
+    payload = steering_eval._trait_to_dict(result)
+    assert payload["logprob_gap"]["metric"] == "mean_per_continuation_token"
+    assert payload["summed_logprob_gap"]["metric"] == "sum_over_continuation_tokens"
+
+
+def test_hf_scorer_uses_configured_dtype_without_downloading(monkeypatch):
+    captured = {}
+
+    class _Tokenizer:
+        is_fast = True
+        pad_token = "<pad>"
+        eos_token = "<eos>"
+        init_kwargs = {"_commit_hash": "b" * 40}
+
+    class _Config:
+        _commit_hash = "a" * 40
+        hidden_size = 4
+        num_hidden_layers = 2
+
+    class _Model:
+        config = _Config()
+
+        def eval(self):
+            return self
+
+        @staticmethod
+        def parameters():
+            yield torch.zeros(1, dtype=torch.bfloat16)
+
+    def fake_model_loader(*args, **kwargs):
+        captured.update(kwargs)
+        return _Model()
+
+    monkeypatch.setattr(
+        steering_eval.AutoTokenizer,
+        "from_pretrained",
+        lambda *args, **kwargs: _Tokenizer(),
+    )
+    monkeypatch.setattr(
+        steering_eval.AutoModelForCausalLM,
+        "from_pretrained",
+        fake_model_loader,
+    )
+
+    scorer = steering_eval.HFContrastScorer(
+        "test/model",
+        {},
+        model_revision="a" * 40,
+        tokenizer_revision="b" * 40,
+        dtype="bf16",
+    )
+
+    assert captured["torch_dtype"] is torch.bfloat16
+    assert scorer.resolved_dtype == "bfloat16"
 
 
 def test_canonicalize_trait_handles_aliases():
@@ -238,6 +356,17 @@ def test_parse_alpha_grid_parses_comma_list():
     assert steering_eval.parse_alpha_grid("0.25, 0.5,1.0") == [0.25, 0.5, 1.0]
 
 
+def test_parse_trait_alphas_accepts_codes_and_names_and_rejects_duplicates():
+    assert steering_eval.parse_trait_alphas(["E=0.8,agreeableness=0.5", "C=0.6"]) == {
+        "E": 0.8,
+        "A": 0.5,
+        "C": 0.6,
+    }
+
+    with pytest.raises(ValueError, match="Duplicate"):
+        steering_eval.parse_trait_alphas(["E=0.8", "extraversion=1.0"])
+
+
 def test_measure_cross_trait_bleed_returns_source_target_matrix():
     prompts = {
         "extraversion": [
@@ -266,3 +395,84 @@ def test_measure_cross_trait_bleed_returns_source_target_matrix():
     )
 
     assert matrix == {"extraversion": {"extraversion": 0.5}}
+
+
+def test_archival_provenance_hashes_runtime_and_every_input_class(tmp_path):
+    prompt = tmp_path / "extraversion_eval.jsonl"
+    prompt.write_text('{"id":"E1"}\n', encoding="utf-8")
+    vector = tmp_path / "E-v1-layer1.npy"
+    vector.write_bytes(b"vector")
+    metadata = tmp_path / "E.meta.json"
+    metadata.write_text('{"vector_store_id":"E-v1"}\n', encoding="utf-8")
+    index = tmp_path / "index.jsonl"
+    index.write_text('{"vector_store_id":"E-v1"}\n', encoding="utf-8")
+    vector_config = tmp_path / "steering.layers.yaml"
+    vector_config.write_text("traits: {}\n", encoding="utf-8")
+
+    class _Config:
+        @staticmethod
+        def to_dict():
+            return {"hidden_size": 4, "num_hidden_layers": 2}
+
+    class _Model:
+        config = _Config()
+
+    scorer = type(
+        "Scorer",
+        (),
+        {
+            "model": _Model(),
+            "model_revision": "a" * 40,
+            "tokenizer_revision": "b" * 40,
+            "resolved_dtype": "bfloat16",
+        },
+    )()
+    provenance = steering_eval.build_archival_provenance(
+        scorer=scorer,
+        prompt_paths={"extraversion": prompt},
+        metadata_root=tmp_path,
+        metadata_map={
+            "E": {
+                "resolved_vector_artifacts": {
+                    "1": {
+                        "path": str(vector),
+                        "sha256": steering_eval._sha256_file(vector),
+                    }
+                }
+            }
+        },
+        vector_config=vector_config,
+    )
+
+    assert provenance["runtime"]["dtype"] == "bfloat16"
+    assert provenance["model"]["config_sha256"]
+    assert provenance["files"]["prompts"]["extraversion"]["sha256"]
+    assert provenance["files"]["vector_metadata"]["E"]["sha256"]
+    assert provenance["files"]["vector_index"]["sha256"]
+    assert provenance["files"]["vectors"]["E@1"]["sha256"]
+    assert provenance["files"]["vector_config"]["sha256"]
+    assert provenance["files"]["scripts"]["steering_eval"]["sha256"]
+
+
+def test_report_content_hash_is_canonical_and_self_excluding():
+    report = {
+        "model": "test",
+        "traits": [{"E": 1}],
+        "alpha": 0.8,
+        "generated_at": "2026-07-10T05:00:00+00:00",
+    }
+    first = steering_eval.report_content_sha256(report)
+    report["report_content_sha256"] = first
+
+    assert steering_eval.report_content_sha256(report) == first
+    assert (
+        steering_eval.report_content_sha256(
+            {
+                "generated_at": "2026-07-11T05:00:00+00:00",
+                "alpha": 0.8,
+                "traits": [{"E": 1}],
+                "model": "test",
+            }
+        )
+        == first
+    )

@@ -53,13 +53,20 @@ what you expect.
 ## 4. Evaluate before trusting the vectors in a simulation run
 
 ```bash
-STEERING_ALPHA=1.0 DELTA_THRESHOLD=0.1 SIGN_THRESHOLD=0.55 ./scripts/eval_vectors.sh
+TRAIT_ALPHAS=E=0.8,A=0.5,C=0.6 \
+INFERENCE_DTYPE=bf16 \
+DELTA_THRESHOLD=0.1 SIGN_THRESHOLD=0.55 \
+./scripts/eval_vectors.sh
 ```
 
 This regenerates vectors from the configured model and runs `steering.eval`, writing
-`artifacts/steering_eval/report.json` and `.md`. Set `STEERING_ALPHA` to the
-same value as `steering.strength` in the run config you plan to use, so the
-evaluated dose matches what agents will actually receive.
+`artifacts/steering_eval/report.json` and `.md`. Use `TRAIT_ALPHAS` for the
+actual per-trait experimental doses; `STEERING_ALPHA` remains the shared
+fallback. The evaluator uses mean conditional log-probability per continuation
+token as its primary statistic and also archives summed log-probability. It
+tokenizes the prompt, delimiter, and option as one string to preserve the real
+token boundary. Set `OVERWRITE=1` only when deliberately replacing an existing
+report.
 
 The checked-in E/A/C evaluation files contain 20 items per trait and are
 disjoint from the eight extraction items. Verify that separation after any

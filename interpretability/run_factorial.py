@@ -10,11 +10,13 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib.metadata
 import json
+import logging
 import os
 import re
 import sys
-from collections.abc import Iterator, Mapping, Sequence
+from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -92,6 +94,15 @@ class FactorialPrompt:
     source_id: str | None = None
     source_file: str | None = None
     source_record_index: int | None = None
+
+
+@dataclass(frozen=True)
+class FactorialArtifactPaths:
+    """Canonical output, progress, and final-manifest paths for one run."""
+
+    output: Path
+    progress: Path
+    manifest: Path
 
 
 def parse_base_alphas(value: str) -> dict[str, float]:
@@ -496,6 +507,11 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--top-p", type=float, default=0.9)
     parser.add_argument("--greedy", action="store_true")
     parser.add_argument("--dtype", choices=("bf16", "fp16", "fp32"), default="bf16")
+    parser.add_argument(
+        "--resume",
+        action="store_true",
+        help="resume a hash-compatible run from complete six-arm prompt blocks",
+    )
     return parser.parse_args()
 
 
@@ -552,19 +568,381 @@ def _active_vector_fields(
 def _write_jsonl_atomic(path: Path, rows: Sequence[Mapping[str, Any]]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_name(f".{path.name}.tmp.{os.getpid()}")
-    temporary.write_text(
-        "".join(
-            json.dumps(row, sort_keys=True, separators=(",", ":"), ensure_ascii=False) + "\n"
-            for row in rows
-        ),
-        encoding="utf-8",
+    try:
+        temporary.write_bytes(_canonical_jsonl_bytes(rows))
+        temporary.replace(path)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+def _canonical_jsonl_bytes(rows: Sequence[Mapping[str, Any]]) -> bytes:
+    return "".join(
+        json.dumps(row, sort_keys=True, separators=(",", ":"), ensure_ascii=False) + "\n"
+        for row in rows
+    ).encode("utf-8")
+
+
+def _canonical_rows_sha256(rows: Sequence[Mapping[str, Any]]) -> str:
+    return hashlib.sha256(_canonical_jsonl_bytes(rows)).hexdigest()
+
+
+def _read_jsonl(path: Path) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        if not line.strip():
+            continue
+        payload = json.loads(line)
+        if not isinstance(payload, dict):
+            raise ValueError(f"{path}:{line_number} must contain a JSON object")
+        rows.append(payload)
+    return rows
+
+
+def factorial_artifact_paths(output: Path) -> FactorialArtifactPaths:
+    return FactorialArtifactPaths(
+        output=output,
+        progress=output.with_suffix(".progress.json"),
+        manifest=output.with_suffix(".manifest.json"),
     )
-    temporary.replace(path)
+
+
+def enforce_output_policy(paths: FactorialArtifactPaths, *, resume: bool) -> None:
+    existing = [path for path in (paths.output, paths.progress, paths.manifest) if path.exists()]
+    if not resume and existing:
+        raise FileExistsError(
+            "factorial artifacts already exist; choose a fresh --output or pass --resume: "
+            + ", ".join(str(path) for path in existing)
+        )
+    if resume and not paths.progress.is_file():
+        raise FileNotFoundError(
+            f"--resume requires the progress sidecar created by this runner: {paths.progress}"
+        )
+
+
+def _progress_payload(
+    *,
+    run_spec: Mapping[str, Any],
+    run_id: str,
+    rows: Sequence[Mapping[str, Any]],
+    started_at: str,
+    status: str,
+    manifest_sha256: str | None = None,
+) -> dict[str, Any]:
+    blocks, remainder = divmod(len(rows), len(CONDITION_ORDER))
+    if remainder:
+        raise ValueError("progress can only describe complete six-arm prompt blocks")
+    prompt_ids = list(run_spec["prompt_ids"])
+    if blocks > len(prompt_ids):
+        raise ValueError("progress contains more prompt blocks than the run specification")
+    return {
+        "schema_version": "factorial-progress-1.0",
+        "run_id": run_id,
+        "run_spec": dict(run_spec),
+        "run_spec_sha256": sha256_json(run_spec),
+        "started_at": started_at,
+        "updated_at": datetime.now(UTC).isoformat(),
+        "status": status,
+        "completed_prompt_blocks": blocks,
+        "completed_prompt_ids": prompt_ids[:blocks],
+        "events": len(rows),
+        "output_sha256": _canonical_rows_sha256(rows),
+        "manifest_sha256": manifest_sha256,
+    }
+
+
+def _validate_progress_identity(
+    progress: Mapping[str, Any],
+    *,
+    run_spec: Mapping[str, Any],
+    run_id: str,
+) -> None:
+    if progress.get("schema_version") != "factorial-progress-1.0":
+        raise ValueError("unsupported or missing factorial progress schema")
+    if progress.get("run_id") != run_id:
+        raise ValueError("progress run_id does not match the current run specification")
+    if progress.get("run_spec") != run_spec:
+        raise ValueError("progress run specification is incompatible with this invocation")
+    if progress.get("run_spec_sha256") != sha256_json(run_spec):
+        raise ValueError("progress run-spec hash is corrupt")
+    started_at = progress.get("started_at")
+    if not isinstance(started_at, str) or not started_at:
+        raise ValueError("progress sidecar has no stable started_at timestamp")
+
+
+def validate_resume_rows(
+    rows: Sequence[Mapping[str, Any]],
+    *,
+    run_spec: Mapping[str, Any],
+    run_id: str,
+    prompts: Sequence[FactorialPrompt],
+    prompt_tokens: Sequence[tuple[list[int], list[int]]],
+    conditions: Sequence[Condition],
+    bundle: VectorBundle,
+    decode_generated: Callable[[list[int]], str],
+) -> int:
+    """Validate a contiguous prefix of complete, unique six-arm prompt blocks."""
+
+    block_size = len(CONDITION_ORDER)
+    blocks, remainder = divmod(len(rows), block_size)
+    if remainder:
+        raise ValueError(
+            f"resume output ends with a partial prompt block: {remainder}/{block_size} arms"
+        )
+    if blocks > len(prompts):
+        raise ValueError("resume output has more prompt blocks than configured prompts")
+    if len(prompt_tokens) != len(prompts):
+        raise ValueError("prompt-token validation data does not match configured prompts")
+    if tuple(condition.name for condition in conditions) != CONDITION_ORDER:
+        raise ValueError("resume validator received an unexpected condition order")
+    expected_prompt_ids = [prompt.prompt_id for prompt in prompts]
+    expected_prompt_hashes = [
+        hashlib.sha256(prompt.text.encode("utf-8")).hexdigest() for prompt in prompts
+    ]
+    if run_spec.get("prompt_ids") != expected_prompt_ids:
+        raise ValueError("run specification prompt IDs do not match loaded prompts")
+    if run_spec.get("prompt_hashes") != expected_prompt_hashes:
+        raise ValueError("run specification prompt hashes do not match loaded prompts")
+    expected_condition_specs = [
+        {
+            "name": condition.name,
+            "effective_alphas": condition.effective_alphas,
+            "controller_alphas": condition.controller_alphas,
+            "vector_mode": condition.vector_mode,
+        }
+        for condition in conditions
+    ]
+    if run_spec.get("conditions") != expected_condition_specs:
+        raise ValueError("run specification conditions do not match the six-arm design")
+    bundle_fields = {
+        "vector_metadata_sha256": bundle.metadata_sha256,
+        "vector_index_sha256": bundle.index_sha256,
+        "vector_ids": bundle.vector_ids,
+        "vector_source_hashes": bundle.source_hashes,
+        "vector_applied_hashes": bundle.applied_hashes,
+        "vector_polarities": bundle.polarities,
+    }
+    for field, expected in bundle_fields.items():
+        if run_spec.get(field) != expected:
+            raise ValueError(f"run specification {field} does not match loaded vectors")
+
+    seen_trace_ids: set[str] = set()
+    model_fields = {
+        "model_id": run_spec["model_id"],
+        "model_revision": run_spec["model_revision"],
+        "tokenizer_revision": run_spec["tokenizer_revision"],
+        "inference_dtype": run_spec["dtype"],
+        "quantization": run_spec["quantization"],
+        "do_sample": run_spec["do_sample"],
+        "temperature": run_spec["temperature"],
+        "top_p": run_spec["top_p"],
+    }
+    for prompt_index in range(blocks):
+        prompt_record = prompts[prompt_index]
+        prompt_hash = hashlib.sha256(prompt_record.text.encode("utf-8")).hexdigest()
+        seed = prompt_seed(int(run_spec["base_seed"]), prompt_index)
+        expected_input_ids, expected_attention_mask = prompt_tokens[prompt_index]
+        block = rows[prompt_index * block_size : (prompt_index + 1) * block_size]
+        for condition_index, (condition, event) in enumerate(zip(conditions, block, strict=True)):
+            label = f"prompt {prompt_index} condition {condition.name}"
+            if event.get("schema_version") != "factorial-event-1.0":
+                raise ValueError(f"{label} has an invalid event schema")
+            if event.get("run_id") != run_id:
+                raise ValueError(f"{label} has the wrong run_id")
+            expected_identity = {
+                "prompt_id": prompt_record.prompt_id,
+                "prompt_index": prompt_index,
+                "origin_stratum": prompt_record.origin_stratum,
+                "source_id": prompt_record.source_id,
+                "source_file": prompt_record.source_file,
+                "source_record_index": prompt_record.source_record_index,
+                "condition": condition.name,
+                "condition_index": condition_index,
+                "prompt_hash": prompt_hash,
+                "prompt_text": prompt_record.text,
+                "input_ids": expected_input_ids,
+                "attention_mask": expected_attention_mask,
+                "prompt_token_count": len(expected_input_ids),
+                "paired_seed": seed,
+                "sampling_seed": seed if run_spec["do_sample"] else None,
+                "effective_alphas": condition.effective_alphas,
+                "controller_alphas": condition.controller_alphas,
+                "steering_applied": any(
+                    alpha != 0.0 for alpha in condition.controller_alphas.values()
+                ),
+                "vector_mode": condition.vector_mode,
+                **model_fields,
+            }
+            for field, expected in expected_identity.items():
+                if event.get(field) != expected:
+                    raise ValueError(f"{label} disagrees on {field}")
+
+            generated_ids = event.get("generated_ids")
+            if (
+                not isinstance(generated_ids, list)
+                or not generated_ids
+                or any(not isinstance(token, int) for token in generated_ids)
+                or event.get("generated_token_count") != len(generated_ids)
+            ):
+                raise ValueError(f"{label} has invalid generated token data")
+            if event.get("raw_completion") != decode_generated(generated_ids):
+                raise ValueError(f"{label} raw completion does not match generated IDs")
+
+            vector_ids, source_hashes, applied_hashes = _active_vector_fields(
+                condition, bundle
+            )
+            vector_fields = {
+                "steering_vector_ids": vector_ids,
+                "steering_vector_hashes": source_hashes,
+                "applied_vector_hashes": applied_hashes,
+                "vector_mapping": condition_vector_provenance(condition, bundle),
+            }
+            for field, expected in vector_fields.items():
+                if event.get(field) != expected:
+                    raise ValueError(f"{label} disagrees on {field}")
+
+            expected_trace_id = (
+                f"{run_id}-p{prompt_index:04d}-{condition.name}-"
+                f"{sha256_json([prompt_hash, condition.name, seed, generated_ids])[:12]}"
+            )
+            trace_id = event.get("trace_id")
+            if trace_id != expected_trace_id:
+                raise ValueError(f"{label} has a non-reproducible trace_id")
+            if trace_id in seen_trace_ids:
+                raise ValueError(f"duplicate trace_id in resume output: {trace_id}")
+            seen_trace_ids.add(str(trace_id))
+    return blocks
+
+
+def load_resume_rows(
+    paths: FactorialArtifactPaths,
+    *,
+    run_spec: Mapping[str, Any],
+    run_id: str,
+    prompts: Sequence[FactorialPrompt],
+    prompt_tokens: Sequence[tuple[list[int], list[int]]],
+    conditions: Sequence[Condition],
+    bundle: VectorBundle,
+    decode_generated: Callable[[list[int]], str],
+) -> tuple[list[dict[str, Any]], str]:
+    progress = json.loads(paths.progress.read_text(encoding="utf-8"))
+    if not isinstance(progress, dict):
+        raise ValueError("factorial progress sidecar must contain a JSON object")
+    _validate_progress_identity(progress, run_spec=run_spec, run_id=run_id)
+    rows = _read_jsonl(paths.output) if paths.output.is_file() else []
+    blocks = validate_resume_rows(
+        rows,
+        run_spec=run_spec,
+        run_id=run_id,
+        prompts=prompts,
+        prompt_tokens=prompt_tokens,
+        conditions=conditions,
+        bundle=bundle,
+        decode_generated=decode_generated,
+    )
+
+    recorded_events = progress.get("events")
+    recorded_blocks = progress.get("completed_prompt_blocks")
+    expected_recorded_blocks, recorded_remainder = divmod(
+        int(recorded_events) if isinstance(recorded_events, int) else -1,
+        len(CONDITION_ORDER),
+    )
+    if (
+        recorded_remainder
+        or recorded_blocks != expected_recorded_blocks
+        or progress.get("completed_prompt_ids")
+        != list(run_spec["prompt_ids"])[:expected_recorded_blocks]
+    ):
+        raise ValueError("progress completion counters are internally inconsistent")
+    if expected_recorded_blocks < 0 or expected_recorded_blocks > blocks:
+        raise ValueError("progress sidecar is ahead of or invalid for the durable output")
+    if blocks - expected_recorded_blocks > 1:
+        raise ValueError("progress sidecar lags durable output by more than one prompt block")
+    recorded_prefix = rows[: expected_recorded_blocks * len(CONDITION_ORDER)]
+    if progress.get("output_sha256") != _canonical_rows_sha256(recorded_prefix):
+        raise ValueError("progress output hash does not match its recorded durable prefix")
+    if paths.output.is_file() and sha256_file(paths.output) != _canonical_rows_sha256(rows):
+        raise ValueError("durable factorial output is not in canonical JSONL form")
+
+    status = progress.get("status")
+    if status not in {"active", "complete"}:
+        raise ValueError(f"progress sidecar has invalid status: {status!r}")
+    if paths.manifest.exists() and blocks != len(prompts):
+        raise ValueError("a final manifest exists for an incomplete durable output")
+    if status == "complete":
+        if blocks != len(prompts) or not paths.manifest.is_file():
+            raise ValueError("complete progress is missing the complete output or final manifest")
+        if progress.get("manifest_sha256") != sha256_file(paths.manifest):
+            raise ValueError("complete progress final-manifest hash mismatch")
+
+    started_at = str(progress["started_at"])
+    if blocks != expected_recorded_blocks:
+        reconciled = _progress_payload(
+            run_spec=run_spec,
+            run_id=run_id,
+            rows=rows,
+            started_at=started_at,
+            status="active",
+        )
+        write_json_atomic(paths.progress, reconciled)
+        logging.info(
+            "reconciled progress sidecar to durable prompt block %d/%d",
+            blocks,
+            len(prompts),
+        )
+    return rows, started_at
+
+
+def persist_prompt_block(
+    paths: FactorialArtifactPaths,
+    *,
+    rows: Sequence[Mapping[str, Any]],
+    run_spec: Mapping[str, Any],
+    run_id: str,
+    started_at: str,
+) -> None:
+    """Commit output first, then progress; a crash can leave progress one block behind."""
+
+    progress = _progress_payload(
+        run_spec=run_spec,
+        run_id=run_id,
+        rows=rows,
+        started_at=started_at,
+        status="active",
+    )
+    _write_jsonl_atomic(paths.output, rows)
+    write_json_atomic(paths.progress, progress)
+
+
+def build_final_manifest(
+    *,
+    run_spec: Mapping[str, Any],
+    run_id: str,
+    output: Path,
+    prompts: int,
+    conditions_per_prompt: int,
+) -> dict[str, Any]:
+    """Build the timestamp-free archival manifest deterministically."""
+
+    manifest = {
+        **dict(run_spec),
+        "run_id": run_id,
+        "prompts": prompts,
+        "conditions_per_prompt": conditions_per_prompt,
+        "events": prompts * conditions_per_prompt,
+        "output": output.name,
+        "output_sha256": sha256_file(output),
+        "script_sha256": run_spec["code_hashes"]["run_factorial.py"],
+    }
+    manifest["manifest_content_sha256"] = sha256_json(manifest)
+    return manifest
 
 
 def main() -> None:
     args = _parse_args()
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     _validate_args(args)
+    paths = factorial_artifact_paths(args.output)
+    enforce_output_policy(paths, resume=args.resume)
     base_alphas = parse_base_alphas(args.alphas)
     conditions = build_conditions(base_alphas)
     prompts = load_factorial_prompts(args.prompts, limit=args.limit)
@@ -603,8 +981,8 @@ def main() -> None:
         expected_layers=layer_count,
         placebo_seed=args.placebo_seed,
     )
-    controller = SteeringController(model, bundle.vectors)
-    controller.register()
+    script_path = Path(__file__).resolve()
+    hooks_path = ROOT / "steering" / "hooks.py"
     run_spec = {
         "schema_version": "factorial-1.0",
         "model_id": args.model_id,
@@ -628,6 +1006,10 @@ def main() -> None:
         "temperature": None if args.greedy else args.temperature,
         "top_p": None if args.greedy else args.top_p,
         "max_new_tokens": args.max_new_tokens,
+        "torch_version": torch.__version__,
+        "transformers_version": importlib.metadata.version("transformers"),
+        "prompt_source_file": args.prompts.name,
+        "prompt_source_sha256": sha256_file(args.prompts),
         "prompt_ids": [prompt.prompt_id for prompt in prompts],
         "prompt_hashes": [
             hashlib.sha256(prompt.text.encode()).hexdigest() for prompt in prompts
@@ -639,112 +1021,213 @@ def main() -> None:
         "vector_applied_hashes": bundle.applied_hashes,
         "vector_polarities": bundle.polarities,
         "placebo_algorithm": PLACEBO_ALGORITHM,
+        "code_hashes": {
+            "run_factorial.py": sha256_file(script_path),
+            "steering/hooks.py": sha256_file(hooks_path),
+        },
     }
     run_id = f"factorial-{sha256_json(run_spec)[:16]}"
-    rows: list[dict[str, Any]] = []
-    try:
-        for prompt_index, prompt_record in enumerate(prompts):
-            prompt = prompt_record.text
-            tokens = tokenizer(prompt, return_tensors="pt").to(model.device)
-            input_ids = tokens["input_ids"][0].detach().cpu().tolist()
-            attention_mask = tokens["attention_mask"][0].detach().cpu().tolist()
-            seed = prompt_seed(args.base_seed, prompt_index)
-            prompt_hash = hashlib.sha256(prompt.encode()).hexdigest()
-            for condition_index, condition in enumerate(conditions):
-                controller.set_alphas(
-                    condition.controller_alphas,
-                    prompt_mask=torch.ones_like(tokens["input_ids"][0], dtype=torch.bool),
-                )
-                generation_kwargs: dict[str, Any] = {
-                    "max_new_tokens": args.max_new_tokens,
-                    "do_sample": not args.greedy,
-                    "pad_token_id": (
-                        tokenizer.pad_token_id
-                        if tokenizer.pad_token_id is not None
-                        else tokenizer.eos_token_id
-                    ),
-                }
-                if not args.greedy:
-                    generation_kwargs.update(temperature=args.temperature, top_p=args.top_p)
-                try:
-                    with seeded_rng(seed, enabled=not args.greedy), torch.inference_mode():
-                        output = model.generate(**tokens, **generation_kwargs)
-                finally:
-                    controller.clear_prompt_metadata()
+    prompt_tokens: list[tuple[list[int], list[int]]] = []
+    for prompt_record in prompts:
+        encoded = tokenizer(prompt_record.text, return_tensors="pt")
+        prompt_tokens.append(
+            (
+                encoded["input_ids"][0].detach().cpu().tolist(),
+                encoded["attention_mask"][0].detach().cpu().tolist(),
+            )
+        )
 
-                generated = output[0, len(input_ids) :].detach().cpu()
-                generated_ids = generated.tolist()
-                raw_completion = tokenizer.decode(generated_ids, skip_special_tokens=True)
-                vector_ids, source_hashes, applied_hashes = _active_vector_fields(
-                    condition, bundle
-                )
-                trace_id = (
-                    f"{run_id}-p{prompt_index:04d}-{condition.name}-"
-                    f"{sha256_json([prompt_hash, condition.name, seed, generated_ids])[:12]}"
-                )
-                rows.append(
-                    {
-                        "schema_version": "factorial-event-1.0",
-                        "trace_id": trace_id,
-                        "run_id": run_id,
-                        "prompt_id": prompt_record.prompt_id,
-                        "prompt_index": prompt_index,
-                        "origin_stratum": prompt_record.origin_stratum,
-                        "source_id": prompt_record.source_id,
-                        "source_file": prompt_record.source_file,
-                        "source_record_index": prompt_record.source_record_index,
-                        "condition": condition.name,
-                        "condition_index": condition_index,
-                        "prompt_hash": prompt_hash,
-                        "prompt_text": prompt,
-                        "input_ids": input_ids,
-                        "attention_mask": attention_mask,
-                        "generated_ids": generated_ids,
-                        "prompt_token_count": len(input_ids),
-                        "generated_token_count": len(generated_ids),
-                        "raw_completion": raw_completion,
-                        "model_id": args.model_id,
-                        "model_revision": resolved_model_revision,
-                        "tokenizer_revision": resolved_tokenizer_revision,
-                        "inference_dtype": str(dtype).removeprefix("torch."),
-                        "quantization": None,
+    if args.resume:
+        rows, started_at = load_resume_rows(
+            paths,
+            run_spec=run_spec,
+            run_id=run_id,
+            prompts=prompts,
+            prompt_tokens=prompt_tokens,
+            conditions=conditions,
+            bundle=bundle,
+            decode_generated=lambda ids: tokenizer.decode(ids, skip_special_tokens=True),
+        )
+        logging.info(
+            "validated %d/%d durable prompt blocks for resume",
+            len(rows) // len(CONDITION_ORDER),
+            len(prompts),
+        )
+    else:
+        # Recheck after model loading so another process cannot quietly claim
+        # the output while this invocation resolves immutable artifacts.
+        enforce_output_policy(paths, resume=False)
+        rows = []
+        started_at = datetime.now(UTC).isoformat()
+        write_json_atomic(
+            paths.progress,
+            _progress_payload(
+                run_spec=run_spec,
+                run_id=run_id,
+                rows=rows,
+                started_at=started_at,
+                status="active",
+            ),
+        )
+        logging.info("initialized durable factorial progress at %s", paths.progress)
+
+    completed_blocks = len(rows) // len(CONDITION_ORDER)
+    if completed_blocks < len(prompts):
+        controller = SteeringController(model, bundle.vectors)
+        controller.register()
+        try:
+            for prompt_index in range(completed_blocks, len(prompts)):
+                prompt_record = prompts[prompt_index]
+                block_rows: list[dict[str, Any]] = []
+                prompt = prompt_record.text
+                tokens = tokenizer(prompt, return_tensors="pt").to(model.device)
+                input_ids = tokens["input_ids"][0].detach().cpu().tolist()
+                attention_mask = tokens["attention_mask"][0].detach().cpu().tolist()
+                seed = prompt_seed(args.base_seed, prompt_index)
+                prompt_hash = hashlib.sha256(prompt.encode()).hexdigest()
+                for condition_index, condition in enumerate(conditions):
+                    controller.set_alphas(
+                        condition.controller_alphas,
+                        prompt_mask=torch.ones_like(tokens["input_ids"][0], dtype=torch.bool),
+                    )
+                    generation_kwargs: dict[str, Any] = {
+                        "max_new_tokens": args.max_new_tokens,
                         "do_sample": not args.greedy,
-                        "temperature": None if args.greedy else args.temperature,
-                        "top_p": None if args.greedy else args.top_p,
-                        "sampling_seed": seed if not args.greedy else None,
-                        "paired_seed": seed,
-                        "effective_alphas": condition.effective_alphas,
-                        "controller_alphas": condition.controller_alphas,
-                        "steering_applied": any(
-                            alpha != 0.0 for alpha in condition.controller_alphas.values()
+                        "pad_token_id": (
+                            tokenizer.pad_token_id
+                            if tokenizer.pad_token_id is not None
+                            else tokenizer.eos_token_id
                         ),
-                        "vector_mode": condition.vector_mode,
-                        "steering_vector_ids": vector_ids,
-                        "steering_vector_hashes": source_hashes,
-                        "applied_vector_hashes": applied_hashes,
-                        "vector_mapping": condition_vector_provenance(condition, bundle),
                     }
-                )
-    finally:
-        controller.clear_prompt_metadata()
-        controller.remove()
+                    if not args.greedy:
+                        generation_kwargs.update(
+                            temperature=args.temperature, top_p=args.top_p
+                        )
+                    try:
+                        with seeded_rng(seed, enabled=not args.greedy), torch.inference_mode():
+                            output = model.generate(**tokens, **generation_kwargs)
+                    finally:
+                        controller.clear_prompt_metadata()
 
-    _write_jsonl_atomic(args.output, rows)
-    manifest = {
-        **run_spec,
-        "run_id": run_id,
-        "created_at": datetime.now(UTC).isoformat(),
-        "prompt_source": str(args.prompts),
-        "prompt_source_sha256": sha256_file(args.prompts),
-        "prompts": len(prompts),
-        "conditions_per_prompt": len(conditions),
-        "events": len(rows),
-        "output": args.output.name,
-        "output_sha256": sha256_file(args.output),
-        "script_sha256": sha256_file(Path(__file__)),
-    }
-    manifest["manifest_content_sha256"] = sha256_json(manifest)
-    write_json_atomic(args.output.with_suffix(".manifest.json"), manifest)
+                    generated = output[0, len(input_ids) :].detach().cpu()
+                    generated_ids = generated.tolist()
+                    raw_completion = tokenizer.decode(
+                        generated_ids, skip_special_tokens=True
+                    )
+                    vector_ids, source_hashes, applied_hashes = _active_vector_fields(
+                        condition, bundle
+                    )
+                    trace_id = (
+                        f"{run_id}-p{prompt_index:04d}-{condition.name}-"
+                        f"{sha256_json([prompt_hash, condition.name, seed, generated_ids])[:12]}"
+                    )
+                    block_rows.append(
+                        {
+                            "schema_version": "factorial-event-1.0",
+                            "trace_id": trace_id,
+                            "run_id": run_id,
+                            "prompt_id": prompt_record.prompt_id,
+                            "prompt_index": prompt_index,
+                            "origin_stratum": prompt_record.origin_stratum,
+                            "source_id": prompt_record.source_id,
+                            "source_file": prompt_record.source_file,
+                            "source_record_index": prompt_record.source_record_index,
+                            "condition": condition.name,
+                            "condition_index": condition_index,
+                            "prompt_hash": prompt_hash,
+                            "prompt_text": prompt,
+                            "input_ids": input_ids,
+                            "attention_mask": attention_mask,
+                            "generated_ids": generated_ids,
+                            "prompt_token_count": len(input_ids),
+                            "generated_token_count": len(generated_ids),
+                            "raw_completion": raw_completion,
+                            "model_id": args.model_id,
+                            "model_revision": resolved_model_revision,
+                            "tokenizer_revision": resolved_tokenizer_revision,
+                            "inference_dtype": str(dtype).removeprefix("torch."),
+                            "quantization": None,
+                            "do_sample": not args.greedy,
+                            "temperature": None if args.greedy else args.temperature,
+                            "top_p": None if args.greedy else args.top_p,
+                            "sampling_seed": seed if not args.greedy else None,
+                            "paired_seed": seed,
+                            "effective_alphas": condition.effective_alphas,
+                            "controller_alphas": condition.controller_alphas,
+                            "steering_applied": any(
+                                alpha != 0.0
+                                for alpha in condition.controller_alphas.values()
+                            ),
+                            "vector_mode": condition.vector_mode,
+                            "steering_vector_ids": vector_ids,
+                            "steering_vector_hashes": source_hashes,
+                            "applied_vector_hashes": applied_hashes,
+                            "vector_mapping": condition_vector_provenance(
+                                condition, bundle
+                            ),
+                        }
+                    )
+
+                if len(block_rows) != len(CONDITION_ORDER):
+                    raise RuntimeError(
+                        f"prompt {prompt_index} did not produce one complete six-arm block"
+                    )
+                rows.extend(block_rows)
+                persist_prompt_block(
+                    paths,
+                    rows=rows,
+                    run_spec=run_spec,
+                    run_id=run_id,
+                    started_at=started_at,
+                )
+                logging.info(
+                    "persisted prompt block %d/%d (%d events, sha256=%s)",
+                    prompt_index + 1,
+                    len(prompts),
+                    len(rows),
+                    sha256_file(paths.output),
+                )
+        finally:
+            controller.clear_prompt_metadata()
+            controller.remove()
+
+    validate_resume_rows(
+        rows,
+        run_spec=run_spec,
+        run_id=run_id,
+        prompts=prompts,
+        prompt_tokens=prompt_tokens,
+        conditions=conditions,
+        bundle=bundle,
+        decode_generated=lambda ids: tokenizer.decode(ids, skip_special_tokens=True),
+    )
+    if len(rows) != len(prompts) * len(CONDITION_ORDER):
+        raise RuntimeError("factorial run ended without every complete prompt block")
+
+    manifest = build_final_manifest(
+        run_spec=run_spec,
+        run_id=run_id,
+        output=paths.output,
+        prompts=len(prompts),
+        conditions_per_prompt=len(conditions),
+    )
+    if paths.manifest.exists():
+        existing_manifest = json.loads(paths.manifest.read_text(encoding="utf-8"))
+        if existing_manifest != manifest:
+            raise ValueError("existing final manifest is incompatible or corrupt")
+    else:
+        write_json_atomic(paths.manifest, manifest)
+
+    final_progress = _progress_payload(
+        run_spec=run_spec,
+        run_id=run_id,
+        rows=rows,
+        started_at=started_at,
+        status="complete",
+        manifest_sha256=sha256_file(paths.manifest),
+    )
+    write_json_atomic(paths.progress, final_progress)
+    logging.info("factorial run complete: %s", paths.output)
     print(json.dumps(manifest, indent=2, sort_keys=True))
 
 

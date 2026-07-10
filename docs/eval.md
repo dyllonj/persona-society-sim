@@ -23,8 +23,9 @@
 ## Steering vector evaluation harness
 
 - `scripts/eval_vectors.sh` regenerates steering vectors via the metadata-aware loader, runs `steering.eval`, and writes both JSON + Markdown summaries to `artifacts/steering_eval/`. E/A/C each have 20 checked-in held-out items; `uv run python scripts/split_eval_prompts.py --verify-existing` rejects ID, exact-text, normalized-text, and near-duplicate-stem leakage against extraction data.
-- The harness reports baseline vs steered accuracy, log-prob deltas, and sign consistency for every prompt so you can catch regressions before running a multi-agent sim.
-- Set `STEERING_ALPHA` to the same value as `steering.strength` in your run config to evaluate the correct dose. Use `DELTA_THRESHOLD` and `SIGN_THRESHOLD` to fail the script when the expected gains disappear.
+- The harness reports baseline vs steered accuracy, primary mean-per-continuation-token log-prob deltas, secondary summed log-prob deltas, and sign consistency for every prompt. Prompt and option are tokenized together with an explicit delimiter, avoiding synthetic token boundaries.
+- Set `TRAIT_ALPHAS` to the deployed per-trait doses, or `STEERING_ALPHA` as a shared fallback. Set `INFERENCE_DTYPE` to the deployed dtype. Use `DELTA_THRESHOLD` and `SIGN_THRESHOLD` to fail the script when the expected gains disappear.
+- The JSON report contains a canonical content hash plus model configuration, model/tokenizer revision, resolved dtype, Torch/Transformers versions, and hashes for every prompt, vector, metadata, index, vector-config, and evaluation-script input.
 - `steering.eval` can also capture transcripts with steering toggled on/off to manually verify tone changes. These transcripts, along with `vector_store_id`, prompt metadata, and evaluation hashes, serve as the reproducibility record for persona experiments.
 - `--traits` defaults to `extraversion agreeableness conscientiousness` because O/N do not yet have checked-in prompt sets or vector artifacts. The evaluator already recognizes their aliases.
 

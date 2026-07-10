@@ -99,10 +99,10 @@ Use `python -m data.prompts.schema validate data/prompts/*.jsonl` to ensure ever
 Run `./scripts/eval_vectors.sh` to regenerate vectors, evaluate them with `steering.eval`, and capture a JSON + Markdown report under `artifacts/steering_eval/`. The harness:
 
 1. Regenerates vectors with the metadata-aware loader so the right layers and vector-store IDs are selected.
-2. Scores held-out prompt files (use the `_eval.jsonl` suffix) with and without steering to compute accuracy deltas and log-probability gaps.
+2. Scores deliberately delimited held-out option continuations with and without steering. Mean conditional log-probability per continuation token is the primary comparison; summed conditional log-probability is retained as a secondary diagnostic.
 3. Surfaces directional-fidelity checks (`delta_threshold`, `sign_threshold`) and optional transcript samples to sanity-check qualitative behavior.
 
-Set `STEERING_ALPHA` before running the script to mirror the `steering.strength` used in your simulation configs so the evaluation curve matches in-sim usage.
+Set `TRAIT_ALPHAS=E=0.8,A=0.5,C=0.6` when traits use different deployed doses, or `STEERING_ALPHA` for one shared fallback. Set `INFERENCE_DTYPE=bf16` to match the research runtime. The JSON report records model/tokenizer revisions, resolved dtype, dependency versions, model-config hash, prompt/vector/metadata/index/script hashes, and a deterministic content hash.
 
 ### Migration notes
 

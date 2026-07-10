@@ -127,6 +127,27 @@ alphas, source and applied vector hashes, and permutation provenance. Its
 sidecar manifest hashes the complete output, model configuration, input prompt
 file, metadata, vector index, and runner source.
 
+The runner refuses an existing output, progress sidecar, or final manifest by
+default. After each prompt's complete six-arm block it atomically replaces the
+canonical JSONL, then advances `<output-stem>.progress.json`. If a process is
+interrupted, rerun the identical command with `--resume`:
+
+```bash
+uv run --project interpretability python -m interpretability.run_factorial \
+  --model-revision <immutable-hf-commit> \
+  --prompts experiments/factorial_prompts.jsonl \
+  --vector-metadata configs/steering.layers.yaml \
+  --output artifacts/jacobian_factorial/live-generations.jsonl \
+  --resume
+```
+
+Resume verifies the complete run specification, prompt/model/vector/code/input
+hashes, and every durable event. It accepts only a contiguous prefix of unique,
+complete six-arm blocks; corrupt, partial, reordered, or incompatible data
+fails closed. Because output is committed before progress, recovery can also
+reconcile the single completed block written immediately before a crash. At
+most the currently generating prompt block is lost.
+
 Validate the six complete arms for every prompt/seed and render descriptive
 paired contrasts:
 

@@ -8,17 +8,30 @@ import pytest
 import torch
 import yaml
 
+from interpretability.common import sha256_json
 from interpretability.run_factorial import (
     CONDITION_ORDER,
     TRAITS,
+    FactorialPrompt,
+    VectorBundle,
+    _active_vector_fields,
+    _canonical_rows_sha256,
+    _progress_payload,
+    _write_jsonl_atomic,
+    build_final_manifest,
     build_conditions,
     condition_vector_provenance,
+    enforce_output_policy,
+    factorial_artifact_paths,
     load_factorial_prompts,
+    load_resume_rows,
     load_vector_bundle,
     parse_base_alphas,
+    persist_prompt_block,
     placebo_permutation_seed,
     prompt_seed,
     shuffled_vector,
+    validate_resume_rows,
     validate_neutral_prompts,
 )
 
@@ -196,3 +209,305 @@ def test_vector_bundle_enforces_model_and_polarity_and_builds_hashed_placebos(tm
             expected_layers=3,
             placebo_seed=313,
         )
+
+
+def _durability_fixture(prompt_count: int = 2):
+    conditions = build_conditions({"E": 0.8, "A": 0.5, "C": 0.6})
+    prompts = [
+        FactorialPrompt(
+            prompt_id=f"stable-{index}",
+            text=f"Prompt text {index}",
+            origin_stratum="E" if index % 2 == 0 else "A",
+            source_id=f"source-{index}",
+            source_file="eval.jsonl",
+            source_record_index=index,
+        )
+        for index in range(prompt_count)
+    ]
+    prompt_tokens = [([1, index + 2], [1, 1]) for index in range(prompt_count)]
+    vector_ids = {trait: f"{trait}-vectors" for trait in TRAITS}
+    source_hashes = {trait: {str(index): trait.lower() * 64} for index, trait in enumerate(TRAITS)}
+    applied_hashes = {
+        **{trait: {str(index): (trait.lower() + "i") * 32} for index, trait in enumerate(TRAITS)},
+        **{
+            f"placebo_{trait}": {str(index): (trait.lower() + "p") * 32}
+            for index, trait in enumerate(TRAITS)
+        },
+    }
+    mapping = {
+        **{trait: {"mode": "identity", "source_trait": trait} for trait in TRAITS},
+        **{
+            f"placebo_{trait}": {"mode": "coordinate_permutation", "source_trait": trait}
+            for trait in TRAITS
+        },
+    }
+    bundle = VectorBundle(
+        vectors={},
+        vector_ids=vector_ids,
+        source_hashes=source_hashes,
+        applied_hashes=applied_hashes,
+        polarities={trait: 1.0 for trait in TRAITS},
+        mapping=mapping,
+        metadata_sha256="m" * 64,
+        index_sha256="n" * 64,
+    )
+    run_spec = {
+        "schema_version": "factorial-1.0",
+        "model_id": "test/model",
+        "model_revision": "a" * 40,
+        "tokenizer_revision": "a" * 40,
+        "model_config_sha256": "c" * 64,
+        "dtype": "float32",
+        "quantization": None,
+        "conditions": [
+            {
+                "name": condition.name,
+                "effective_alphas": condition.effective_alphas,
+                "controller_alphas": condition.controller_alphas,
+                "vector_mode": condition.vector_mode,
+            }
+            for condition in conditions
+        ],
+        "base_seed": 17,
+        "placebo_seed": 29,
+        "do_sample": True,
+        "temperature": 0.7,
+        "top_p": 0.9,
+        "max_new_tokens": 10,
+        "prompt_ids": [prompt.prompt_id for prompt in prompts],
+        "prompt_hashes": [hashlib.sha256(prompt.text.encode()).hexdigest() for prompt in prompts],
+        "vector_metadata_sha256": bundle.metadata_sha256,
+        "vector_index_sha256": bundle.index_sha256,
+        "vector_ids": bundle.vector_ids,
+        "vector_source_hashes": bundle.source_hashes,
+        "vector_applied_hashes": bundle.applied_hashes,
+        "vector_polarities": bundle.polarities,
+        "code_hashes": {
+            "run_factorial.py": "r" * 64,
+            "steering/hooks.py": "h" * 64,
+        },
+    }
+    run_id = f"factorial-{sha256_json(run_spec)[:16]}"
+
+    def decode(ids):
+        return ",".join(str(token) for token in ids)
+
+    rows = []
+    for prompt_index, prompt in enumerate(prompts):
+        seed = prompt_seed(run_spec["base_seed"], prompt_index)
+        prompt_hash = hashlib.sha256(prompt.text.encode()).hexdigest()
+        for condition_index, condition in enumerate(conditions):
+            generated_ids = [100 + prompt_index, condition_index]
+            vector_ids_for_arm, source_for_arm, applied_for_arm = _active_vector_fields(
+                condition, bundle
+            )
+            trace_id = (
+                f"{run_id}-p{prompt_index:04d}-{condition.name}-"
+                f"{sha256_json([prompt_hash, condition.name, seed, generated_ids])[:12]}"
+            )
+            rows.append(
+                {
+                    "schema_version": "factorial-event-1.0",
+                    "trace_id": trace_id,
+                    "run_id": run_id,
+                    "prompt_id": prompt.prompt_id,
+                    "prompt_index": prompt_index,
+                    "origin_stratum": prompt.origin_stratum,
+                    "source_id": prompt.source_id,
+                    "source_file": prompt.source_file,
+                    "source_record_index": prompt.source_record_index,
+                    "condition": condition.name,
+                    "condition_index": condition_index,
+                    "prompt_hash": prompt_hash,
+                    "prompt_text": prompt.text,
+                    "input_ids": prompt_tokens[prompt_index][0],
+                    "attention_mask": prompt_tokens[prompt_index][1],
+                    "prompt_token_count": len(prompt_tokens[prompt_index][0]),
+                    "generated_ids": generated_ids,
+                    "generated_token_count": len(generated_ids),
+                    "raw_completion": decode(generated_ids),
+                    "model_id": run_spec["model_id"],
+                    "model_revision": run_spec["model_revision"],
+                    "tokenizer_revision": run_spec["tokenizer_revision"],
+                    "inference_dtype": run_spec["dtype"],
+                    "quantization": None,
+                    "do_sample": True,
+                    "temperature": 0.7,
+                    "top_p": 0.9,
+                    "sampling_seed": seed,
+                    "paired_seed": seed,
+                    "effective_alphas": condition.effective_alphas,
+                    "controller_alphas": condition.controller_alphas,
+                    "steering_applied": any(
+                        alpha != 0.0 for alpha in condition.controller_alphas.values()
+                    ),
+                    "vector_mode": condition.vector_mode,
+                    "steering_vector_ids": vector_ids_for_arm,
+                    "steering_vector_hashes": source_for_arm,
+                    "applied_vector_hashes": applied_for_arm,
+                    "vector_mapping": condition_vector_provenance(condition, bundle),
+                }
+            )
+    return run_spec, run_id, prompts, prompt_tokens, conditions, bundle, decode, rows
+
+
+def test_factorial_output_policy_requires_explicit_resume(tmp_path):
+    paths = factorial_artifact_paths(tmp_path / "factorial.jsonl")
+    paths.output.write_text("", encoding="utf-8")
+
+    with pytest.raises(FileExistsError, match="pass --resume"):
+        enforce_output_policy(paths, resume=False)
+    with pytest.raises(FileNotFoundError, match="progress sidecar"):
+        enforce_output_policy(paths, resume=True)
+
+
+def test_resume_accepts_only_complete_unique_internally_valid_blocks():
+    run_spec, run_id, prompts, prompt_tokens, conditions, bundle, decode, rows = (
+        _durability_fixture()
+    )
+    kwargs = {
+        "run_spec": run_spec,
+        "run_id": run_id,
+        "prompts": prompts,
+        "prompt_tokens": prompt_tokens,
+        "conditions": conditions,
+        "bundle": bundle,
+        "decode_generated": decode,
+    }
+
+    assert validate_resume_rows(rows, **kwargs) == 2
+    with pytest.raises(ValueError, match="partial prompt block"):
+        validate_resume_rows(rows[:-1], **kwargs)
+
+    corrupt = [dict(row) for row in rows]
+    corrupt[1]["condition"] = "neutral"
+    with pytest.raises(ValueError, match="disagrees on condition"):
+        validate_resume_rows(corrupt, **kwargs)
+
+    corrupt = [dict(row) for row in rows]
+    corrupt[6]["generated_ids"] = list(corrupt[0]["generated_ids"])
+    corrupt[6]["raw_completion"] = decode(corrupt[6]["generated_ids"])
+    with pytest.raises(ValueError, match="non-reproducible trace_id"):
+        validate_resume_rows(corrupt, **kwargs)
+
+
+def test_resume_reconciles_exactly_one_output_first_progress_lag(tmp_path):
+    run_spec, run_id, prompts, prompt_tokens, conditions, bundle, decode, rows = (
+        _durability_fixture()
+    )
+    paths = factorial_artifact_paths(tmp_path / "factorial.jsonl")
+    started_at = "2026-01-01T00:00:00+00:00"
+    progress = _progress_payload(
+        run_spec=run_spec,
+        run_id=run_id,
+        rows=[],
+        started_at=started_at,
+        status="active",
+    )
+    paths.progress.write_text(json.dumps(progress), encoding="utf-8")
+    _write_jsonl_atomic(paths.output, rows[: len(CONDITION_ORDER)])
+
+    recovered, recovered_started_at = load_resume_rows(
+        paths,
+        run_spec=run_spec,
+        run_id=run_id,
+        prompts=prompts,
+        prompt_tokens=prompt_tokens,
+        conditions=conditions,
+        bundle=bundle,
+        decode_generated=decode,
+    )
+
+    assert recovered == rows[: len(CONDITION_ORDER)]
+    assert recovered_started_at == started_at
+    reconciled = json.loads(paths.progress.read_text(encoding="utf-8"))
+    assert reconciled["completed_prompt_blocks"] == 1
+    assert reconciled["output_sha256"] == _canonical_rows_sha256(recovered)
+
+    incompatible = dict(run_spec)
+    incompatible["temperature"] = 0.8
+    with pytest.raises(ValueError, match="run specification is incompatible"):
+        load_resume_rows(
+            paths,
+            run_spec=incompatible,
+            run_id=run_id,
+            prompts=prompts,
+            prompt_tokens=prompt_tokens,
+            conditions=conditions,
+            bundle=bundle,
+            decode_generated=decode,
+        )
+
+
+def test_resume_rejects_progress_more_than_one_block_behind(tmp_path):
+    run_spec, run_id, prompts, prompt_tokens, conditions, bundle, decode, rows = (
+        _durability_fixture()
+    )
+    paths = factorial_artifact_paths(tmp_path / "factorial.jsonl")
+    paths.progress.write_text(
+        json.dumps(
+            _progress_payload(
+                run_spec=run_spec,
+                run_id=run_id,
+                rows=[],
+                started_at="2026-01-01T00:00:00+00:00",
+                status="active",
+            )
+        ),
+        encoding="utf-8",
+    )
+    _write_jsonl_atomic(paths.output, rows)
+
+    with pytest.raises(ValueError, match="lags durable output by more than one"):
+        load_resume_rows(
+            paths,
+            run_spec=run_spec,
+            run_id=run_id,
+            prompts=prompts,
+            prompt_tokens=prompt_tokens,
+            conditions=conditions,
+            bundle=bundle,
+            decode_generated=decode,
+        )
+
+
+def test_persist_rejects_partial_block_before_touching_output(tmp_path):
+    run_spec, run_id, *_rest, rows = _durability_fixture(prompt_count=1)
+    paths = factorial_artifact_paths(tmp_path / "factorial.jsonl")
+
+    with pytest.raises(ValueError, match="complete six-arm"):
+        persist_prompt_block(
+            paths,
+            rows=rows[:-1],
+            run_spec=run_spec,
+            run_id=run_id,
+            started_at="2026-01-01T00:00:00+00:00",
+        )
+
+    assert not paths.output.exists()
+    assert not paths.progress.exists()
+
+
+def test_final_manifest_is_timestamp_free_and_deterministic(tmp_path):
+    run_spec, run_id, *_rest, rows = _durability_fixture(prompt_count=1)
+    output = tmp_path / "factorial.jsonl"
+    _write_jsonl_atomic(output, rows)
+
+    first = build_final_manifest(
+        run_spec=run_spec,
+        run_id=run_id,
+        output=output,
+        prompts=1,
+        conditions_per_prompt=len(CONDITION_ORDER),
+    )
+    second = build_final_manifest(
+        run_spec=run_spec,
+        run_id=run_id,
+        output=output,
+        prompts=1,
+        conditions_per_prompt=len(CONDITION_ORDER),
+    )
+
+    assert first == second
+    assert "created_at" not in first
+    assert first["output_sha256"] == _canonical_rows_sha256(rows)
