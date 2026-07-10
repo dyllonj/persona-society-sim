@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import json
 import random
+import re
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -19,7 +20,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from data.prompts.schema import PromptItem, load_prompt_items
+from data.prompts.schema import PromptItem, load_prompt_items  # noqa: E402
 
 
 DEFAULT_EVAL_FRACTION = 0.2
@@ -34,10 +35,19 @@ class SplitVerification:
     eval_count: int
     overlapping_ids: tuple[str, ...]
     overlapping_fingerprints: tuple[str, ...]
+    overlapping_normalized_texts: tuple[str, ...] = ()
+    near_duplicate_questions: tuple[str, ...] = ()
 
     @property
     def ok(self) -> bool:
-        return not self.overlapping_ids and not self.overlapping_fingerprints
+        return not any(
+            (
+                self.overlapping_ids,
+                self.overlapping_fingerprints,
+                self.overlapping_normalized_texts,
+                self.near_duplicate_questions,
+            )
+        )
 
 
 @dataclass(frozen=True)
@@ -76,6 +86,22 @@ def _record_id(record: PromptItem | Mapping[str, object]) -> str:
     return str(record.get("id", ""))
 
 
+def _field(record: PromptItem | Mapping[str, object], name: str) -> str:
+    if isinstance(record, PromptItem):
+        return str(getattr(record, name))
+    return str(record.get(name, ""))
+
+
+def normalize_prompt_text(value: str) -> str:
+    """Normalize prose so formatting changes cannot hide train/eval leakage."""
+
+    return " ".join(re.findall(r"[a-z0-9]+", value.casefold()))
+
+
+def _question_tokens(record: PromptItem | Mapping[str, object]) -> set[str]:
+    return set(normalize_prompt_text(_field(record, "question_text")).split())
+
+
 def verify_disjoint(
     train_records: Sequence[PromptItem | Mapping[str, object]],
     eval_records: Sequence[PromptItem | Mapping[str, object]],
@@ -86,11 +112,39 @@ def verify_disjoint(
     eval_ids = {_record_id(record) for record in eval_records}
     train_fingerprints = {prompt_fingerprint(record) for record in train_records}
     eval_fingerprints = {prompt_fingerprint(record) for record in eval_records}
+    text_fields = ("question_text", "option_a", "option_b")
+    train_texts = {
+        normalize_prompt_text(_field(record, field))
+        for record in train_records
+        for field in text_fields
+    }
+    eval_texts = {
+        normalize_prompt_text(_field(record, field))
+        for record in eval_records
+        for field in text_fields
+    }
+    near_duplicates: list[str] = []
+    for train_record in train_records:
+        train_tokens = _question_tokens(train_record)
+        if len(train_tokens) < 4:
+            continue
+        for eval_record in eval_records:
+            eval_tokens = _question_tokens(eval_record)
+            if len(eval_tokens) < 4:
+                continue
+            union = train_tokens | eval_tokens
+            similarity = len(train_tokens & eval_tokens) / len(union)
+            if similarity >= 0.8 and train_tokens != eval_tokens:
+                near_duplicates.append(
+                    f"{_record_id(train_record)}~{_record_id(eval_record)}:{similarity:.3f}"
+                )
     return SplitVerification(
         train_count=len(train_records),
         eval_count=len(eval_records),
         overlapping_ids=tuple(sorted(train_ids & eval_ids)),
         overlapping_fingerprints=tuple(sorted(train_fingerprints & eval_fingerprints)),
+        overlapping_normalized_texts=tuple(sorted(train_texts & eval_texts)),
+        near_duplicate_questions=tuple(sorted(near_duplicates)),
     )
 
 
@@ -146,7 +200,9 @@ def split_prompt_items(
         raise ValueError(
             "Prompt split is not disjoint: "
             f"ids={verification.overlapping_ids}, "
-            f"fingerprints={verification.overlapping_fingerprints}"
+            f"fingerprints={verification.overlapping_fingerprints}, "
+            f"normalized_text={verification.overlapping_normalized_texts}, "
+            f"near_questions={verification.near_duplicate_questions}"
         )
     return train_records, eval_records
 

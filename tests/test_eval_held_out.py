@@ -5,6 +5,7 @@ import pytest
 
 from data.prompts.schema import PromptItem, load_prompt_items
 from scripts.split_eval_prompts import (
+    normalize_prompt_text,
     split_prompt_file,
     split_prompt_items,
     verify_disjoint,
@@ -64,6 +65,22 @@ def test_verify_disjoint_catches_overlapping_ids_and_content() -> None:
     assert not verification.ok
     assert verification.overlapping_ids == ("same",)
     assert verification.overlapping_fingerprints
+    assert verification.overlapping_normalized_texts
+
+
+def test_verify_disjoint_catches_reformatted_and_near_duplicate_text() -> None:
+    train = [_item(1, prompt_id="train")]
+    train[0].question_text = "A teammate carefully reviews the final project report."
+    eval_records = [_item(2, prompt_id="eval")]
+    eval_records[0].question_text = "A teammate carefully reviews the final project report again."
+    eval_records[0].option_a = "  HIGH behavior 1!! "
+
+    verification = verify_disjoint(train, eval_records)
+
+    assert not verification.ok
+    assert normalize_prompt_text(eval_records[0].option_a) == "high behavior 1"
+    assert verification.overlapping_normalized_texts == ("high behavior 1",)
+    assert verification.near_duplicate_questions == ("train~eval:0.889",)
 
 
 def test_split_prompt_file_refuses_existing_outputs(tmp_path: Path) -> None:
