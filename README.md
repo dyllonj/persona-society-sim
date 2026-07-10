@@ -2,6 +2,8 @@
 
 Social town simulator where 30–300 activation-steered LLM agents live, converse, collaborate, and produce emergent dynamics. Agents use persona steering vectors (Contrastive Activation Addition) instead of prompt-only roles, combining Smallville-inspired memory loops with lightweight world mechanics and measurement harnesses.
 
+![Persona steering evaluation pipeline](docs/assets/persona-steering-evaluation-pipeline.svg)
+
 ## Project scope
 - Build an open-world town loop (observation → reflection → planning → action) with a scheduler, social graph, and light economy/institutions.
 - Compute Big-Five steering vectors via CAA/ActAdd from public IPIP items; inject them during inference for dose-controlled personalities.
