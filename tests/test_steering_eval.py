@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import torch
+import pytest
 
 from steering import eval as steering_eval
 from steering.llm_judge import StaticJudgeClient
@@ -103,6 +104,15 @@ def test_evaluate_trait_dataset_computes_metrics():
 def test_canonicalize_trait_handles_aliases():
     assert steering_eval.canonicalize_trait("E") == ("extraversion", "E")
     assert steering_eval.canonicalize_trait("agreeableness") == ("agreeableness", "A")
+
+
+def test_vector_loader_rejects_artifacts_from_another_model():
+    with pytest.raises(ValueError, match="vector model mismatch"):
+        steering_eval._load_trait_vectors(
+            Path("data/vectors"),
+            [("extraversion", "E")],
+            model_name="wrong/model",
+        )
 
 
 def test_build_markdown_includes_failures():
