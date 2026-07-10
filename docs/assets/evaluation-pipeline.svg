@@ -1,0 +1,252 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1080" viewBox="0 0 1800 1080" role="img" aria-labelledby="title desc">
+  <title id="title">Persona steering evaluation pipeline</title>
+  <desc id="desc">A four-stage evaluation design: lock and validate the prompt, vector, and runtime inputs; evaluate vector direction and Jacobian mechanism; run a paired six-arm behavioral factorial; and estimate society-level effects across thirty replicated simulation worlds.</desc>
+
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#172b3a"/>
+    </marker>
+    <pattern id="placeboHatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="8" height="8" fill="#f4eef8"/>
+      <line x1="0" y1="0" x2="0" y2="8" stroke="#b697c5" stroke-width="3"/>
+    </pattern>
+    <style>
+      .text { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #172b3a; }
+      .title { font-size: 38px; font-weight: 760; letter-spacing: -0.8px; }
+      .subtitle { font-size: 19px; font-weight: 430; fill: #536675; }
+      .eyebrow { font-size: 13px; font-weight: 760; letter-spacing: 2.2px; fill: #1c7399; }
+      .stage-title { font-size: 24px; font-weight: 740; letter-spacing: -0.35px; }
+      .section { font-size: 13px; font-weight: 760; letter-spacing: 1.65px; fill: #526674; }
+      .node-title { font-size: 18px; font-weight: 720; }
+      .body { font-size: 16px; font-weight: 480; fill: #405563; }
+      .small { font-size: 14px; font-weight: 500; fill: #5c6f7b; }
+      .tiny { font-size: 12px; font-weight: 620; fill: #637683; letter-spacing: 0.25px; }
+      .metric { font-size: 14px; font-weight: 650; fill: #334a58; }
+      .gate { font-size: 12px; font-weight: 780; letter-spacing: 1.5px; fill: #1c7399; }
+      .panel { stroke: #1c7399; stroke-width: 2.4; }
+      .divider { stroke: #1c7399; stroke-width: 2; }
+      .card { fill: rgba(255,255,255,0.72); stroke: #8ca2af; stroke-width: 1.5; }
+      .soft-line { stroke: #a8b8c1; stroke-width: 1.35; }
+      .ink-line { stroke: #172b3a; stroke-width: 2.5; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+      .accent-line { stroke: #1898d0; stroke-width: 2.8; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    </style>
+  </defs>
+
+  <rect width="1800" height="1080" fill="#ffffff"/>
+
+  <text class="text eyebrow" x="60" y="38">EVALUATION DESIGN</text>
+  <text class="text small" x="1725" y="38" text-anchor="end">Design snapshot · 2026-07-10</text>
+  <text class="text title" x="60" y="82">Evaluation pipeline for activation-steered societies</text>
+  <text class="text subtitle" x="60" y="119">Four levels of evidence—from a steering artifact to replicated social outcomes—with controls carried forward at every stage.</text>
+
+  <!-- Stage 1 panel -->
+  <rect class="panel" x="60" y="175" width="390" height="640" rx="28" fill="#eaf4ff"/>
+  <path d="M88 175 H422 Q450 175 450 203 V261 H60 V203 Q60 175 88 175 Z" fill="#ffffff" opacity="0.94"/>
+  <line class="divider" x1="60" y1="261" x2="450" y2="261"/>
+  <text class="text stage-title" x="255" y="225" text-anchor="middle">Step 1: Lock &amp; Validate</text>
+  <text class="text section" x="255" y="294" text-anchor="middle">DATA SEPARATION</text>
+
+  <rect class="card" x="85" y="317" width="150" height="106" rx="12"/>
+  <path class="ink-line" d="M105 338 h35 l13 13 v48 h-48 z M140 338 v14 h13" stroke-width="2"/>
+  <text class="text tiny" x="166" y="344">TRAIN</text>
+  <text class="text node-title" x="166" y="375">8</text>
+  <text class="text small" x="166" y="398">items / trait</text>
+
+  <text class="text small" x="255" y="374" text-anchor="middle">≠</text>
+
+  <rect class="card" x="275" y="317" width="150" height="106" rx="12"/>
+  <path class="ink-line" d="M295 338 h35 l13 13 v48 h-48 z M330 338 v14 h13" stroke-width="2"/>
+  <text class="text tiny" x="356" y="344">HELD-OUT</text>
+  <text class="text node-title" x="356" y="375">20</text>
+  <text class="text small" x="356" y="398">items / trait</text>
+
+  <rect x="105" y="443" width="64" height="29" rx="14.5" fill="#d5ebfb" stroke="#73aeca"/>
+  <rect x="223" y="443" width="64" height="29" rx="14.5" fill="#fff1cf" stroke="#d1aa50"/>
+  <rect x="341" y="443" width="64" height="29" rx="14.5" fill="#dff2e5" stroke="#79ad86"/>
+  <text class="text metric" x="137" y="463" text-anchor="middle">E</text>
+  <text class="text metric" x="255" y="463" text-anchor="middle">A</text>
+  <text class="text metric" x="373" y="463" text-anchor="middle">C</text>
+
+  <line class="ink-line" x1="255" y1="484" x2="255" y2="510" marker-end="url(#arrow)"/>
+  <path d="M255 523 L287 535 V558 C287 579 272 593 255 601 C238 593 223 579 223 558 V535 Z" fill="#ffffff" stroke="#1898d0" stroke-width="2.5"/>
+  <path class="accent-line" d="M239 560 l11 11 22 -26"/>
+  <text class="text node-title" x="255" y="625" text-anchor="middle">Leakage audit</text>
+  <text class="text small" x="255" y="647" text-anchor="middle">IDs · hashes · text · near-duplicates</text>
+
+  <rect class="card" x="85" y="668" width="340" height="87" rx="12"/>
+  <text class="text tiny" x="105" y="692">PINNED RUNTIME</text>
+  <text class="text node-title" x="105" y="719">Qwen2.5-32B · BF16</text>
+  <text class="text small" x="105" y="741">immutable model, tokenizer &amp; input hashes</text>
+  <text class="text gate" x="255" y="791" text-anchor="middle">PROVENANCE GATE</text>
+
+  <!-- Stage 2 panel -->
+  <rect class="panel" x="485" y="175" width="390" height="640" rx="28" fill="#fff1e8"/>
+  <path d="M513 175 H847 Q875 175 875 203 V261 H485 V203 Q485 175 513 175 Z" fill="#ffffff" opacity="0.94"/>
+  <line class="divider" x1="485" y1="261" x2="875" y2="261"/>
+  <text class="text stage-title" x="680" y="225" text-anchor="middle">Step 2: Test the Vector</text>
+  <text class="text section" x="680" y="294" text-anchor="middle">TWO MODEL-LEVEL CHECKS</text>
+
+  <circle cx="530" cy="338" r="19" fill="#d5ebfb" stroke="#498fac" stroke-width="1.5"/>
+  <circle cx="530" cy="383" r="19" fill="#fff0c9" stroke="#bd9743" stroke-width="1.5"/>
+  <circle cx="530" cy="428" r="19" fill="#dff2e5" stroke="#679c76" stroke-width="1.5"/>
+  <text class="text metric" x="530" y="343" text-anchor="middle">E</text>
+  <text class="text metric" x="530" y="388" text-anchor="middle">A</text>
+  <text class="text metric" x="530" y="433" text-anchor="middle">C</text>
+  <line class="ink-line" x1="551" y1="338" x2="590" y2="360"/>
+  <line class="ink-line" x1="551" y1="383" x2="590" y2="383"/>
+  <line class="ink-line" x1="551" y1="428" x2="590" y2="406"/>
+  <rect x="605" y="327" width="125" height="112" rx="10" fill="#ffffff" stroke="#657b89" stroke-width="1.5"/>
+  <line class="soft-line" x1="622" y1="348" x2="713" y2="348"/>
+  <line class="soft-line" x1="622" y1="368" x2="713" y2="368"/>
+  <line class="soft-line" x1="622" y1="388" x2="713" y2="388"/>
+  <line class="soft-line" x1="622" y1="408" x2="713" y2="408"/>
+  <circle cx="638" cy="348" r="4.5" fill="#1898d0"/>
+  <circle cx="675" cy="368" r="4.5" fill="#d4a235"/>
+  <circle cx="653" cy="388" r="4.5" fill="#57a06a"/>
+  <circle cx="696" cy="408" r="4.5" fill="#1898d0"/>
+  <text class="text tiny" x="668" y="430" text-anchor="middle">7 INJECTION SITES</text>
+  <line class="ink-line" x1="733" y1="383" x2="774" y2="383" marker-end="url(#arrow)"/>
+  <rect x="791" y="333" width="50" height="100" rx="8" fill="#ffffff" stroke="#657b89" stroke-width="1.5"/>
+  <rect x="800" y="344" width="32" height="13" rx="3" fill="#d5ebfb"/>
+  <rect x="800" y="364" width="26" height="13" rx="3" fill="#fff0c9"/>
+  <rect x="800" y="384" width="29" height="13" rx="3" fill="#dff2e5"/>
+  <rect x="800" y="404" width="21" height="13" rx="3" fill="#e7e9eb"/>
+
+  <rect class="card" x="512" y="468" width="336" height="94" rx="12"/>
+  <circle cx="541" cy="501" r="15" fill="#d5ebfb" stroke="#498fac"/>
+  <path class="accent-line" d="M534 501 h14 M541 494 v14" stroke-width="2"/>
+  <text class="text node-title" x="568" y="501">Held-out forced choice</text>
+  <text class="text body" x="541" y="531">neutral ↔ steered conditional log-probs</text>
+  <text class="text metric" x="541" y="550">direction · sign · cross-trait bleed</text>
+
+  <rect class="card" x="512" y="579" width="336" height="94" rx="12"/>
+  <circle cx="541" cy="612" r="15" fill="#ffe0cf" stroke="#cc815c"/>
+  <path class="ink-line" d="M534 618 l7 -14 7 14 M536 614 h10" stroke-width="1.8"/>
+  <text class="text node-title" x="568" y="612">Jacobian transport</text>
+  <text class="text body" x="541" y="642">J<tspan baseline-shift="sub" font-size="12">layer</tspan> × v<tspan baseline-shift="sub" font-size="12">trait</tspan> into the final representation</text>
+  <text class="text metric" x="541" y="662">7-part geometry · vocabulary projection</text>
+
+  <rect x="512" y="696" width="336" height="59" rx="12" fill="#ffffff" opacity="0.72" stroke="#cc815c" stroke-width="1.5"/>
+  <text class="text metric" x="680" y="720" text-anchor="middle">Does the intervention move the model</text>
+  <text class="text metric" x="680" y="742" text-anchor="middle">in the intended direction?</text>
+  <text class="text gate" x="680" y="791" text-anchor="middle">MECHANISM EVIDENCE</text>
+
+  <!-- Stage 3 panel -->
+  <rect class="panel" x="910" y="175" width="390" height="640" rx="28" fill="#f2f2f0"/>
+  <path d="M938 175 H1272 Q1300 175 1300 203 V261 H910 V203 Q910 175 938 175 Z" fill="#ffffff" opacity="0.94"/>
+  <line class="divider" x1="910" y1="261" x2="1300" y2="261"/>
+  <text class="text stage-title" x="1105" y="225" text-anchor="middle">Step 3: Behavioral Factorial</text>
+  <text class="text section" x="1105" y="294" text-anchor="middle">PAIRED SIX-ARM DESIGN</text>
+
+  <rect class="card" x="940" y="317" width="330" height="78" rx="12"/>
+  <path class="ink-line" d="M963 334 h30 l11 11 v34 h-41 z M993 334 v12 h11" stroke-width="1.8"/>
+  <text class="text node-title" x="1020" y="351">60 neutral scenarios</text>
+  <text class="text small" x="1020" y="376">paired prompt IDs + sampling seeds</text>
+  <line class="ink-line" x1="1105" y1="402" x2="1105" y2="422" marker-end="url(#arrow)"/>
+
+  <rect x="940" y="432" width="99" height="38" rx="8" fill="#e6e8e9" stroke="#929da4"/>
+  <rect x="1056" y="432" width="99" height="38" rx="8" fill="#d5ebfb" stroke="#73aeca"/>
+  <rect x="1171" y="432" width="99" height="38" rx="8" fill="#fff0c9" stroke="#d1aa50"/>
+  <rect x="940" y="480" width="99" height="38" rx="8" fill="#dff2e5" stroke="#79ad86"/>
+  <rect x="1056" y="480" width="99" height="38" rx="8" fill="#dce8f1" stroke="#5e879e"/>
+  <rect x="1171" y="480" width="99" height="38" rx="8" fill="url(#placeboHatch)" stroke="#a17caf"/>
+  <text class="text tiny" x="989.5" y="456" text-anchor="middle">NEUTRAL</text>
+  <text class="text metric" x="1105.5" y="456" text-anchor="middle">E</text>
+  <text class="text metric" x="1220.5" y="456" text-anchor="middle">A</text>
+  <text class="text metric" x="989.5" y="504" text-anchor="middle">C</text>
+  <text class="text tiny" x="1105.5" y="504" text-anchor="middle">E + A + C</text>
+  <text class="text tiny" x="1220.5" y="504" text-anchor="middle">PLACEBO</text>
+
+  <line class="ink-line" x1="1105" y1="529" x2="1105" y2="549" marker-end="url(#arrow)"/>
+  <rect class="card" x="940" y="559" width="330" height="90" rx="12"/>
+  <path d="M963 578 h45 a8 8 0 0 1 8 8 v18 a8 8 0 0 1 -8 8 h-17 l-10 9 v-9 h-18 a8 8 0 0 1 -8 -8 v-18 a8 8 0 0 1 8 -8z" fill="#ffffff" stroke="#657b89" stroke-width="1.5"/>
+  <circle cx="973" cy="595" r="2.5" fill="#657b89"/>
+  <circle cx="985" cy="595" r="2.5" fill="#657b89"/>
+  <circle cx="997" cy="595" r="2.5" fill="#657b89"/>
+  <text class="text node-title" x="1032" y="590">Independent continuations</text>
+  <text class="text body" x="1032" y="616">each arm generates its own token path</text>
+  <text class="text small" x="1032" y="638">same scenario; controlled intervention</text>
+
+  <rect x="940" y="674" width="330" height="81" rx="12" fill="#ffffff" opacity="0.72" stroke="#8c9da6" stroke-width="1.5"/>
+  <text class="text tiny" x="1105" y="697" text-anchor="middle">EVALUATE</text>
+  <text class="text metric" x="1105" y="721" text-anchor="middle">action validity · choice · path divergence</text>
+  <text class="text metric" x="1105" y="744" text-anchor="middle">preregistered trait rubrics</text>
+  <text class="text gate" x="1105" y="791" text-anchor="middle">BEHAVIORAL EFFECT</text>
+
+  <!-- Stage 4 panel -->
+  <rect class="panel" x="1335" y="175" width="390" height="640" rx="28" fill="#ebf7e9"/>
+  <path d="M1363 175 H1697 Q1725 175 1725 203 V261 H1335 V203 Q1335 175 1363 175 Z" fill="#ffffff" opacity="0.94"/>
+  <line class="divider" x1="1335" y1="261" x2="1725" y2="261"/>
+  <text class="text stage-title" x="1530" y="225" text-anchor="middle">Step 4: Replicate Societies</text>
+  <text class="text section" x="1530" y="294" text-anchor="middle">SIX ARMS × FIVE PAIRED SEEDS</text>
+
+  <rect class="card" x="1360" y="310" width="340" height="190" rx="12"/>
+  <text class="text tiny" x="1380" y="337">N</text>
+  <text class="text tiny" x="1380" y="366">E</text>
+  <text class="text tiny" x="1380" y="395">A</text>
+  <text class="text tiny" x="1380" y="424">C</text>
+  <text class="text tiny" x="1380" y="453">EAC</text>
+  <text class="text tiny" x="1380" y="482">P</text>
+  <g fill="#81939d">
+    <circle cx="1425" cy="333" r="7"/><circle cx="1466" cy="333" r="7"/><circle cx="1507" cy="333" r="7"/><circle cx="1548" cy="333" r="7"/><circle cx="1589" cy="333" r="7"/>
+  </g>
+  <g fill="#1898d0">
+    <circle cx="1425" cy="362" r="7"/><circle cx="1466" cy="362" r="7"/><circle cx="1507" cy="362" r="7"/><circle cx="1548" cy="362" r="7"/><circle cx="1589" cy="362" r="7"/>
+  </g>
+  <g fill="#d4a235">
+    <circle cx="1425" cy="391" r="7"/><circle cx="1466" cy="391" r="7"/><circle cx="1507" cy="391" r="7"/><circle cx="1548" cy="391" r="7"/><circle cx="1589" cy="391" r="7"/>
+  </g>
+  <g fill="#57a06a">
+    <circle cx="1425" cy="420" r="7"/><circle cx="1466" cy="420" r="7"/><circle cx="1507" cy="420" r="7"/><circle cx="1548" cy="420" r="7"/><circle cx="1589" cy="420" r="7"/>
+  </g>
+  <g fill="#467792">
+    <circle cx="1425" cy="449" r="7"/><circle cx="1466" cy="449" r="7"/><circle cx="1507" cy="449" r="7"/><circle cx="1548" cy="449" r="7"/><circle cx="1589" cy="449" r="7"/>
+  </g>
+  <g fill="#a17caf">
+    <circle cx="1425" cy="478" r="7"/><circle cx="1466" cy="478" r="7"/><circle cx="1507" cy="478" r="7"/><circle cx="1548" cy="478" r="7"/><circle cx="1589" cy="478" r="7"/>
+  </g>
+  <path class="ink-line" d="M1620 326 h12 v159 h-12" stroke-width="1.8"/>
+  <text class="text node-title" x="1661" y="397" text-anchor="middle">30</text>
+  <text class="text small" x="1661" y="419" text-anchor="middle">worlds</text>
+
+  <rect class="card" x="1360" y="520" width="340" height="62" rx="12"/>
+  <circle cx="1400" cy="551" r="18" fill="#dff2e5" stroke="#679c76"/>
+  <circle cx="1393" cy="547" r="4" fill="#57a06a"/>
+  <circle cx="1407" cy="547" r="4" fill="#57a06a"/>
+  <path class="accent-line" d="M1388 560 q12 -10 24 0" stroke="#57a06a"/>
+  <text class="text node-title" x="1430" y="548">30 agents × 100 ticks</text>
+  <text class="text small" x="1430" y="570">per independently analyzed world</text>
+
+  <rect x="1360" y="603" width="340" height="152" rx="12" fill="#ffffff" opacity="0.74" stroke="#679c76" stroke-width="1.5"/>
+  <text class="text tiny" x="1530" y="628" text-anchor="middle">EVALUATE</text>
+  <line class="soft-line" x1="1378" y1="640" x2="1682" y2="640"/>
+  <circle cx="1390" cy="664" r="5" fill="#1898d0"/><text class="text metric" x="1404" y="669">social graph</text>
+  <circle cx="1546" cy="664" r="5" fill="#57a06a"/><text class="text metric" x="1560" y="669">task + research</text>
+  <circle cx="1390" cy="699" r="5" fill="#d4a235"/><text class="text metric" x="1404" y="704">macro dynamics</text>
+  <circle cx="1546" cy="699" r="5" fill="#a17caf"/><text class="text metric" x="1560" y="704">safety + cost</text>
+  <text class="text small" x="1530" y="735" text-anchor="middle">paired contrasts · 95% CI across worlds</text>
+  <text class="text gate" x="1530" y="791" text-anchor="middle">SOCIETY-LEVEL EFFECT</text>
+
+  <!-- Inter-stage arrows -->
+  <line class="ink-line" x1="456" y1="490" x2="478" y2="490" marker-end="url(#arrow)"/>
+  <line class="ink-line" x1="881" y1="490" x2="903" y2="490" marker-end="url(#arrow)"/>
+  <line class="ink-line" x1="1306" y1="490" x2="1328" y2="490" marker-end="url(#arrow)"/>
+
+  <!-- Evidence chain -->
+  <text class="text section" x="60" y="859">CLAIM ADVANCES ONLY WHEN THE PREVIOUS LEVEL PASSES</text>
+  <line x1="255" y1="883" x2="1530" y2="883" stroke="#aab9c2" stroke-width="2"/>
+  <circle cx="255" cy="883" r="8" fill="#1898d0"/>
+  <circle cx="680" cy="883" r="8" fill="#cc815c"/>
+  <circle cx="1105" cy="883" r="8" fill="#657b89"/>
+  <circle cx="1530" cy="883" r="8" fill="#57a06a"/>
+  <text class="text metric" x="255" y="912" text-anchor="middle">valid artifact</text>
+  <text class="text metric" x="680" y="912" text-anchor="middle">directed intervention</text>
+  <text class="text metric" x="1105" y="912" text-anchor="middle">generated behavior</text>
+  <text class="text metric" x="1530" y="912" text-anchor="middle">society outcome</text>
+
+  <line x1="60" y1="940" x2="1725" y2="940" stroke="#d4dde2" stroke-width="1.5"/>
+  <text class="text body" x="900" y="972" text-anchor="middle">Overview of the persona-steering evaluation. Content-hashed inputs feed model-level checks, paired behavioral generations,</text>
+  <text class="text body" x="900" y="998" text-anchor="middle">and 30 independent simulation worlds. Uncertainty is estimated across worlds—not by treating nested actions as independent samples.</text>
+  <text class="text tiny" x="60" y="1045">STATUS: engineering pilot passed; phase-two held-out, live-factorial, and society-study confirmatory runs remain pending.</text>
+  <text class="text tiny" x="1725" y="1045" text-anchor="end">Source: docs/jacobian-lens-phase-two.md · experiments/society_study/matrix.yaml</text>
+</svg>
