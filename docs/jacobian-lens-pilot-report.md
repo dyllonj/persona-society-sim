@@ -99,13 +99,12 @@ The integration clears its engineering gate:
 - Direct final logits and replayed final-layer logits agree exactly.
 - Artifacts survive teardown and the GPU instance no longer exists.
 
-The next phase is specified in
-[jacobian-lens-phase-two.md](jacobian-lens-phase-two.md). Held-out E/A/C data,
-missing-layer merge/report tooling, the live factorial, and a simulation-level
-replicated-study runner are implemented. Remaining execution gates are the
-four missing fitted matrices, exact-checkpoint held-out/factorial results,
-quantization matching, paid independent world replicates, preregistered token
-sets, and explicit fallback-rate analysis.
+The phase-two fit, exact seven-layer merge, trait report, replay, held-out
+evaluation, and live factorial are now complete. See
+[jacobian-lens-phase-two-results.md](jacobian-lens-phase-two-results.md) for the
+artifact hashes and findings, and
+[jacobian-lens-phase-two.md](jacobian-lens-phase-two.md) for the reproducible
+runbook. Paid independent world replicates remain the final execution stage.
 
 ## Recovered files
 

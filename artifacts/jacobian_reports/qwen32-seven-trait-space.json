@@ -1,0 +1,2890 @@
+{
+  "alpha_weighted_combined_effect": {
+    "coherence_ratio": 0.6045557358251813,
+    "contributions": [
+      {
+        "alpha": 0.5,
+        "cosine_with_combined": 0.9089926481246948,
+        "dot_with_combined": 1.8307174444198608,
+        "norm": 1.1015901565551758,
+        "trait": "A"
+      },
+      {
+        "alpha": 0.6,
+        "cosine_with_combined": 0.9481155276298523,
+        "dot_with_combined": 2.191072702407837,
+        "norm": 1.2640219926834106,
+        "trait": "C"
+      },
+      {
+        "alpha": 0.8,
+        "cosine_with_combined": -0.5641266703605652,
+        "dot_with_combined": -0.6792098879814148,
+        "norm": 0.658546507358551,
+        "trait": "E"
+      }
+    ],
+    "norm": 1.8282724618911743,
+    "sum_contribution_norms": 3.0241586565971375
+  },
+  "alphas": {
+    "A": 0.5,
+    "C": 0.6,
+    "E": 0.8
+  },
+  "analysis_sha256": "a79add52b74059b57575a20f7d7e72e519ea716cab4553f665b23e6aff3f1d2d",
+  "component_space": {
+    "basis": "target residual layer 63",
+    "cosine": [
+      [
+        1.0000004768371582,
+        0.5816040635108948,
+        0.2811846137046814,
+        0.9735363721847534,
+        0.530758261680603,
+        0.13347674906253815,
+        -0.814657986164093
+      ],
+      [
+        0.5816040635108948,
+        0.9999994039535522,
+        0.21839092671871185,
+        0.5845091342926025,
+        0.6457394957542419,
+        0.11610279232263565,
+        -0.7507293224334717
+      ],
+      [
+        0.2811846137046814,
+        0.21839092671871185,
+        1.0000003576278687,
+        0.27643606066703796,
+        0.37755638360977173,
+        0.6081080436706543,
+        -0.2908792495727539
+      ],
+      [
+        0.9735363721847534,
+        0.5845091342926025,
+        0.27643606066703796,
+        0.9999998807907104,
+        0.539492666721344,
+        0.1284632682800293,
+        -0.8129171133041382
+      ],
+      [
+        0.5307585000991821,
+        0.6457394361495972,
+        0.3775564730167389,
+        0.5394927263259888,
+        0.9999998807907104,
+        0.18768413364887238,
+        -0.6313261985778809
+      ],
+      [
+        0.13347673416137695,
+        0.11610275506973267,
+        0.6081082224845886,
+        0.12846319377422333,
+        0.18768413364887238,
+        0.9999998211860657,
+        -0.13136054575443268
+      ],
+      [
+        -0.8146577477455139,
+        -0.750728964805603,
+        -0.29087933897972107,
+        -0.8129171133041382,
+        -0.6313261985778809,
+        -0.13136054575443268,
+        1.0000001192092896
+      ]
+    ],
+    "gram": [
+      [
+        0.6296318769454956,
+        0.38647422194480896,
+        0.2903486490249634,
+        0.5872888565063477,
+        0.452279269695282,
+        0.11489585787057877,
+        -0.5321266651153564
+      ],
+      [
+        0.38647422194480896,
+        0.7012929916381836,
+        0.2379959225654602,
+        0.37213242053985596,
+        0.5807295441627502,
+        0.10547463595867157,
+        -0.5175230503082275
+      ],
+      [
+        0.2903486490249634,
+        0.2379959225654602,
+        1.69344162940979,
+        0.2734866142272949,
+        0.5276349186897278,
+        0.858462393283844,
+        -0.31159770488739014
+      ],
+      [
+        0.5872888565063477,
+        0.37213242053985596,
+        0.2734866142272949,
+        0.5779798030853271,
+        0.4404621422290802,
+        0.10594752430915833,
+        -0.5087437629699707
+      ],
+      [
+        0.4522794783115387,
+        0.5807294845581055,
+        0.5276350378990173,
+        0.4404621720314026,
+        1.1532762050628662,
+        0.21865013241767883,
+        -0.5581063032150269
+      ],
+      [
+        0.11489585041999817,
+        0.10547459870576859,
+        0.8584626913070679,
+        0.10594746470451355,
+        0.21865013241767883,
+        1.1768224239349365,
+        -0.11730509996414185
+      ],
+      [
+        -0.5321264863014221,
+        -0.5175228118896484,
+        -0.3115977942943573,
+        -0.5087437629699707,
+        -0.5581063032150269,
+        -0.11730509996414185,
+        0.6776304841041565
+      ]
+    ],
+    "labels": [
+      "A@16",
+      "A@40",
+      "A@58",
+      "C@20",
+      "C@44",
+      "C@62",
+      "E@36"
+    ],
+    "pairs_by_absolute_cosine": [
+      {
+        "cosine": 0.9735363721847534,
+        "dot": 0.5872888565063477,
+        "left": "A@16",
+        "right": "C@20",
+        "same_trait": false
+      },
+      {
+        "cosine": -0.814657986164093,
+        "dot": -0.5321266651153564,
+        "left": "A@16",
+        "right": "E@36",
+        "same_trait": false
+      },
+      {
+        "cosine": -0.8129171133041382,
+        "dot": -0.5087437629699707,
+        "left": "C@20",
+        "right": "E@36",
+        "same_trait": false
+      },
+      {
+        "cosine": -0.7507293224334717,
+        "dot": -0.5175230503082275,
+        "left": "A@40",
+        "right": "E@36",
+        "same_trait": false
+      },
+      {
+        "cosine": 0.6457394957542419,
+        "dot": 0.5807295441627502,
+        "left": "A@40",
+        "right": "C@44",
+        "same_trait": false
+      },
+      {
+        "cosine": -0.6313261985778809,
+        "dot": -0.5581063032150269,
+        "left": "C@44",
+        "right": "E@36",
+        "same_trait": false
+      },
+      {
+        "cosine": 0.6081080436706543,
+        "dot": 0.858462393283844,
+        "left": "A@58",
+        "right": "C@62",
+        "same_trait": false
+      },
+      {
+        "cosine": 0.5845091342926025,
+        "dot": 0.37213242053985596,
+        "left": "A@40",
+        "right": "C@20",
+        "same_trait": false
+      },
+      {
+        "cosine": 0.5816040635108948,
+        "dot": 0.38647422194480896,
+        "left": "A@16",
+        "right": "A@40",
+        "same_trait": true
+      },
+      {
+        "cosine": 0.539492666721344,
+        "dot": 0.4404621422290802,
+        "left": "C@20",
+        "right": "C@44",
+        "same_trait": true
+      },
+      {
+        "cosine": 0.530758261680603,
+        "dot": 0.452279269695282,
+        "left": "A@16",
+        "right": "C@44",
+        "same_trait": false
+      },
+      {
+        "cosine": 0.37755638360977173,
+        "dot": 0.5276349186897278,
+        "left": "A@58",
+        "right": "C@44",
+        "same_trait": false
+      },
+      {
+        "cosine": -0.2908792495727539,
+        "dot": -0.31159770488739014,
+        "left": "A@58",
+        "right": "E@36",
+        "same_trait": false
+      },
+      {
+        "cosine": 0.2811846137046814,
+        "dot": 0.2903486490249634,
+        "left": "A@16",
+        "right": "A@58",
+        "same_trait": true
+      },
+      {
+        "cosine": 0.27643606066703796,
+        "dot": 0.2734866142272949,
+        "left": "A@58",
+        "right": "C@20",
+        "same_trait": false
+      },
+      {
+        "cosine": 0.21839092671871185,
+        "dot": 0.2379959225654602,
+        "left": "A@40",
+        "right": "A@58",
+        "same_trait": true
+      },
+      {
+        "cosine": 0.18768413364887238,
+        "dot": 0.21865013241767883,
+        "left": "C@44",
+        "right": "C@62",
+        "same_trait": true
+      },
+      {
+        "cosine": 0.13347674906253815,
+        "dot": 0.11489585787057877,
+        "left": "A@16",
+        "right": "C@62",
+        "same_trait": false
+      },
+      {
+        "cosine": -0.13136054575443268,
+        "dot": -0.11730509996414185,
+        "left": "C@62",
+        "right": "E@36",
+        "same_trait": false
+      },
+      {
+        "cosine": 0.1284632682800293,
+        "dot": 0.10594752430915833,
+        "left": "C@20",
+        "right": "C@62",
+        "same_trait": true
+      },
+      {
+        "cosine": 0.11610279232263565,
+        "dot": 0.10547463595867157,
+        "left": "A@40",
+        "right": "C@62",
+        "same_trait": false
+      }
+    ]
+  },
+  "components": [
+    {
+      "directional_gain": 0.7932687735476015,
+      "eval_set_hash": null,
+      "gain_ratio": 1.8947232445281863,
+      "isotropic_rms_gain": 0.41867263508720876,
+      "label": "A@16",
+      "layer": 16,
+      "polarity": 1.0,
+      "raw_norm": 1.0002830028533936,
+      "train_set_hash": "eda2666ddca54950d9619b861e4a8a5317ce6085068892482c28d1a2853b5c12",
+      "trait": "A",
+      "trait_name": "agreeableness",
+      "transported_norm": 0.7934932708740234,
+      "vector_sha256": "0ed0ce67275ea5206d8280a16325c14592c828f033540c402a3754e0d989b61a",
+      "vector_store_id": "A_caa_qwen32b_v1"
+    },
+    {
+      "directional_gain": 0.8376103076389365,
+      "eval_set_hash": null,
+      "gain_ratio": 0.9815514642791974,
+      "isotropic_rms_gain": 0.8533534288536118,
+      "label": "A@40",
+      "layer": 40,
+      "polarity": 1.0,
+      "raw_norm": 0.9997878670692444,
+      "train_set_hash": "eda2666ddca54950d9619b861e4a8a5317ce6085068892482c28d1a2853b5c12",
+      "trait": "A",
+      "trait_name": "agreeableness",
+      "transported_norm": 0.8374326229095459,
+      "vector_sha256": "125b9ad98811312546d0d00d0675cb088827e63f59c8e385cadc6e461e8bfaa9",
+      "vector_store_id": "A_caa_qwen32b_v1"
+    },
+    {
+      "directional_gain": 1.3013440709278246,
+      "eval_set_hash": null,
+      "gain_ratio": 1.0698132311249517,
+      "isotropic_rms_gain": 1.216421738922979,
+      "label": "A@58",
+      "layer": 58,
+      "polarity": 1.0,
+      "raw_norm": 0.9999836683273315,
+      "train_set_hash": "eda2666ddca54950d9619b861e4a8a5317ce6085068892482c28d1a2853b5c12",
+      "trait": "A",
+      "trait_name": "agreeableness",
+      "transported_norm": 1.3013228178024292,
+      "vector_sha256": "e5018277e6bd3a11a09d94a4d3d4073b012084946179cc6f27f45897f3c51179",
+      "vector_store_id": "A_caa_qwen32b_v1"
+    },
+    {
+      "directional_gain": 0.7605095481396491,
+      "eval_set_hash": null,
+      "gain_ratio": 1.755885695649352,
+      "isotropic_rms_gain": 0.4331201911513959,
+      "label": "C@20",
+      "layer": 20,
+      "polarity": 1.0,
+      "raw_norm": 0.9996585249900818,
+      "train_set_hash": "ce4f1870d47dfade51cb5e9fcacf730a48e1a364cf9fcff2c41b544831d66cc0",
+      "trait": "C",
+      "trait_name": "conscientiousness",
+      "transported_norm": 0.7602498531341553,
+      "vector_sha256": "e1e28b9ee21b5024b508d86d905dd43ef4abd146d75cce5ed6a6846c85a19ad4",
+      "vector_store_id": "C_caa_qwen32b_v1"
+    },
+    {
+      "directional_gain": 1.0736257041337864,
+      "eval_set_hash": null,
+      "gain_ratio": 1.1079746486578512,
+      "isotropic_rms_gain": 0.9689984382172702,
+      "label": "C@44",
+      "layer": 44,
+      "polarity": 1.0,
+      "raw_norm": 1.0002620220184326,
+      "train_set_hash": "ce4f1870d47dfade51cb5e9fcacf730a48e1a364cf9fcff2c41b544831d66cc0",
+      "trait": "C",
+      "trait_name": "conscientiousness",
+      "transported_norm": 1.0739070177078247,
+      "vector_sha256": "ba79192b4311b66c2172945df7774ac3757033bdd3c3059c25771429ce74a528",
+      "vector_store_id": "C_caa_qwen32b_v1"
+    },
+    {
+      "directional_gain": 1.084907602193329,
+      "eval_set_hash": null,
+      "gain_ratio": 1.0175794350851692,
+      "isotropic_rms_gain": 1.0661650233748332,
+      "label": "C@62",
+      "layer": 62,
+      "polarity": 1.0,
+      "raw_norm": 0.9999142289161682,
+      "train_set_hash": "ce4f1870d47dfade51cb5e9fcacf730a48e1a364cf9fcff2c41b544831d66cc0",
+      "trait": "C",
+      "trait_name": "conscientiousness",
+      "transported_norm": 1.0848145484924316,
+      "vector_sha256": "433f6d847f23d967874eebe5d4bdbcb12baf6380758aa2d8ee711b1a70a4295f",
+      "vector_store_id": "C_caa_qwen32b_v1"
+    },
+    {
+      "directional_gain": 0.823017997826297,
+      "eval_set_hash": null,
+      "gain_ratio": 1.1610329505627786,
+      "isotropic_rms_gain": 0.7088670458726962,
+      "label": "E@36",
+      "layer": 36,
+      "polarity": -1.0,
+      "raw_norm": 1.000200629234314,
+      "train_set_hash": "e719628c95189e267d9f5e387ab7053765e43d41bd0fc3fed78199fcd95be9c6",
+      "trait": "E",
+      "trait_name": "extraversion",
+      "transported_norm": 0.8231831192970276,
+      "vector_sha256": "9a5440096921974ffd0f8c9f8594d1bae80c893bb569b65e4a7630cc8ab1fa40",
+      "vector_store_id": "E_caa_qwen32b_v1"
+    }
+  ],
+  "coverage": {
+    "complete": true,
+    "configured_components": [
+      "A@16",
+      "A@40",
+      "A@58",
+      "C@20",
+      "C@44",
+      "C@62",
+      "E@36"
+    ],
+    "covered_components": [
+      "A@16",
+      "A@40",
+      "A@58",
+      "C@20",
+      "C@44",
+      "C@62",
+      "E@36"
+    ],
+    "lens_source_layers": [
+      16,
+      20,
+      36,
+      40,
+      44,
+      58,
+      62
+    ],
+    "missing_components": [],
+    "unconfigured_lens_layers": []
+  },
+  "created_at": "2026-07-10T23:37:51.841891+00:00",
+  "provenance": {
+    "d_model": 5120,
+    "jlens_git_commit": "581d398613e5602a5af361e1c34d3a92ea82ba8e",
+    "jlens_version": "0.1.0",
+    "lens_id": "jlens-d2904d15e552f752",
+    "lens_manifest_path": "/workspace/persona-society-sim/artifacts/jacobian_lens/qwen32-seven-layers-n100/manifest.json",
+    "lens_manifest_sha256": "765e848e0124f0de6702c601061ae1ef0f0f052d121f40912ee5749cf91e0a7f",
+    "lens_path": "/workspace/persona-society-sim/artifacts/jacobian_lens/qwen32-seven-layers-n100/lens.pt",
+    "lens_prompts": 100,
+    "lens_sha256": "d2904d15e552f752e252e57584a3f2e34d90c370eafe60ae92623ca5d3289377",
+    "model_config_sha256": "741cb95752449724264aced6c359070cc5318d8019133cfa452783cf259dc972",
+    "model_id": "Qwen/Qwen2.5-32B-Instruct",
+    "model_revision": "5ede1c97bbab6ce5cda5812749b4c0bdf79b18dd",
+    "n_layers": 64,
+    "target_layer": 63,
+    "tokenizer_revision": "5ede1c97bbab6ce5cda5812749b4c0bdf79b18dd",
+    "vector_index_path": "/workspace/persona-society-sim/data/vectors/index.jsonl",
+    "vector_index_sha256": "a1da64c0ccd2550574ed6e6482eb33702d7f7736f10092e59ed9342a05449611",
+    "vector_metadata_path": "/workspace/persona-society-sim/configs/steering.layers.yaml",
+    "vector_metadata_sha256": "4ae5e755e2fdb9058a9a9f8380261ed6ec570b4ae4bd36fa1abdd7a314f7c7fd",
+    "vector_root": "/workspace/persona-society-sim/data/vectors"
+  },
+  "schema_version": "1.0",
+  "trait_space": {
+    "aggregation": "sum of first-order transported layer components per trait",
+    "cosine": [
+      [
+        1.0000001192092896,
+        0.834305465221405,
+        -0.7505687475204468
+      ],
+      [
+        0.834305465221405,
+        1.0000001192092896,
+        -0.6828239560127258
+      ],
+      [
+        -0.7505687475204468,
+        -0.6828239560127258,
+        1.0000001192092896
+      ]
+    ],
+    "gram": [
+      [
+        4.85400390625,
+        3.872384548187256,
+        -1.3612470626831055
+      ],
+      [
+        3.872384548187256,
+        4.438199043273926,
+        -1.1841551065444946
+      ],
+      [
+        -1.3612470626831055,
+        -1.1841551065444946,
+        0.6776304841041565
+      ]
+    ],
+    "labels": [
+      "A",
+      "C",
+      "E"
+    ],
+    "pairs_by_absolute_cosine": [
+      {
+        "cosine": 0.834305465221405,
+        "dot": 3.872384548187256,
+        "left": "A",
+        "right": "C"
+      },
+      {
+        "cosine": -0.7505687475204468,
+        "dot": -1.3612470626831055,
+        "left": "A",
+        "right": "E"
+      },
+      {
+        "cosine": -0.6828239560127258,
+        "dot": -1.1841551065444946,
+        "left": "C",
+        "right": "E"
+      }
+    ]
+  },
+  "traits": [
+    {
+      "alpha": 0.5,
+      "alpha_weighted_norm": 1.1015901565551758,
+      "coherence_ratio": 0.7513620193283989,
+      "component_count": 3,
+      "layers": [
+        16,
+        40,
+        58
+      ],
+      "mean_directional_gain": 0.9774077173714542,
+      "mean_gain_ratio": 1.315362646644112,
+      "mean_within_trait_cosine": 0.3603932013114293,
+      "sum_component_norms": 2.9322487115859985,
+      "trait": "A",
+      "trait_name": "agreeableness",
+      "transported_sum_norm": 2.2031803131103516
+    },
+    {
+      "alpha": 0.6,
+      "alpha_weighted_norm": 1.2640219688415526,
+      "coherence_ratio": 0.7217279578170592,
+      "component_count": 3,
+      "layers": [
+        20,
+        44,
+        62
+      ],
+      "mean_directional_gain": 0.9730142848222548,
+      "mean_gain_ratio": 1.2938132597974574,
+      "mean_within_trait_cosine": 0.28521335621674854,
+      "sum_component_norms": 2.9189714193344116,
+      "trait": "C",
+      "trait_name": "conscientiousness",
+      "transported_sum_norm": 2.106703281402588
+    },
+    {
+      "alpha": 0.8,
+      "alpha_weighted_norm": 0.6585464954376221,
+      "coherence_ratio": 1.0,
+      "component_count": 1,
+      "layers": [
+        36
+      ],
+      "mean_directional_gain": 0.823017997826297,
+      "mean_gain_ratio": 1.1610329505627786,
+      "mean_within_trait_cosine": null,
+      "sum_component_norms": 0.8231831192970276,
+      "trait": "E",
+      "trait_name": "extraversion",
+      "transported_sum_norm": 0.8231831192970276
+    }
+  ],
+  "vocabulary_projections": {
+    "effects": {
+      "combined:alpha_weighted": {
+        "top_negative": [
+          {
+            "logit": -11.75,
+            "token_id": 19,
+            "token_text": "4"
+          },
+          {
+            "logit": -10.6875,
+            "token_id": 3407,
+            "token_text": "。\n\n"
+          },
+          {
+            "logit": -10.6875,
+            "token_id": 6762,
+            "token_text": " .\n\n"
+          },
+          {
+            "logit": -10.625,
+            "token_id": 22,
+            "token_text": "7"
+          },
+          {
+            "logit": -10.5625,
+            "token_id": 101418,
+            "token_text": "弯"
+          },
+          {
+            "logit": -10.3125,
+            "token_id": 7268,
+            "token_text": "LS"
+          },
+          {
+            "logit": -10.3125,
+            "token_id": 59581,
+            "token_text": " --\n\n"
+          },
+          {
+            "logit": -10.25,
+            "token_id": 23,
+            "token_text": "8"
+          },
+          {
+            "logit": -10.25,
+            "token_id": 7511,
+            "token_text": "”\n\n"
+          },
+          {
+            "logit": -10.0625,
+            "token_id": 3248,
+            "token_text": "itter"
+          },
+          {
+            "logit": -10.0,
+            "token_id": 21,
+            "token_text": "6"
+          },
+          {
+            "logit": -10.0,
+            "token_id": 5503,
+            "token_text": "oring"
+          },
+          {
+            "logit": -9.9375,
+            "token_id": 104399,
+            "token_text": "中间"
+          },
+          {
+            "logit": -9.875,
+            "token_id": 61519,
+            "token_text": "﻿\n"
+          },
+          {
+            "logit": -9.875,
+            "token_id": 17,
+            "token_text": "2"
+          },
+          {
+            "logit": -9.8125,
+            "token_id": 18,
+            "token_text": "3"
+          },
+          {
+            "logit": -9.75,
+            "token_id": 119512,
+            "token_text": "蟋"
+          },
+          {
+            "logit": -9.75,
+            "token_id": 101113,
+            "token_text": "阅读"
+          },
+          {
+            "logit": -9.5625,
+            "token_id": 55422,
+            "token_text": "ivariate"
+          },
+          {
+            "logit": -9.5,
+            "token_id": 19049,
+            "token_text": "ashing"
+          }
+        ],
+        "top_positive": [
+          {
+            "logit": 12.3125,
+            "token_id": 3746,
+            "token_text": " strong"
+          },
+          {
+            "logit": 12.0,
+            "token_id": 1602,
+            "token_text": " very"
+          },
+          {
+            "logit": 11.75,
+            "token_id": 7548,
+            "token_text": " highly"
+          },
+          {
+            "logit": 11.4375,
+            "token_id": 91419,
+            "token_text": "ERSHEY"
+          },
+          {
+            "logit": 11.3125,
+            "token_id": 15811,
+            "token_text": " fundamental"
+          },
+          {
+            "logit": 11.25,
+            "token_id": 16626,
+            "token_text": " commonly"
+          },
+          {
+            "logit": 11.25,
+            "token_id": 6770,
+            "token_text": " basic"
+          },
+          {
+            "logit": 11.125,
+            "token_id": 5798,
+            "token_text": " built"
+          },
+          {
+            "logit": 11.0,
+            "token_id": 140485,
+            "token_text": "AĞ"
+          },
+          {
+            "logit": 10.9375,
+            "token_id": 2696,
+            "token_text": " lot"
+          },
+          {
+            "logit": 10.875,
+            "token_id": 4285,
+            "token_text": " simple"
+          },
+          {
+            "logit": 10.6875,
+            "token_id": 10707,
+            "token_text": " competition"
+          },
+          {
+            "logit": 10.5,
+            "token_id": 3198,
+            "token_text": " women"
+          },
+          {
+            "logit": 10.5,
+            "token_id": 2632,
+            "token_text": " little"
+          },
+          {
+            "logit": 10.5,
+            "token_id": 10552,
+            "token_text": " sport"
+          },
+          {
+            "logit": 10.4375,
+            "token_id": 26779,
+            "token_text": " sophisticated"
+          },
+          {
+            "logit": 10.4375,
+            "token_id": 3654,
+            "token_text": " certain"
+          },
+          {
+            "logit": 10.375,
+            "token_id": 61433,
+            "token_text": " militar"
+          },
+          {
+            "logit": 10.25,
+            "token_id": 3953,
+            "token_text": " particular"
+          },
+          {
+            "logit": 10.25,
+            "token_id": 4727,
+            "token_text": " perfect"
+          }
+        ]
+      },
+      "component:A@16": {
+        "top_negative": [
+          {
+            "logit": -14.875,
+            "token_id": 41233,
+            "token_text": " ```\n"
+          },
+          {
+            "logit": -14.6875,
+            "token_id": 9902,
+            "token_text": " ``"
+          },
+          {
+            "logit": -14.0,
+            "token_id": 3355,
+            "token_text": " ''"
+          },
+          {
+            "logit": -13.4375,
+            "token_id": 1177,
+            "token_text": " --"
+          },
+          {
+            "logit": -13.125,
+            "token_id": 12448,
+            "token_text": " ---"
+          },
+          {
+            "logit": -12.6875,
+            "token_id": 58883,
+            "token_text": "．"
+          },
+          {
+            "logit": -12.1875,
+            "token_id": 3225,
+            "token_text": "﻿"
+          },
+          {
+            "logit": -12.125,
+            "token_id": 4605,
+            "token_text": "''"
+          },
+          {
+            "logit": -12.125,
+            "token_id": 54275,
+            "token_text": " ```"
+          },
+          {
+            "logit": -12.0,
+            "token_id": 61519,
+            "token_text": "﻿\n"
+          },
+          {
+            "logit": -11.6875,
+            "token_id": 13874,
+            "token_text": "``"
+          },
+          {
+            "logit": -11.4375,
+            "token_id": 83134,
+            "token_text": " !***"
+          },
+          {
+            "logit": -11.25,
+            "token_id": 27152,
+            "token_text": " \\'"
+          },
+          {
+            "logit": -11.0625,
+            "token_id": 1540,
+            "token_text": "�"
+          },
+          {
+            "logit": -10.9375,
+            "token_id": 4102,
+            "token_text": " "
+          },
+          {
+            "logit": -10.75,
+            "token_id": 71472,
+            "token_text": "''\n"
+          },
+          {
+            "logit": -10.75,
+            "token_id": 10958,
+            "token_text": "】"
+          },
+          {
+            "logit": -10.5625,
+            "token_id": 7245,
+            "token_text": " \\\""
+          },
+          {
+            "logit": -10.4375,
+            "token_id": 42484,
+            "token_text": ".''"
+          },
+          {
+            "logit": -10.25,
+            "token_id": 33576,
+            "token_text": " 【"
+          }
+        ],
+        "top_positive": [
+          {
+            "logit": 16.125,
+            "token_id": 11,
+            "token_text": ","
+          },
+          {
+            "logit": 15.6875,
+            "token_id": 1871,
+            "token_text": ",\r\n"
+          },
+          {
+            "logit": 15.5,
+            "token_id": 345,
+            "token_text": ",\n"
+          },
+          {
+            "logit": 14.75,
+            "token_id": 48746,
+            "token_text": ",\r\n\r\n"
+          },
+          {
+            "logit": 14.75,
+            "token_id": 59610,
+            "token_text": "–\n\n"
+          },
+          {
+            "logit": 13.875,
+            "token_id": 3554,
+            "token_text": ",\n\n"
+          },
+          {
+            "logit": 13.5,
+            "token_id": 70198,
+            "token_text": "[…"
+          },
+          {
+            "logit": 12.5,
+            "token_id": 74721,
+            "token_text": "*A"
+          },
+          {
+            "logit": 12.25,
+            "token_id": 95232,
+            "token_text": "[…]"
+          },
+          {
+            "logit": 12.0,
+            "token_id": 57475,
+            "token_text": ",\n\n\n"
+          },
+          {
+            "logit": 12.0,
+            "token_id": 319,
+            "token_text": "\r\n"
+          },
+          {
+            "logit": 11.75,
+            "token_id": 4142,
+            "token_text": "–"
+          },
+          {
+            "logit": 11.5,
+            "token_id": 31980,
+            "token_text": ":\r\n\r\n"
+          },
+          {
+            "logit": 11.0625,
+            "token_id": 89478,
+            "token_text": "…\n"
+          },
+          {
+            "logit": 11.0625,
+            "token_id": 2834,
+            "token_text": ":\r\n"
+          },
+          {
+            "logit": 11.0,
+            "token_id": 98213,
+            "token_text": ",…"
+          },
+          {
+            "logit": 10.9375,
+            "token_id": 5434,
+            "token_text": "…\n\n"
+          },
+          {
+            "logit": 10.8125,
+            "token_id": 198,
+            "token_text": "\n"
+          },
+          {
+            "logit": 10.1875,
+            "token_id": 15031,
+            "token_text": ",A"
+          },
+          {
+            "logit": 10.0625,
+            "token_id": 4346,
+            "token_text": "(A"
+          }
+        ]
+      },
+      "component:A@40": {
+        "top_negative": [
+          {
+            "logit": -16.375,
+            "token_id": 6762,
+            "token_text": " .\n\n"
+          },
+          {
+            "logit": -14.5625,
+            "token_id": 9470,
+            "token_text": " ;\n\n"
+          },
+          {
+            "logit": -14.3125,
+            "token_id": 19,
+            "token_text": "4"
+          },
+          {
+            "logit": -14.125,
+            "token_id": 21,
+            "token_text": "6"
+          },
+          {
+            "logit": -13.9375,
+            "token_id": 20,
+            "token_text": "5"
+          },
+          {
+            "logit": -13.8125,
+            "token_id": 22,
+            "token_text": "7"
+          },
+          {
+            "logit": -13.625,
+            "token_id": 14512,
+            "token_text": " :\n\n"
+          },
+          {
+            "logit": -13.5,
+            "token_id": 23,
+            "token_text": "8"
+          },
+          {
+            "logit": -13.25,
+            "token_id": 555,
+            "token_text": " }\n\n"
+          },
+          {
+            "logit": -13.25,
+            "token_id": 17,
+            "token_text": "2"
+          },
+          {
+            "logit": -13.0625,
+            "token_id": 18,
+            "token_text": "3"
+          },
+          {
+            "logit": -12.875,
+            "token_id": 24,
+            "token_text": "9"
+          },
+          {
+            "logit": -12.8125,
+            "token_id": 659,
+            "token_text": " ."
+          },
+          {
+            "logit": -12.625,
+            "token_id": 1177,
+            "token_text": " --"
+          },
+          {
+            "logit": -12.5,
+            "token_id": 55144,
+            "token_text": " '\n\n"
+          },
+          {
+            "logit": -12.1875,
+            "token_id": 58883,
+            "token_text": "．"
+          },
+          {
+            "logit": -12.0625,
+            "token_id": 1837,
+            "token_text": "\"\n\n"
+          },
+          {
+            "logit": -12.0,
+            "token_id": 3876,
+            "token_text": "'\n\n"
+          },
+          {
+            "logit": -11.9375,
+            "token_id": 66786,
+            "token_text": " ”\n\n"
+          },
+          {
+            "logit": -11.8125,
+            "token_id": 3355,
+            "token_text": " ''"
+          }
+        ],
+        "top_positive": [
+          {
+            "logit": 13.5,
+            "token_id": 1871,
+            "token_text": ",\r\n"
+          },
+          {
+            "logit": 12.4375,
+            "token_id": 109457,
+            "token_text": "必备"
+          },
+          {
+            "logit": 11.8125,
+            "token_id": 113252,
+            "token_text": "报业"
+          },
+          {
+            "logit": 11.6875,
+            "token_id": 111692,
+            "token_text": "地理位置"
+          },
+          {
+            "logit": 10.9375,
+            "token_id": 345,
+            "token_text": ",\n"
+          },
+          {
+            "logit": 10.75,
+            "token_id": 122531,
+            "token_text": "浐"
+          },
+          {
+            "logit": 10.6875,
+            "token_id": 111432,
+            "token_text": "新闻中心"
+          },
+          {
+            "logit": 10.625,
+            "token_id": 113483,
+            "token_text": "博弈"
+          },
+          {
+            "logit": 10.5625,
+            "token_id": 89478,
+            "token_text": "…\n"
+          },
+          {
+            "logit": 10.375,
+            "token_id": 116118,
+            "token_text": "谱写"
+          },
+          {
+            "logit": 10.25,
+            "token_id": 45349,
+            "token_text": "?\r\n"
+          },
+          {
+            "logit": 10.1875,
+            "token_id": 110377,
+            "token_text": "农田"
+          },
+          {
+            "logit": 10.125,
+            "token_id": 117616,
+            "token_text": "日报社"
+          },
+          {
+            "logit": 10.0625,
+            "token_id": 10205,
+            "token_text": " […"
+          },
+          {
+            "logit": 10.0625,
+            "token_id": 319,
+            "token_text": "\r\n"
+          },
+          {
+            "logit": 10.0625,
+            "token_id": 85994,
+            "token_text": "(`<"
+          },
+          {
+            "logit": 9.875,
+            "token_id": 118230,
+            "token_text": "位於"
+          },
+          {
+            "logit": 9.875,
+            "token_id": 117360,
+            "token_text": "评比"
+          },
+          {
+            "logit": 9.875,
+            "token_id": 21088,
+            "token_text": "-zA"
+          },
+          {
+            "logit": 9.75,
+            "token_id": 117427,
+            "token_text": "动工"
+          }
+        ]
+      },
+      "component:A@58": {
+        "top_negative": [
+          {
+            "logit": -11.9375,
+            "token_id": 49335,
+            "token_text": "tier"
+          },
+          {
+            "logit": -11.625,
+            "token_id": 55422,
+            "token_text": "ivariate"
+          },
+          {
+            "logit": -11.625,
+            "token_id": 99835,
+            "token_text": "偏"
+          },
+          {
+            "logit": -10.75,
+            "token_id": 44162,
+            "token_text": "ENDED"
+          },
+          {
+            "logit": -10.625,
+            "token_id": 6762,
+            "token_text": " .\n\n"
+          },
+          {
+            "logit": -10.5,
+            "token_id": 17120,
+            "token_text": "edReader"
+          },
+          {
+            "logit": -10.4375,
+            "token_id": 118022,
+            "token_text": "书香"
+          },
+          {
+            "logit": -10.4375,
+            "token_id": 3407,
+            "token_text": "。\n\n"
+          },
+          {
+            "logit": -10.375,
+            "token_id": 122110,
+            "token_text": "鼹"
+          },
+          {
+            "logit": -10.375,
+            "token_id": 114869,
+            "token_text": "第二大"
+          },
+          {
+            "logit": -10.375,
+            "token_id": 102611,
+            "token_text": "振兴"
+          },
+          {
+            "logit": -10.3125,
+            "token_id": 103347,
+            "token_text": "鹅"
+          },
+          {
+            "logit": -10.1875,
+            "token_id": 99476,
+            "token_text": "冷"
+          },
+          {
+            "logit": -10.0,
+            "token_id": 112630,
+            "token_text": "冰冷"
+          },
+          {
+            "logit": -9.9375,
+            "token_id": 106657,
+            "token_text": "第二个"
+          },
+          {
+            "logit": -9.9375,
+            "token_id": 126383,
+            "token_text": "سو"
+          },
+          {
+            "logit": -9.9375,
+            "token_id": 100179,
+            "token_text": "针"
+          },
+          {
+            "logit": -9.9375,
+            "token_id": 101480,
+            "token_text": "不出"
+          },
+          {
+            "logit": -9.875,
+            "token_id": 70031,
+            "token_text": "......\n\n"
+          },
+          {
+            "logit": -9.8125,
+            "token_id": 101113,
+            "token_text": "阅读"
+          }
+        ],
+        "top_positive": [
+          {
+            "logit": 13.75,
+            "token_id": 42690,
+            "token_text": " unified"
+          },
+          {
+            "logit": 13.5,
+            "token_id": 3746,
+            "token_text": " strong"
+          },
+          {
+            "logit": 12.375,
+            "token_id": 10552,
+            "token_text": " sport"
+          },
+          {
+            "logit": 11.4375,
+            "token_id": 2696,
+            "token_text": " lot"
+          },
+          {
+            "logit": 11.4375,
+            "token_id": 3654,
+            "token_text": " certain"
+          },
+          {
+            "logit": 11.375,
+            "token_id": 91419,
+            "token_text": "ERSHEY"
+          },
+          {
+            "logit": 11.375,
+            "token_id": 2896,
+            "token_text": " bro"
+          },
+          {
+            "logit": 11.25,
+            "token_id": 62261,
+            "token_text": "@SpringBootApplication"
+          },
+          {
+            "logit": 11.125,
+            "token_id": 8474,
+            "token_text": " guide"
+          },
+          {
+            "logit": 11.0625,
+            "token_id": 1602,
+            "token_text": " very"
+          },
+          {
+            "logit": 11.0,
+            "token_id": 70820,
+            "token_text": " vigorous"
+          },
+          {
+            "logit": 10.875,
+            "token_id": 69268,
+            "token_text": " mango"
+          },
+          {
+            "logit": 10.875,
+            "token_id": 21765,
+            "token_text": " robust"
+          },
+          {
+            "logit": 10.875,
+            "token_id": 1661,
+            "token_text": " good"
+          },
+          {
+            "logit": 10.8125,
+            "token_id": 140485,
+            "token_text": "AĞ"
+          },
+          {
+            "logit": 10.8125,
+            "token_id": 3204,
+            "token_text": " possible"
+          },
+          {
+            "logit": 10.75,
+            "token_id": 1616,
+            "token_text": " way"
+          },
+          {
+            "logit": 10.75,
+            "token_id": 16510,
+            "token_text": " strongly"
+          },
+          {
+            "logit": 10.625,
+            "token_id": 5220,
+            "token_text": " woman"
+          },
+          {
+            "logit": 10.625,
+            "token_id": 2632,
+            "token_text": " little"
+          }
+        ]
+      },
+      "component:C@20": {
+        "top_negative": [
+          {
+            "logit": -16.0,
+            "token_id": 4102,
+            "token_text": " "
+          },
+          {
+            "logit": -15.375,
+            "token_id": 9902,
+            "token_text": " ``"
+          },
+          {
+            "logit": -15.3125,
+            "token_id": 41233,
+            "token_text": " ```\n"
+          },
+          {
+            "logit": -14.0,
+            "token_id": 3355,
+            "token_text": " ''"
+          },
+          {
+            "logit": -13.875,
+            "token_id": 3225,
+            "token_text": "﻿"
+          },
+          {
+            "logit": -13.5625,
+            "token_id": 61519,
+            "token_text": "﻿\n"
+          },
+          {
+            "logit": -13.3125,
+            "token_id": 1177,
+            "token_text": " --"
+          },
+          {
+            "logit": -13.25,
+            "token_id": 4605,
+            "token_text": "''"
+          },
+          {
+            "logit": -13.0,
+            "token_id": 54275,
+            "token_text": " ```"
+          },
+          {
+            "logit": -13.0,
+            "token_id": 13874,
+            "token_text": "``"
+          },
+          {
+            "logit": -12.375,
+            "token_id": 58883,
+            "token_text": "．"
+          },
+          {
+            "logit": -11.75,
+            "token_id": 12448,
+            "token_text": " ---"
+          },
+          {
+            "logit": -11.5,
+            "token_id": 83134,
+            "token_text": " !***"
+          },
+          {
+            "logit": -11.0,
+            "token_id": 42484,
+            "token_text": ".''"
+          },
+          {
+            "logit": -10.9375,
+            "token_id": 27152,
+            "token_text": " \\'"
+          },
+          {
+            "logit": -10.75,
+            "token_id": 71472,
+            "token_text": "''\n"
+          },
+          {
+            "logit": -10.6875,
+            "token_id": 75780,
+            "token_text": " ﻿"
+          },
+          {
+            "logit": -10.6875,
+            "token_id": 52471,
+            "token_text": "=''"
+          },
+          {
+            "logit": -10.6875,
+            "token_id": 33576,
+            "token_text": " 【"
+          },
+          {
+            "logit": -10.625,
+            "token_id": 30372,
+            "token_text": " ："
+          }
+        ],
+        "top_positive": [
+          {
+            "logit": 15.5625,
+            "token_id": 11,
+            "token_text": ","
+          },
+          {
+            "logit": 15.3125,
+            "token_id": 345,
+            "token_text": ",\n"
+          },
+          {
+            "logit": 14.4375,
+            "token_id": 1871,
+            "token_text": ",\r\n"
+          },
+          {
+            "logit": 13.75,
+            "token_id": 48746,
+            "token_text": ",\r\n\r\n"
+          },
+          {
+            "logit": 13.4375,
+            "token_id": 70198,
+            "token_text": "[…"
+          },
+          {
+            "logit": 13.375,
+            "token_id": 59610,
+            "token_text": "–\n\n"
+          },
+          {
+            "logit": 13.1875,
+            "token_id": 3554,
+            "token_text": ",\n\n"
+          },
+          {
+            "logit": 12.875,
+            "token_id": 95232,
+            "token_text": "[…]"
+          },
+          {
+            "logit": 12.75,
+            "token_id": 74721,
+            "token_text": "*A"
+          },
+          {
+            "logit": 12.3125,
+            "token_id": 57475,
+            "token_text": ",\n\n\n"
+          },
+          {
+            "logit": 11.625,
+            "token_id": 4142,
+            "token_text": "–"
+          },
+          {
+            "logit": 11.1875,
+            "token_id": 98213,
+            "token_text": ",…"
+          },
+          {
+            "logit": 11.125,
+            "token_id": 69979,
+            "token_text": ",**"
+          },
+          {
+            "logit": 10.6875,
+            "token_id": 60212,
+            "token_text": "»,"
+          },
+          {
+            "logit": 10.625,
+            "token_id": 89478,
+            "token_text": "…\n"
+          },
+          {
+            "logit": 10.4375,
+            "token_id": 31980,
+            "token_text": ":\r\n\r\n"
+          },
+          {
+            "logit": 10.375,
+            "token_id": 10205,
+            "token_text": " […"
+          },
+          {
+            "logit": 10.3125,
+            "token_id": 12950,
+            "token_text": ",("
+          },
+          {
+            "logit": 10.3125,
+            "token_id": 26266,
+            "token_text": ",\\"
+          },
+          {
+            "logit": 10.125,
+            "token_id": 24391,
+            "token_text": ":\n\n\n"
+          }
+        ]
+      },
+      "component:C@44": {
+        "top_negative": [
+          {
+            "logit": -11.25,
+            "token_id": 19,
+            "token_text": "4"
+          },
+          {
+            "logit": -10.8125,
+            "token_id": 121040,
+            "token_text": "焜"
+          },
+          {
+            "logit": -10.75,
+            "token_id": 25829,
+            "token_text": "().\n"
+          },
+          {
+            "logit": -10.625,
+            "token_id": 29636,
+            "token_text": "'.\n\n"
+          },
+          {
+            "logit": -10.4375,
+            "token_id": 26126,
+            "token_text": "].\n"
+          },
+          {
+            "logit": -10.3125,
+            "token_id": 10040,
+            "token_text": ".\"\n"
+          },
+          {
+            "logit": -10.3125,
+            "token_id": 21696,
+            "token_text": ".'\n\n"
+          },
+          {
+            "logit": -10.25,
+            "token_id": 117853,
+            "token_text": "黄昏"
+          },
+          {
+            "logit": -10.25,
+            "token_id": 22956,
+            "token_text": "\".\n"
+          },
+          {
+            "logit": -10.1875,
+            "token_id": 23569,
+            "token_text": "'.\n"
+          },
+          {
+            "logit": -10.1875,
+            "token_id": 2217,
+            "token_text": ".\"\n\n"
+          },
+          {
+            "logit": -10.0625,
+            "token_id": 23421,
+            "token_text": ".'\n"
+          },
+          {
+            "logit": -10.0,
+            "token_id": 20,
+            "token_text": "5"
+          },
+          {
+            "logit": -9.9375,
+            "token_id": 18,
+            "token_text": "3"
+          },
+          {
+            "logit": -9.9375,
+            "token_id": 35184,
+            "token_text": ".]\n\n"
+          },
+          {
+            "logit": -9.875,
+            "token_id": 113035,
+            "token_text": "也正是"
+          },
+          {
+            "logit": -9.8125,
+            "token_id": 48116,
+            "token_text": ".”\n"
+          },
+          {
+            "logit": -9.75,
+            "token_id": 108349,
+            "token_text": "间接"
+          },
+          {
+            "logit": -9.75,
+            "token_id": 109073,
+            "token_text": "返回搜狐"
+          },
+          {
+            "logit": -9.625,
+            "token_id": 23,
+            "token_text": "8"
+          }
+        ],
+        "top_positive": [
+          {
+            "logit": 11.4375,
+            "token_id": 73547,
+            "token_text": " scientifically"
+          },
+          {
+            "logit": 10.875,
+            "token_id": 256,
+            "token_text": "  "
+          },
+          {
+            "logit": 10.75,
+            "token_id": 716,
+            "token_text": " _"
+          },
+          {
+            "logit": 10.1875,
+            "token_id": 55693,
+            "token_text": " `$"
+          },
+          {
+            "logit": 10.1875,
+            "token_id": 636,
+            "token_text": " �"
+          },
+          {
+            "logit": 10.0625,
+            "token_id": 3070,
+            "token_text": " **"
+          },
+          {
+            "logit": 9.875,
+            "token_id": 1565,
+            "token_text": " `"
+          },
+          {
+            "logit": 9.8125,
+            "token_id": 12344,
+            "token_text": " scientific"
+          },
+          {
+            "logit": 9.8125,
+            "token_id": 54209,
+            "token_text": " bargaining"
+          },
+          {
+            "logit": 9.625,
+            "token_id": 37609,
+            "token_text": " Avatar"
+          },
+          {
+            "logit": 9.5,
+            "token_id": 72363,
+            "token_text": " ​​"
+          },
+          {
+            "logit": 9.5,
+            "token_id": 7214,
+            "token_text": " foreign"
+          },
+          {
+            "logit": 9.4375,
+            "token_id": 1584,
+            "token_text": " state"
+          },
+          {
+            "logit": 9.4375,
+            "token_id": 5411,
+            "token_text": " popular"
+          },
+          {
+            "logit": 9.4375,
+            "token_id": 50270,
+            "token_text": " mould"
+          },
+          {
+            "logit": 9.375,
+            "token_id": 110755,
+            "token_text": "部份"
+          },
+          {
+            "logit": 9.375,
+            "token_id": 2581,
+            "token_text": " never"
+          },
+          {
+            "logit": 9.25,
+            "token_id": 101583,
+            "token_text": "陌"
+          },
+          {
+            "logit": 9.1875,
+            "token_id": 44214,
+            "token_text": " eleven"
+          },
+          {
+            "logit": 9.125,
+            "token_id": 7548,
+            "token_text": " highly"
+          }
+        ]
+      },
+      "component:C@62": {
+        "top_negative": [
+          {
+            "logit": -16.5,
+            "token_id": 5503,
+            "token_text": "oring"
+          },
+          {
+            "logit": -14.375,
+            "token_id": 3018,
+            "token_text": "ored"
+          },
+          {
+            "logit": -13.0,
+            "token_id": 3127,
+            "token_text": "iod"
+          },
+          {
+            "logit": -13.0,
+            "token_id": 55422,
+            "token_text": "ivariate"
+          },
+          {
+            "logit": -12.8125,
+            "token_id": 10544,
+            "token_text": "ordered"
+          },
+          {
+            "logit": -12.8125,
+            "token_id": 3248,
+            "token_text": "itter"
+          },
+          {
+            "logit": -12.75,
+            "token_id": 1718,
+            "token_text": "ING"
+          },
+          {
+            "logit": -12.6875,
+            "token_id": 80030,
+            "token_text": "anter"
+          },
+          {
+            "logit": -12.5625,
+            "token_id": 20764,
+            "token_text": "ionic"
+          },
+          {
+            "logit": -12.125,
+            "token_id": 131931,
+            "token_text": "экон"
+          },
+          {
+            "logit": -12.125,
+            "token_id": 120884,
+            "token_text": "楮"
+          },
+          {
+            "logit": -12.0,
+            "token_id": 14412,
+            "token_text": "egr"
+          },
+          {
+            "logit": -11.8125,
+            "token_id": 48341,
+            "token_text": "landing"
+          },
+          {
+            "logit": -11.8125,
+            "token_id": 3540,
+            "token_text": "SC"
+          },
+          {
+            "logit": -11.75,
+            "token_id": 92559,
+            "token_text": "SCAN"
+          },
+          {
+            "logit": -11.6875,
+            "token_id": 120038,
+            "token_text": "荞"
+          },
+          {
+            "logit": -11.625,
+            "token_id": 878,
+            "token_text": "read"
+          },
+          {
+            "logit": -11.4375,
+            "token_id": 19859,
+            "token_text": "arring"
+          },
+          {
+            "logit": -11.4375,
+            "token_id": 109122,
+            "token_text": "马来"
+          },
+          {
+            "logit": -11.4375,
+            "token_id": 8546,
+            "token_text": "road"
+          }
+        ],
+        "top_positive": [
+          {
+            "logit": 20.375,
+            "token_id": 91419,
+            "token_text": "ERSHEY"
+          },
+          {
+            "logit": 12.75,
+            "token_id": 140485,
+            "token_text": "AĞ"
+          },
+          {
+            "logit": 12.0625,
+            "token_id": 3746,
+            "token_text": " strong"
+          },
+          {
+            "logit": 11.9375,
+            "token_id": 70009,
+            "token_text": "esthetic"
+          },
+          {
+            "logit": 11.8125,
+            "token_id": 48353,
+            "token_text": "EDIATEK"
+          },
+          {
+            "logit": 11.75,
+            "token_id": 2284,
+            "token_text": "ways"
+          },
+          {
+            "logit": 11.625,
+            "token_id": 23590,
+            "token_text": "UAGE"
+          },
+          {
+            "logit": 11.625,
+            "token_id": 141042,
+            "token_text": "ESİ"
+          },
+          {
+            "logit": 11.25,
+            "token_id": 140652,
+            "token_text": "hế"
+          },
+          {
+            "logit": 11.125,
+            "token_id": 8968,
+            "token_text": " bag"
+          },
+          {
+            "logit": 10.875,
+            "token_id": 122426,
+            "token_text": "茳"
+          },
+          {
+            "logit": 10.75,
+            "token_id": 132632,
+            "token_text": "AŞ"
+          },
+          {
+            "logit": 10.6875,
+            "token_id": 16626,
+            "token_text": " commonly"
+          },
+          {
+            "logit": 10.625,
+            "token_id": 11682,
+            "token_text": " detailed"
+          },
+          {
+            "logit": 10.625,
+            "token_id": 2632,
+            "token_text": " little"
+          },
+          {
+            "logit": 10.5625,
+            "token_id": 9474,
+            "token_text": " unf"
+          },
+          {
+            "logit": 10.5625,
+            "token_id": 73732,
+            "token_text": "aepernick"
+          },
+          {
+            "logit": 10.5,
+            "token_id": 114989,
+            "token_text": "随时随"
+          },
+          {
+            "logit": 10.5,
+            "token_id": 8802,
+            "token_text": "firm"
+          },
+          {
+            "logit": 10.4375,
+            "token_id": 26099,
+            "token_text": " Strong"
+          }
+        ]
+      },
+      "component:E@36": {
+        "top_negative": [
+          {
+            "logit": -19.125,
+            "token_id": 319,
+            "token_text": "\r\n"
+          },
+          {
+            "logit": -18.75,
+            "token_id": 345,
+            "token_text": ",\n"
+          },
+          {
+            "logit": -18.75,
+            "token_id": 1871,
+            "token_text": ",\r\n"
+          },
+          {
+            "logit": -18.125,
+            "token_id": 198,
+            "token_text": "\n"
+          },
+          {
+            "logit": -16.375,
+            "token_id": 89478,
+            "token_text": "…\n"
+          },
+          {
+            "logit": -15.25,
+            "token_id": 2529,
+            "token_text": " \r\n"
+          },
+          {
+            "logit": -14.9375,
+            "token_id": 715,
+            "token_text": " \n"
+          },
+          {
+            "logit": -14.5625,
+            "token_id": 48746,
+            "token_text": ",\r\n\r\n"
+          },
+          {
+            "logit": -13.8125,
+            "token_id": 10205,
+            "token_text": " […"
+          },
+          {
+            "logit": -13.5625,
+            "token_id": 45349,
+            "token_text": "?\r\n"
+          },
+          {
+            "logit": -13.375,
+            "token_id": 7613,
+            "token_text": " *\r\n"
+          },
+          {
+            "logit": -13.0625,
+            "token_id": 6913,
+            "token_text": "-\n"
+          },
+          {
+            "logit": -12.75,
+            "token_id": 10419,
+            "token_text": "  \r\n"
+          },
+          {
+            "logit": -12.5625,
+            "token_id": 70198,
+            "token_text": "[…"
+          },
+          {
+            "logit": -12.5625,
+            "token_id": 69127,
+            "token_text": "-\r\n"
+          },
+          {
+            "logit": -12.5,
+            "token_id": 2834,
+            "token_text": ":\r\n"
+          },
+          {
+            "logit": -12.25,
+            "token_id": 5894,
+            "token_text": "/\n"
+          },
+          {
+            "logit": -12.25,
+            "token_id": 871,
+            "token_text": "\r\n\r\n"
+          },
+          {
+            "logit": -11.875,
+            "token_id": 1213,
+            "token_text": " *\n"
+          },
+          {
+            "logit": -11.8125,
+            "token_id": 5267,
+            "token_text": "?\n"
+          }
+        ],
+        "top_positive": [
+          {
+            "logit": 14.5625,
+            "token_id": 3355,
+            "token_text": " ''"
+          },
+          {
+            "logit": 13.125,
+            "token_id": 41233,
+            "token_text": " ```\n"
+          },
+          {
+            "logit": 13.0,
+            "token_id": 58501,
+            "token_text": ".''\n\n"
+          },
+          {
+            "logit": 13.0,
+            "token_id": 26107,
+            "token_text": " $$"
+          },
+          {
+            "logit": 12.9375,
+            "token_id": 4605,
+            "token_text": "''"
+          },
+          {
+            "logit": 12.8125,
+            "token_id": 3225,
+            "token_text": "﻿"
+          },
+          {
+            "logit": 12.25,
+            "token_id": 44732,
+            "token_text": " '''\n\n"
+          },
+          {
+            "logit": 11.8125,
+            "token_id": 88252,
+            "token_text": "_________________\n\n"
+          },
+          {
+            "logit": 11.75,
+            "token_id": 4102,
+            "token_text": " "
+          },
+          {
+            "logit": 11.4375,
+            "token_id": 14085,
+            "token_text": "$$"
+          },
+          {
+            "logit": 11.3125,
+            "token_id": 42484,
+            "token_text": ".''"
+          },
+          {
+            "logit": 11.125,
+            "token_id": 9902,
+            "token_text": " ``"
+          },
+          {
+            "logit": 10.8125,
+            "token_id": 13874,
+            "token_text": "``"
+          },
+          {
+            "logit": 10.625,
+            "token_id": 97833,
+            "token_text": "﻿\n\n"
+          },
+          {
+            "logit": 10.5625,
+            "token_id": 44360,
+            "token_text": "】\n\n"
+          },
+          {
+            "logit": 10.5625,
+            "token_id": 144906,
+            "token_text": "〟"
+          },
+          {
+            "logit": 10.4375,
+            "token_id": 54275,
+            "token_text": " ```"
+          },
+          {
+            "logit": 10.375,
+            "token_id": 335,
+            "token_text": " }"
+          },
+          {
+            "logit": 10.375,
+            "token_id": 10958,
+            "token_text": "】"
+          },
+          {
+            "logit": 10.25,
+            "token_id": 555,
+            "token_text": " }\n\n"
+          }
+        ]
+      },
+      "trait:A": {
+        "top_negative": [
+          {
+            "logit": -13.375,
+            "token_id": 6762,
+            "token_text": " .\n\n"
+          },
+          {
+            "logit": -11.5,
+            "token_id": 9470,
+            "token_text": " ;\n\n"
+          },
+          {
+            "logit": -11.0,
+            "token_id": 19,
+            "token_text": "4"
+          },
+          {
+            "logit": -10.9375,
+            "token_id": 555,
+            "token_text": " }\n\n"
+          },
+          {
+            "logit": -10.5625,
+            "token_id": 3407,
+            "token_text": "。\n\n"
+          },
+          {
+            "logit": -10.5,
+            "token_id": 58501,
+            "token_text": ".''\n\n"
+          },
+          {
+            "logit": -10.5,
+            "token_id": 33621,
+            "token_text": "​\n\n"
+          },
+          {
+            "logit": -10.3125,
+            "token_id": 44732,
+            "token_text": " '''\n\n"
+          },
+          {
+            "logit": -10.25,
+            "token_id": 21,
+            "token_text": "6"
+          },
+          {
+            "logit": -10.1875,
+            "token_id": 97833,
+            "token_text": "﻿\n\n"
+          },
+          {
+            "logit": -10.125,
+            "token_id": 3225,
+            "token_text": "﻿"
+          },
+          {
+            "logit": -10.125,
+            "token_id": 59581,
+            "token_text": " --\n\n"
+          },
+          {
+            "logit": -10.125,
+            "token_id": 22,
+            "token_text": "7"
+          },
+          {
+            "logit": -10.0625,
+            "token_id": 7268,
+            "token_text": "LS"
+          },
+          {
+            "logit": -9.9375,
+            "token_id": 1177,
+            "token_text": " --"
+          },
+          {
+            "logit": -9.75,
+            "token_id": 101418,
+            "token_text": "弯"
+          },
+          {
+            "logit": -9.75,
+            "token_id": 41233,
+            "token_text": " ```\n"
+          },
+          {
+            "logit": -9.75,
+            "token_id": 17120,
+            "token_text": "edReader"
+          },
+          {
+            "logit": -9.6875,
+            "token_id": 20,
+            "token_text": "5"
+          },
+          {
+            "logit": -9.6875,
+            "token_id": 23,
+            "token_text": "8"
+          }
+        ],
+        "top_positive": [
+          {
+            "logit": 11.625,
+            "token_id": 15811,
+            "token_text": " fundamental"
+          },
+          {
+            "logit": 11.5,
+            "token_id": 3198,
+            "token_text": " women"
+          },
+          {
+            "logit": 11.0625,
+            "token_id": 1871,
+            "token_text": ",\r\n"
+          },
+          {
+            "logit": 11.0,
+            "token_id": 3953,
+            "token_text": " particular"
+          },
+          {
+            "logit": 10.8125,
+            "token_id": 10552,
+            "token_text": " sport"
+          },
+          {
+            "logit": 10.5625,
+            "token_id": 1602,
+            "token_text": " very"
+          },
+          {
+            "logit": 10.5625,
+            "token_id": 2696,
+            "token_text": " lot"
+          },
+          {
+            "logit": 10.5625,
+            "token_id": 3654,
+            "token_text": " certain"
+          },
+          {
+            "logit": 10.3125,
+            "token_id": 3746,
+            "token_text": " strong"
+          },
+          {
+            "logit": 10.25,
+            "token_id": 61433,
+            "token_text": " militar"
+          },
+          {
+            "logit": 10.1875,
+            "token_id": 5220,
+            "token_text": " woman"
+          },
+          {
+            "logit": 10.125,
+            "token_id": 5440,
+            "token_text": " technology"
+          },
+          {
+            "logit": 10.0,
+            "token_id": 42690,
+            "token_text": " unified"
+          },
+          {
+            "logit": 9.9375,
+            "token_id": 140485,
+            "token_text": "AĞ"
+          },
+          {
+            "logit": 9.875,
+            "token_id": 14260,
+            "token_text": " typical"
+          },
+          {
+            "logit": 9.875,
+            "token_id": 4948,
+            "token_text": " political"
+          },
+          {
+            "logit": 9.8125,
+            "token_id": 46850,
+            "token_text": " beginners"
+          },
+          {
+            "logit": 9.8125,
+            "token_id": 10707,
+            "token_text": " competition"
+          },
+          {
+            "logit": 9.8125,
+            "token_id": 6770,
+            "token_text": " basic"
+          },
+          {
+            "logit": 9.8125,
+            "token_id": 1661,
+            "token_text": " good"
+          }
+        ]
+      },
+      "trait:C": {
+        "top_negative": [
+          {
+            "logit": -11.9375,
+            "token_id": 61519,
+            "token_text": "﻿\n"
+          },
+          {
+            "logit": -10.75,
+            "token_id": 507,
+            "token_text": "ld"
+          },
+          {
+            "logit": -10.625,
+            "token_id": 5503,
+            "token_text": "oring"
+          },
+          {
+            "logit": -10.375,
+            "token_id": 3248,
+            "token_text": "itter"
+          },
+          {
+            "logit": -10.3125,
+            "token_id": 10682,
+            "token_text": "LOB"
+          },
+          {
+            "logit": -10.1875,
+            "token_id": 57472,
+            "token_text": "edImage"
+          },
+          {
+            "logit": -9.9375,
+            "token_id": 1716,
+            "token_text": "ott"
+          },
+          {
+            "logit": -9.8125,
+            "token_id": 112188,
+            "token_text": "怀里"
+          },
+          {
+            "logit": -9.8125,
+            "token_id": 19,
+            "token_text": "4"
+          },
+          {
+            "logit": -9.75,
+            "token_id": 19049,
+            "token_text": "ashing"
+          },
+          {
+            "logit": -9.5625,
+            "token_id": 14992,
+            "token_text": "lah"
+          },
+          {
+            "logit": -9.5625,
+            "token_id": 7380,
+            "token_text": "RC"
+          },
+          {
+            "logit": -9.5625,
+            "token_id": 19859,
+            "token_text": "arring"
+          },
+          {
+            "logit": -9.4375,
+            "token_id": 4500,
+            "token_text": "igger"
+          },
+          {
+            "logit": -9.3125,
+            "token_id": 104399,
+            "token_text": "中间"
+          },
+          {
+            "logit": -9.3125,
+            "token_id": 12335,
+            "token_text": "LD"
+          },
+          {
+            "logit": -9.25,
+            "token_id": 7268,
+            "token_text": "LS"
+          },
+          {
+            "logit": -9.1875,
+            "token_id": 1718,
+            "token_text": "ING"
+          },
+          {
+            "logit": -9.1875,
+            "token_id": 22,
+            "token_text": "7"
+          },
+          {
+            "logit": -9.125,
+            "token_id": 49911,
+            "token_text": "ypass"
+          }
+        ],
+        "top_positive": [
+          {
+            "logit": 11.625,
+            "token_id": 7548,
+            "token_text": " highly"
+          },
+          {
+            "logit": 11.3125,
+            "token_id": 15811,
+            "token_text": " fundamental"
+          },
+          {
+            "logit": 10.9375,
+            "token_id": 16626,
+            "token_text": " commonly"
+          },
+          {
+            "logit": 10.875,
+            "token_id": 1602,
+            "token_text": " very"
+          },
+          {
+            "logit": 10.8125,
+            "token_id": 4285,
+            "token_text": " simple"
+          },
+          {
+            "logit": 10.75,
+            "token_id": 3746,
+            "token_text": " strong"
+          },
+          {
+            "logit": 10.75,
+            "token_id": 91419,
+            "token_text": "ERSHEY"
+          },
+          {
+            "logit": 10.5,
+            "token_id": 5798,
+            "token_text": " built"
+          },
+          {
+            "logit": 10.4375,
+            "token_id": 6770,
+            "token_text": " basic"
+          },
+          {
+            "logit": 10.375,
+            "token_id": 10526,
+            "token_text": " pure"
+          },
+          {
+            "logit": 10.25,
+            "token_id": 13942,
+            "token_text": " perfectly"
+          },
+          {
+            "logit": 10.1875,
+            "token_id": 4727,
+            "token_text": " perfect"
+          },
+          {
+            "logit": 9.9375,
+            "token_id": 16401,
+            "token_text": " violent"
+          },
+          {
+            "logit": 9.875,
+            "token_id": 8968,
+            "token_text": " bag"
+          },
+          {
+            "logit": 9.875,
+            "token_id": 54209,
+            "token_text": " bargaining"
+          },
+          {
+            "logit": 9.625,
+            "token_id": 2632,
+            "token_text": " little"
+          },
+          {
+            "logit": 9.5625,
+            "token_id": 53890,
+            "token_text": " Persona"
+          },
+          {
+            "logit": 9.5,
+            "token_id": 25881,
+            "token_text": " barg"
+          },
+          {
+            "logit": 9.5,
+            "token_id": 63086,
+            "token_text": " bonding"
+          },
+          {
+            "logit": 9.4375,
+            "token_id": 2696,
+            "token_text": " lot"
+          }
+        ]
+      },
+      "trait:E": {
+        "top_negative": [
+          {
+            "logit": -19.125,
+            "token_id": 319,
+            "token_text": "\r\n"
+          },
+          {
+            "logit": -18.75,
+            "token_id": 345,
+            "token_text": ",\n"
+          },
+          {
+            "logit": -18.75,
+            "token_id": 1871,
+            "token_text": ",\r\n"
+          },
+          {
+            "logit": -18.125,
+            "token_id": 198,
+            "token_text": "\n"
+          },
+          {
+            "logit": -16.375,
+            "token_id": 89478,
+            "token_text": "…\n"
+          },
+          {
+            "logit": -15.25,
+            "token_id": 2529,
+            "token_text": " \r\n"
+          },
+          {
+            "logit": -14.9375,
+            "token_id": 715,
+            "token_text": " \n"
+          },
+          {
+            "logit": -14.5625,
+            "token_id": 48746,
+            "token_text": ",\r\n\r\n"
+          },
+          {
+            "logit": -13.8125,
+            "token_id": 10205,
+            "token_text": " […"
+          },
+          {
+            "logit": -13.5625,
+            "token_id": 45349,
+            "token_text": "?\r\n"
+          },
+          {
+            "logit": -13.375,
+            "token_id": 7613,
+            "token_text": " *\r\n"
+          },
+          {
+            "logit": -13.0625,
+            "token_id": 6913,
+            "token_text": "-\n"
+          },
+          {
+            "logit": -12.75,
+            "token_id": 10419,
+            "token_text": "  \r\n"
+          },
+          {
+            "logit": -12.5625,
+            "token_id": 70198,
+            "token_text": "[…"
+          },
+          {
+            "logit": -12.5625,
+            "token_id": 69127,
+            "token_text": "-\r\n"
+          },
+          {
+            "logit": -12.5,
+            "token_id": 2834,
+            "token_text": ":\r\n"
+          },
+          {
+            "logit": -12.25,
+            "token_id": 5894,
+            "token_text": "/\n"
+          },
+          {
+            "logit": -12.25,
+            "token_id": 871,
+            "token_text": "\r\n\r\n"
+          },
+          {
+            "logit": -11.875,
+            "token_id": 1213,
+            "token_text": " *\n"
+          },
+          {
+            "logit": -11.8125,
+            "token_id": 5267,
+            "token_text": "?\n"
+          }
+        ],
+        "top_positive": [
+          {
+            "logit": 14.5625,
+            "token_id": 3355,
+            "token_text": " ''"
+          },
+          {
+            "logit": 13.125,
+            "token_id": 41233,
+            "token_text": " ```\n"
+          },
+          {
+            "logit": 13.0,
+            "token_id": 58501,
+            "token_text": ".''\n\n"
+          },
+          {
+            "logit": 13.0,
+            "token_id": 26107,
+            "token_text": " $$"
+          },
+          {
+            "logit": 12.9375,
+            "token_id": 4605,
+            "token_text": "''"
+          },
+          {
+            "logit": 12.8125,
+            "token_id": 3225,
+            "token_text": "﻿"
+          },
+          {
+            "logit": 12.25,
+            "token_id": 44732,
+            "token_text": " '''\n\n"
+          },
+          {
+            "logit": 11.8125,
+            "token_id": 88252,
+            "token_text": "_________________\n\n"
+          },
+          {
+            "logit": 11.75,
+            "token_id": 4102,
+            "token_text": " "
+          },
+          {
+            "logit": 11.4375,
+            "token_id": 14085,
+            "token_text": "$$"
+          },
+          {
+            "logit": 11.3125,
+            "token_id": 42484,
+            "token_text": ".''"
+          },
+          {
+            "logit": 11.125,
+            "token_id": 9902,
+            "token_text": " ``"
+          },
+          {
+            "logit": 10.8125,
+            "token_id": 13874,
+            "token_text": "``"
+          },
+          {
+            "logit": 10.625,
+            "token_id": 97833,
+            "token_text": "﻿\n\n"
+          },
+          {
+            "logit": 10.5625,
+            "token_id": 44360,
+            "token_text": "】\n\n"
+          },
+          {
+            "logit": 10.5625,
+            "token_id": 144906,
+            "token_text": "〟"
+          },
+          {
+            "logit": 10.4375,
+            "token_id": 54275,
+            "token_text": " ```"
+          },
+          {
+            "logit": 10.375,
+            "token_id": 335,
+            "token_text": " }"
+          },
+          {
+            "logit": 10.375,
+            "token_id": 10958,
+            "token_text": "】"
+          },
+          {
+            "logit": 10.25,
+            "token_id": 555,
+            "token_text": " }\n\n"
+          }
+        ]
+      }
+    },
+    "method": "Jacobian transport, then exact final norm and LM head",
+    "model_config_sha256": "741cb95752449724264aced6c359070cc5318d8019133cfa452783cf259dc972",
+    "model_id": "Qwen/Qwen2.5-32B-Instruct",
+    "model_revision": "5ede1c97bbab6ce5cda5812749b4c0bdf79b18dd",
+    "status": "computed",
+    "tokenizer_revision": "5ede1c97bbab6ce5cda5812749b4c0bdf79b18dd",
+    "top_k": 20
+  }
+}

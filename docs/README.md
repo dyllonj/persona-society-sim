@@ -32,6 +32,7 @@ clarifies why.
 - [explanation-known-gaps.md](explanation-known-gaps.md) — every live bug, dead config field, and doc/code mismatch found while writing this documentation, in one place.
 - [jacobian-lens-integration.md](jacobian-lens-integration.md) — implementation contract for reproducible inference manifests, post-hoc Jacobian Lens replay, research design, and GPU budget gates.
 - [jacobian-lens-pilot-report.md](jacobian-lens-pilot-report.md) — completed Qwen32 on-demand GPU pilot, artifact hashes, replay checks, cost, and research limitations.
+- [jacobian-lens-phase-two-results.md](jacobian-lens-phase-two-results.md) — seven-layer geometry, exact replay, held-out deployed-dose results, and the 360-generation live factorial.
 
 ## Also see
 

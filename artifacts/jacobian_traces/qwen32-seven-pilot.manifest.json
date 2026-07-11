@@ -1,0 +1,21 @@
+{
+  "conditions": [
+    "neutral_replay",
+    "observed"
+  ],
+  "created_at": "2026-07-10T23:39:10.390856+00:00",
+  "events": 1,
+  "input_event_files": [
+    "artifacts/jacobian_lens/qwen32-alltraits-n100/pilot-event.jsonl"
+  ],
+  "lens_id": "jlens-d2904d15e552f752",
+  "lens_sha256": "d2904d15e552f752e252e57584a3f2e34d90c370eafe60ae92623ca5d3289377",
+  "output": "qwen32-seven-pilot.parquet",
+  "output_sha256": "bf942721956834c28c2ca81fb5f63578c70ff78439b6c6d6f932a76a810251d6",
+  "rows": 8820,
+  "schema_version": "1.0",
+  "top_k": 10,
+  "trace_ids": [
+    "pilot-7f7546027f0832e5"
+  ]
+}

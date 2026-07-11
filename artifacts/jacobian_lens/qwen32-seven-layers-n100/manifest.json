@@ -1,0 +1,91 @@
+{
+  "artifact_type": "jacobian_lens_layer_union",
+  "corpus_name": "wikitext-103-v1",
+  "corpus_path": "fit_prompts.jsonl",
+  "corpus_sha256": "230d5b93dcf759354ad21f288af3f97f6931f800319a4ad780710da8107f5e50",
+  "created_at": "2026-07-10T23:36:42.564469+00:00",
+  "d_model": 5120,
+  "dim_batch": 4,
+  "dtype": "bf16",
+  "jlens_git_commit": "581d398613e5602a5af361e1c34d3a92ea82ba8e",
+  "jlens_version": "0.1.0",
+  "lens_id": "jlens-d2904d15e552f752",
+  "lens_sha256": "d2904d15e552f752e252e57584a3f2e34d90c370eafe60ae92623ca5d3289377",
+  "max_seq_len": 128,
+  "merge_provenance": {
+    "compatibility_fields": [
+      "schema_version",
+      "jlens_git_commit",
+      "jlens_version",
+      "torch_version",
+      "transformers_version",
+      "model_id",
+      "model_revision",
+      "tokenizer_revision",
+      "model_config_sha256",
+      "dtype",
+      "quantization",
+      "d_model",
+      "n_layers",
+      "target_layer",
+      "corpus_name",
+      "corpus_sha256",
+      "n_prompts_requested",
+      "n_prompts",
+      "max_seq_len",
+      "skip_first",
+      "dim_batch"
+    ],
+    "operation": "exact-layer-union",
+    "overlap_layers": [],
+    "overlap_policy": "same dtype, shape, and torch.equal values only",
+    "parents": [
+      {
+        "artifact_name": "qwen32-alltraits-n100",
+        "lens_id": "jlens-0162010f99a5fc5a",
+        "lens_sha256": "0162010f99a5fc5a513e015798661d7423beeebc811af8b4db88afdc3e1b4068",
+        "manifest_sha256": "1e14f321fbdac19107d11ccfd2551022e968f1d01a6689f80e920fbece4ece38",
+        "source_layers": [
+          36,
+          58,
+          62
+        ]
+      },
+      {
+        "artifact_name": "qwen32-missing-layers-n100-refit",
+        "lens_id": "jlens-9df545b8536a5e3e",
+        "lens_sha256": "9df545b8536a5e3eb6a209b14050fe58720c9c4e126bb5f830e84977040b6068",
+        "manifest_sha256": "a00465f82f10f16f2545f76d575d718db319c1aeadf1d43065f96b57e5ef5c8e",
+        "source_layers": [
+          16,
+          20,
+          40,
+          44
+        ]
+      }
+    ]
+  },
+  "model_config_sha256": "741cb95752449724264aced6c359070cc5318d8019133cfa452783cf259dc972",
+  "model_id": "Qwen/Qwen2.5-32B-Instruct",
+  "model_revision": "5ede1c97bbab6ce5cda5812749b4c0bdf79b18dd",
+  "n_layers": 64,
+  "n_prompts": 100,
+  "n_prompts_requested": 100,
+  "quantization": null,
+  "schema_version": "1.0",
+  "serialization_dtype": "float16",
+  "skip_first": 16,
+  "source_layers": [
+    16,
+    20,
+    36,
+    40,
+    44,
+    58,
+    62
+  ],
+  "target_layer": 63,
+  "tokenizer_revision": "5ede1c97bbab6ce5cda5812749b4c0bdf79b18dd",
+  "torch_version": "2.7.1+cu128",
+  "transformers_version": "5.13.0"
+}

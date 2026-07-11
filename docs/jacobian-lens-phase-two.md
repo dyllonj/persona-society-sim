@@ -9,6 +9,12 @@ The seven components are E@36, A@16/40/58, and C@20/44/62. All work uses the
 immutable `Qwen/Qwen2.5-32B-Instruct` revision
 `5ede1c97bbab6ce5cda5812749b4c0bdf79b18dd`.
 
+The fit, exact seven-layer merge, trait report, replay, held-out evaluation,
+and live factorial are complete. See
+[jacobian-lens-phase-two-results.md](jacobian-lens-phase-two-results.md) for
+artifact hashes and findings. The society study in section 6 is the remaining
+confirmatory stage.
+
 ## Implemented controls
 
 - E/A/C each have 20 held-out evaluation items, disjoint from the eight vector
@@ -79,7 +85,7 @@ a mismatch.
   --model-revision 5ede1c97bbab6ce5cda5812749b4c0bdf79b18dd \
   --prompts artifacts/jacobian_lens/qwen32-alltraits-n100/fit_prompts.jsonl \
   --corpus-name wikitext-103-v1 \
-  --output-dir artifacts/jacobian_lens/qwen32-missing-layers-n100 \
+  --output-dir artifacts/jacobian_lens/qwen32-missing-layers-n100-refit \
   --source-layers 16,20,40,44 \
   --target-layer 63 \
   --max-prompts 100 \
@@ -97,7 +103,7 @@ The existing E@36, A@58, and C@62 matrices are not recomputed.
 ```bash
 "$JACOBIAN_PYTHON" -m interpretability.merge_lenses \
   --input artifacts/jacobian_lens/qwen32-alltraits-n100 \
-  --input artifacts/jacobian_lens/qwen32-missing-layers-n100 \
+  --input artifacts/jacobian_lens/qwen32-missing-layers-n100-refit \
   --output-dir artifacts/jacobian_lens/qwen32-seven-layers-n100
 
 "$JACOBIAN_PYTHON" -m interpretability.trait_report \
