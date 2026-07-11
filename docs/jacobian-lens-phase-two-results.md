@@ -31,6 +31,13 @@ The merge contains exactly layers 16, 20, 36, 40, 44, 58, and 62. Every
 matrix in the union is `torch.equal` to its declared parent, the parents have
 no overlapping layers, and all 21 compatibility fields match.
 
+Large binaries and the complete remote artifact tree are archived in the
+[Hugging Face dataset](https://huggingface.co/datasets/dyllonj/persona-society-jacobian-lens)
+at verified commit `bd7a053ed18aab889147c34ab51bb280071b1b2d`. Because the
+project `.gitignore` excludes `artifacts/**/lens.pt`, the three lens binaries
+are stored under `lenses/` in that dataset. Their Hub LFS SHA-256 values match
+the three hashes in the table above exactly.
+
 ## Fit behavior
 
 The four-layer fit processed 100 fixed corpus prompts in 17,844 seconds. Most
