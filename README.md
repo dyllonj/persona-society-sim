@@ -18,7 +18,15 @@ Isolated agents never broke the rules: every answer satisfied every clue they he
 
 ![Without the missing clues, agents take the first listed candidate 78% of the time](docs/assets/fig-partial-information-guesses.svg)
 
-With everyone starting in the same room, communication hits the ceiling, so this layout cannot separate coordination strategies. The scattered-start, dropout, and second-model studies in the results doc test the regimes where coordination can fail.
+Communication succeeds only when teammates already share a room. Each row below uses the same 15 task instances:
+
+![Agents pool evidence when together but never go looking for teammates](docs/assets/fig-coordination-conditions.svg)
+
+- **Separate rooms:** across 915 deliberation turns, Qwen3-8B never moved to find a teammate. More rounds did not change that, and neither did showing agents their room was empty. Accuracy fell to the no-communication level. Qwen2.5-7B behaved the same way. The failure is in planning, not perception.
+- **Dropout:** silencing one teammate after round 0 cut accuracy to 82%. A clue survived only when its holder had shared before leaving. First speakers almost always open with a question and never shared before dropping (0/8).
+- **Share-first norm:** adding "Share your own evidence before asking others for theirs" made dropout *worse* (53%). Agents began describing evidence in text without attaching the evidence records.
+- **Second model:** Qwen2.5-7B wraps its answer in code fences only when it holds every clue. Under strict scoring, communication therefore looks harmful (−9 points), although on content it helps (+24). Format compliance and task success must be reported separately.
+- **Sizing:** 91% of baseline variance is between task instances. A ±5-point estimate needs about 200 instances, not more replicates.
 
 - **Results:** [docs/local-v1-results.md](docs/local-v1-results.md). Completed batches, confidence intervals across task instances, failure breakdowns, and limitations.
 - **Traces:** [dyllonj/persona-society-swarm-local](https://huggingface.co/datasets/dyllonj/persona-society-swarm-local). Every prompt, raw completion, action, and inference receipt from replay-verified batches.

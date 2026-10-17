@@ -161,7 +161,7 @@ def guesses(batches, output):
     output.write_text(svg(bottom + 60, title, subtitle, body, desc))
 
 
-def conditions(specs, output, title, subtitle):
+def conditions(specs, output, title, subtitle, highlight=None, footnote=""):
     groups = []
     for spec in specs:
         label, _, source = spec.partition("=")
@@ -169,11 +169,14 @@ def conditions(specs, output, title, subtitle):
         rows, _ = load_batches([Path(batch)])
         chosen = [r for r in rows if r["condition"] == condition]
         groups.append((label, list(per_seed_means(chosen, episode_accuracy).values()), False))
-    worst = min(range(len(groups)), key=lambda i: statistics.fmean(groups[i][1]))
-    groups = [(l, v, i == worst) for i, (l, v, _) in enumerate(groups)]
+    if highlight is None:
+        highlight = [min(groups, key=lambda g: statistics.fmean(g[1]))[0]]
+    groups = [(l, v, l in highlight) for l, v, _ in groups]
     body, bottom = strip_rows(groups, 96, 84)
+    if footnote:
+        body.append(f'<text class="t note" x="24" y="{bottom + 30:.1f}">{escape(footnote)}</text>')
     desc = "; ".join(f"{l}: mean {pct(statistics.fmean(v))} over {len(v)} instances" for l, v, _ in groups)
-    output.write_text(svg(bottom + 24, title, subtitle, body, desc))
+    output.write_text(svg(bottom + (50 if footnote else 24), title, subtitle, body, desc))
 
 
 def main():
@@ -183,6 +186,8 @@ def main():
     parser.add_argument("--row", action="append", default=[], help='"Label=BATCH:condition" (conditions figure)')
     parser.add_argument("--title", default="")
     parser.add_argument("--subtitle", default="")
+    parser.add_argument("--highlight", action="append", help="row label(s) drawn in the accent color")
+    parser.add_argument("--footnote", default="")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     if args.figure == "effect":
@@ -190,7 +195,7 @@ def main():
     elif args.figure == "guesses":
         guesses(args.batches, args.output)
     else:
-        conditions(args.row, args.output, args.title, args.subtitle)
+        conditions(args.row, args.output, args.title, args.subtitle, args.highlight, args.footnote)
     print(args.output)
 
 
