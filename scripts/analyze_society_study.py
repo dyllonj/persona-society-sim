@@ -12,7 +12,7 @@ import statistics
 import sys
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, Iterable, Sequence
+from typing import Any, Iterable, Mapping, Sequence
 
 import pyarrow.parquet as pq
 import yaml
@@ -27,7 +27,7 @@ from scripts.run_society_study import DEFAULT_MATRIX, load_matrix, sha256_file
 RUN_OUTCOME_FIELDS = (
     "cooperation_rate",
     "gini_wealth",
-    "polarization_modularity",
+    "satisfaction_variance",
     "conflicts_total",
     "rule_enforcement_cost_total",
     "prompt_duplication_rate",
@@ -82,6 +82,15 @@ T975 = {
 def _mean(values: Iterable[float]) -> float | None:
     materialized = list(values)
     return statistics.fmean(materialized) if materialized else None
+
+
+def _satisfaction_variance(row: Mapping[str, object]) -> object:
+    """Read satisfaction variance, falling back to its legacy column name."""
+
+    value = row.get("satisfaction_variance")
+    if value is None:
+        value = row.get("polarization_modularity")
+    return value
 
 
 def _write_atomic(path: Path, payload: bytes) -> None:
@@ -163,8 +172,8 @@ def aggregate_one_run(
         "ticks_observed": len(global_metrics),
         "cooperation_rate": _mean(float(row["cooperation_rate"]) for row in global_metrics),
         "gini_wealth": _mean(float(row["gini_wealth"]) for row in global_metrics),
-        "polarization_modularity": _mean(
-            float(row["polarization_modularity"]) for row in global_metrics
+        "satisfaction_variance": _mean(
+            float(_satisfaction_variance(row)) for row in global_metrics
         ),
         "conflicts_total": sum(float(row["conflicts"]) for row in global_metrics),
         "rule_enforcement_cost_total": sum(

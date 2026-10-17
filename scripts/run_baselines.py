@@ -256,7 +256,7 @@ def _aggregate_macro_metrics(metrics: Iterable[MetricsSnapshot]) -> Dict[str, Di
         aggregates[key] = {
             "cooperation_rate": _avg([s.cooperation_rate for s in snaps]),
             "gini_wealth": _avg([s.gini_wealth for s in snaps]),
-            "polarization_modularity": _avg([s.polarization_modularity for s in snaps]),
+            "satisfaction_variance": _avg([s.satisfaction_variance for s in snaps]),
             "prompt_duplication_rate": _avg([s.prompt_duplication_rate for s in snaps]),
             "plan_reuse_rate": _avg([s.plan_reuse_rate for s in snaps]),
             "conflicts": _avg([float(s.conflicts) for s in snaps]),

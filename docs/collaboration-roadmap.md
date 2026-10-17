@@ -22,7 +22,7 @@ Known concerns to address or preserve explicitly as legacy behavior:
 
 - The current CAA extraction template omits answer-option text, and training labels are not counterbalanced. Rebuild and validate vectors before personality-specific causal claims.
 - Older versions let the planner choose the action while the model mainly produced speech. Current versions accept validated model-selected actions, with logged planner fallbacks.
-- The metric named polarization is based on satisfaction variance. It is not opinion polarization or graph modularity.
+- The metric formerly named `polarization_modularity` is satisfaction variance. New rows write it as `satisfaction_variance` and leave the legacy column null; analysis falls back to the legacy column for old runs. No opinion-polarization or graph-modularity metric exists yet.
 - Several personality measures are keyword proxies. Their output should not be presented as a validated psychological trait.
 - A successful action is not necessarily a completed objective, and co-presence is not evidence of productive collaboration.
 
