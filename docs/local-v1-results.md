@@ -14,7 +14,7 @@ The current engineering milestone is a reliable final decision with all clues av
 
 The fresh verification uses seeds 100–129, distinct from development seeds 7–11. It is a small, synthetic constraint-intersection family. Different seeds do not establish transfer to different task families. Earlier incomplete batches remain excluded from any completed comparison. The seven completed phase-instruction episodes were replayed separately; they are not a finished paired benchmark.
 
-The new final-turn prompt renders the known constraint lists and asks the model to select a plan present in every list. It never computes or inserts the solution. The diagnostic advances one fixture wait turn, then makes one actual model call. That fixture is explicitly recorded and is not model behavior. The next collaboration check should preserve private evidence access while applying this answer format after sharing.
+The new final-turn prompt renders the known constraint lists and asks the model to select a plan present in every list. It never computes or inserts the solution. The diagnostic advances one fixture wait turn, then makes one actual model call. That fixture is explicitly recorded and is not model behavior. The subsequent collaboration check preserved private evidence access while applying this answer format after sharing; its results are below.
 
 ## Reproduce and audit
 
@@ -30,6 +30,24 @@ Checkpoint: `mlx-community/Qwen3-8B-4bit`, revision `545dc4251c05440727734bcd943
 
 [Development traces and receipts](../artifacts/local-v1/single-agent-dev-001/) and [fresh verification traces and receipts](../artifacts/local-v1/single-agent-verification-001/) are portable exports. Their manifest output directory is made relative; raw requests, responses and traces are unchanged. Replay reconstructs prompts and observations, checks request settings and response receipts, then regrades actions deterministically. It checks internal consistency, not cryptographic proof of when a run happened or a model vendor's identity. Source hashes describe the launch-time code; subsequent replay hardening can change current source hashes.
 
-The targeted regression suite passed **81 tests, with one legacy GPU test skipped**. It covers environment boundaries, strict parsing, transport/receipt corruption, paired denominators, replay, and failure manifests. Scripted tests are engineering evidence, separate from the live model results above. Direct MLX and hosted adapters are preliminary and were not validated with live inference here.
+The targeted regression suite passed **85 tests, with one legacy GPU test skipped**. It covers environment boundaries, strict parsing, transport/receipt corruption, paired denominators, replay, and failure manifests. Scripted tests are engineering evidence, separate from the live model results above. Direct MLX and hosted adapters are preliminary and were not validated with live inference here.
 
 Personality interventions, human calibration, a G-study, a PettingZoo adapter and RL training are not implemented milestones of this pilot. See [the task and measurement design](distributed-clues-evaluation.md) for controls, prior works and limitations.
+
+## Completed three-case collaboration check
+
+The compact final-turn condition completed all nine episodes on seeds 200, 201 and 202, with one inference replicate and three deliberation rounds per resident. This is a small development comparison, not a confirmatory benchmark.
+
+| Condition | Correct final answers | Fully supported answers | Invalid actions |
+| --- | --- | --- | --- |
+| Communication enabled | 9/9 | 9/9 | 0/36 |
+| Communication disabled | 1/9 | 0/9 | 0/36 |
+| Single agent, all clues | 3/3 | 3/3 | 0/12 |
+
+All nine episodes and 84 decisions passed deterministic replay. There were **81 unique inference requests and three cached reuses**. The three all-clues final requests matched earlier communication-condition requests exactly, including sampling seed, and reused the same responses. They are not independent fresh samples. The separate 60-decision diagnostic remains the fresh single-agent evidence.
+
+The batch's unique responses used 35,833 input tokens and 2,865 output tokens. Per-condition summaries count tokens associated with each decision, including cache reuse; they are not a sum of fresh serving work. The replay report separately records unique-response totals. Matched inference seeds and identical-request caching are explicit parts of this paired pilot; results do not demonstrate stochastic repeat reliability.
+
+The enabled condition got every resident all three clues. Raw answer accuracy increased from 1/9 to 9/9 across these three cases. Complete-support gains are partly built into the information restriction, so interpret them alongside raw accuracy. More task families, cases, inference replicates and partner configurations remain necessary before making general collaboration claims.
+
+[Complete comparison, traces, receipts and review packets](../artifacts/local-v1/distributed-clues-003/) are published. Portable export changes only local path metadata and review-packet context labeling; inference requests, responses, trace rows and scores are unchanged. The manifest identifies the archived source commit whose file hashes match the launch-time source. Review packets are unrated and do not provide an ethics assessment. See [the plain-language model journey and scoring rubric](collaboration-walkthrough.md).

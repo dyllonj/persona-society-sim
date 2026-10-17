@@ -45,3 +45,5 @@ clarifies why.
 - [../OPTIMIZATION_GUIDE.md](../OPTIMIZATION_GUIDE.md) — performance tuning.
 
 - [Local V1 results and single-agent verification](local-v1-results.md)
+
+- [Model journey and collaboration scoring, in plain language](collaboration-walkthrough.md)

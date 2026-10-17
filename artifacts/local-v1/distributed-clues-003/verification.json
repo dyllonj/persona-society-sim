@@ -1,0 +1,11 @@
+{
+  "verified_episodes": 9,
+  "verified_actions_and_receipts": 84,
+  "unique_inference_receipts": 81,
+  "reused_decisions": 3,
+  "unique_inference_tokens": {
+    "prompt_tokens": 35833,
+    "completion_tokens": 2865
+  },
+  "method": "Deterministic replay and receipt reconciliation; no inference calls"
+}

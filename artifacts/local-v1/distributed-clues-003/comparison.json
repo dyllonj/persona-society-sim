@@ -1,0 +1,56 @@
+{
+  "conditions": {
+    "communication": {
+      "episodes": 3,
+      "task_instances": 3,
+      "team_success_rate": 1.0,
+      "answer_accuracy": 1.0,
+      "supported_fraction": 1.0,
+      "invalid_actions": 0,
+      "actions": 36,
+      "tokens_in": 17722,
+      "tokens_out": 1515
+    },
+    "no_communication": {
+      "episodes": 3,
+      "task_instances": 3,
+      "team_success_rate": 0.0,
+      "answer_accuracy": 0.1111111111111111,
+      "supported_fraction": 0.0,
+      "invalid_actions": 0,
+      "actions": 36,
+      "tokens_in": 13443,
+      "tokens_out": 983
+    },
+    "all_clues_single": {
+      "episodes": 3,
+      "task_instances": 3,
+      "team_success_rate": 1.0,
+      "answer_accuracy": 1.0,
+      "supported_fraction": 1.0,
+      "invalid_actions": 0,
+      "actions": 12,
+      "tokens_in": 5229,
+      "tokens_out": 478
+    }
+  },
+  "paired_differences": [
+    {
+      "seed": 200,
+      "replicate": 0,
+      "answer_accuracy_difference": 1.0
+    },
+    {
+      "seed": 201,
+      "replicate": 0,
+      "answer_accuracy_difference": 0.6666666666666667
+    },
+    {
+      "seed": 202,
+      "replicate": 0,
+      "answer_accuracy_difference": 1.0
+    }
+  ],
+  "mean_paired_accuracy_difference": 0.888888888888889,
+  "note": "Descriptive pilot only. Residents share an episode; repeated inference shares a task instance. Neither is an independent case. No G-study, mastery threshold, human calibration or confidence claim is established. all_clues_single has fewer total calls and is a solvability reference, not an equal-budget swarm comparison."
+}

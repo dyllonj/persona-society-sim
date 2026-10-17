@@ -1,0 +1,52 @@
+{
+  "task_version": "town-distributed-clues-v1",
+  "answer": "plan_3",
+  "clues": {
+    "e477d": {
+      "id": "e477d",
+      "subject": "venue availability",
+      "allowed_plans": [
+        "plan_1",
+        "plan_2",
+        "plan_3",
+        "plan_7"
+      ]
+    },
+    "ef41c": {
+      "id": "ef41c",
+      "subject": "attendee availability",
+      "allowed_plans": [
+        "plan_2",
+        "plan_3",
+        "plan_5",
+        "plan_6"
+      ]
+    },
+    "e1fe1": {
+      "id": "e1fe1",
+      "subject": "equipment availability",
+      "allowed_plans": [
+        "plan_3",
+        "plan_5",
+        "plan_7",
+        "plan_8"
+      ]
+    }
+  },
+  "owners": {
+    "e477d": "resident_a",
+    "ef41c": "resident_c",
+    "e1fe1": "resident_b"
+  },
+  "initial_evidence": {
+    "resident_a": [
+      "e477d"
+    ],
+    "resident_b": [
+      "e1fe1"
+    ],
+    "resident_c": [
+      "ef41c"
+    ]
+  }
+}
