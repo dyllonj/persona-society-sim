@@ -202,3 +202,19 @@ The official strict protocol, including the rule that invalid output consumes th
 Neither model moved. In Qwen3-8B's last deliberation round, 80 of 90 messages were the exact sentence "What are the constraints for choosing the meeting plan?", sent while `residents_here` was empty. Qwen2.5-7B talked about its own evidence ("I have information about attendee availability…") but also never left its room. Both models could see that the room was empty, so perception does not explain the failure. With these prompts, neither model forms the plan "go to where a teammate might be". Accuracy matches each model's no-communication guessing level.
 
 A planning scaffold is the obvious next intervention, kept separate from these results. Examples are an explicit hint that sharing requires co-location, or a shared meeting point. Either one would change what is being measured, so it would need its own version label.
+
+## Share-first norm under dropout: the intervention backfired
+
+The dropout analysis suggested that the question-first opener causes lost clues. The direct test was prompt version `phase-v2-intersection-final-share-first-v1`. It adds one deliberation sentence, "Share your own evidence before asking others for theirs.", and leaves final turns unchanged. It was rerun on the identical dropout instances (seeds 300–314, 2 replicates, Qwen3-8B). The batch `clues-dropout-share-first-001` passed replay.
+
+| Measure | Dropout, original prompt | Dropout, share-first norm |
+| --- | --- | --- |
+| Answer accuracy, remaining residents (95% CI by instance) | 49/60, 82% (65–97%) | **32/60, 53% (30–77%)** |
+| Dropped resident's clue survived | 20/30 | 13/30 |
+| First speaker opened with a question | 28/30 | 25/30 |
+| Second speaker attached its own clue in round 0 | 23/30 | 15/30 |
+| Third speaker attached its own clue in round 0 | 29/30 | 15/30 |
+
+The norm barely changed first speakers and made later speakers worse. Under the norm, second and third speakers often *described* their evidence in the message text while attaching no evidence records. One example: "The venue availability evidence indicates that the library and community_center are available…" sent with `evidence_ids: []`. In this environment only attached records transfer, and final decisions use only received records, so a paraphrase is lost information. The agents appear to read "share your own evidence" as "talk about your evidence".
+
+This is a negative result for this wording and this model only. It shows that a plausible protocol fix can reduce reliability, so protocol changes need the same paired testing as any other intervention. It does not show that share-first protocols fail in general. A version that names the mechanism, such as attaching evidence IDs, would be a separate condition. The dropout mechanism itself still stands as an association across speaking positions (0/8 first speakers shared versus 20/22 later speakers). This intervention did not test it cleanly.
