@@ -134,3 +134,27 @@ Communication won all 10 instances, with a mean effect of +64 points (CI 43–85
 Extra replicates barely help. Use one or two replicates per instance and about 200 instances for a ±5-point baseline. At the measured local rates (about 45 s per communication episode and 30 s per no-communication episode), 200 instances × 2 conditions × 1 replicate takes about 4 hours.
 
 This is a single-facet decomposition for one model and one task family. It is not a G-study of model ranking, and it does not establish validity. Communication sits at ceiling and has no variance to decompose.
+
+## Dropout: one teammate goes silent
+
+`+dropout-after-round0-v1` makes one seed-chosen resident unavailable after its round-0 turn. Its teammates are not told. Scores cover the two residents who can still submit. The instances are the same as the first 15 of the 30-instance study (seeds 300–314, 2 replicates, together layout, communication only). Without dropout, communication scored 100% on these instances. The batch `clues-dropout-001` passed replay.
+
+| Measure | Result |
+| --- | --- |
+| Answer accuracy, remaining residents (95% CI by instance) | 49/60, 82% (65–97%) |
+| Fully supported answers | 38/60 |
+| Dropped resident shared its clue before leaving | 20/30 episodes |
+| Accuracy when that clue survived | **40/40** |
+| Accuracy when that clue was lost | **9/20** |
+
+The dropped resident's round-0 speaking position decides whether its clue survives:
+
+| Dropped resident's round-0 position | Shared its clue before leaving |
+| --- | --- |
+| First | 0/8 |
+| Second | 14/16 |
+| Third | 6/6 |
+
+A resident that speaks first opens with an evidence-free question (28 of 30 episodes), as in the main study. When that resident is the one who drops out, its clue never moves. The two remaining candidates then come down to the first-listed preference. The question-first convention costs nothing while every teammate stays available, but it turns a single unavailable teammate into lost information.
+
+This is an observed association across speaking positions within one model and task. Speaking order is assigned by the seed rather than chosen by the agent, which supports reading it as the mechanism. Still, no intervention on the opener was run. A direct test would add a prompt or protocol variant that requires sharing one's own clue first and repeat the dropout runs.
