@@ -1,5 +1,35 @@
 # Local V1 results — October 17, 2026
 
+## Overnight handoff (03:20–09:15, October 17)
+
+Thirteen new batches ran on the 16 GB M4: 550 episodes and 5,775 replay-verified model decisions, all with local 4-bit models and no paid inference. Every batch completed and passed deterministic replay. Every batch is public at [dyllonj/persona-society-swarm-local](https://huggingface.co/datasets/dyllonj/persona-society-swarm-local). Sections below are in run order.
+
+**Established for these models on this task**
+- **Together, communication works.** 100% vs 16% over 30 fresh instances, +84 points (CI 74–94). A majority vote over isolated answers gives 15%.
+- **Apart, there is no coordination.** Scattered agents never moved in 915 turns. More rounds and visible room occupants did not change this, and Qwen2.5-7B did the same. The bottleneck is planning, not perception.
+- **Dropout fragility.** Dropout lowers accuracy to 82%. Clues are lost when their holder had not yet shared, and first speakers open with a question.
+- **Isolated guessing.** Qwen3-8B picks the first listed candidate 78% of the time; Qwen2.5-7B does not. No-communication baselines therefore depend on instance ordering.
+- **Sizing.** 91% of baseline variance is between instances. Plan about 200 instances at 1–2 replicates for ±5 points.
+
+**Not established**
+- The share-first norm reduced accuracy (53%). It did not test the dropout mechanism cleanly.
+- Qwen2.5-7B's strict scores are dominated by code-fenced answers. Its content-level comparison is a post-hoc diagnostic.
+- Only one synthetic task family has been run. There is no human review, frontier models, roles, or personality condition yet.
+
+**Code added**, each change tested and replay-compatible with older batches:
+- **Environment variants:** `--layout scattered`, `--disruption dropout`, `--perception room-occupants`, and the share-first prompt version.
+- **Model selection:** `--model-profile qwen2.5-7b`.
+- **Analysis and figures:** `analyze_distributed_clues.py` (instance bootstrap, failure types, variance split, vote baseline, guess and format diagnostics), `plot_distributed_clues.py` (Tufte-style SVG figures), and `export_distributed_clues.py` (portable, re-verified exports).
+- **Metric fix:** `polarization_modularity` is renamed `satisfaction_variance`.
+
+**Suggested next steps**
+1. A planning scaffold for scattered start, as its own version: a shared meeting point, or an explicit "sharing requires being in the same room" hint. This tests whether any prompt-level structure produces search.
+2. A share-first norm worded around attaching evidence IDs, rerun on the same dropout instances.
+3. The no-role vs assigned-role and personality conditions from the roadmap. Run them on the scattered or dropout variants, where the together layout's ceiling does not hide differences.
+4. A confirmatory run of about 200 instances once the condition set is fixed.
+
+**Operational note.** The Mac idle-sleeps with the lid closed. From 08:05 to 08:38 the last batch advanced only during maintenance wakes. Run long queues under `caffeinate -dimsu -w <pid>`. Stalls delay a batch but do not corrupt it: the affected batch still replayed.
+
 The current engineering milestone is a reliable final decision with all clues available. Qwen3-8B in 4-bit passed **60/60 valid, correct, fully supported submissions**, on **30 fresh task instances with two inference replicates each**. These are 60 decisions, not 60 independent cases or full society episodes. This passes the predeclared local engineering gate of at least 95%; it does not establish general collaboration or benchmark mastery.
 
 ## What changed and what failed
