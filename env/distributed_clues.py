@@ -20,12 +20,16 @@ LAYOUTS = ("together", "scattered")
 # "dropout" makes one seed-chosen resident unavailable after round 0: it takes
 # no further turns and never submits. Peers are not told.
 DISRUPTIONS = ("none", "dropout")
+# "room-occupants" adds the residents currently in the observer's room. Only
+# communication episodes may use it: peer locations are a side channel otherwise.
+PERCEPTIONS = ("none", "room-occupants")
 
 
 class DistributedClues:
     version = "town-distributed-clues-v1"
 
-    def __init__(self, seed=7, condition="communication", rounds=3, layout="together", disruption="none"):
+    def __init__(self, seed=7, condition="communication", rounds=3, layout="together", disruption="none",
+                 perception="none"):
         if condition not in CONDITIONS or type(rounds) is not int or not 1 <= rounds <= 12:
             raise ValueError("Invalid condition or rounds (1..12 required)")
         if layout not in LAYOUTS or disruption not in DISRUPTIONS:
@@ -33,12 +37,16 @@ class DistributedClues:
         if disruption == "dropout" and (condition == "all_clues_single" or rounds < 2):
             raise ValueError("Dropout requires multiple residents and at least two rounds")
         self.seed, self.condition, self.rounds = seed, condition, rounds
-        self.layout, self.disruption = layout, disruption
+        if perception not in PERCEPTIONS or (perception != "none" and condition != "communication"):
+            raise ValueError("Room-occupant perception requires the communication condition")
+        self.layout, self.disruption, self.perception = layout, disruption, perception
         self.task_version = self.version
         if layout == "scattered":
             self.task_version += "+scattered-start-v1"
         if disruption == "dropout":
             self.task_version += "+dropout-after-round0-v1"
+        if perception == "room-occupants":
+            self.task_version += "+visible-occupants-v1"
         self.world = World()
         self.agents = ["resident_a", "resident_b", "resident_c"]
         rng = random.Random(seed)
@@ -120,6 +128,8 @@ class DistributedClues:
             "recent_messages": self._inbox[agent][-3:],
             "last_result": self._last_result[agent],
             **({"start_layout": "scattered"} if self.layout == "scattered" else {}),
+            **({"residents_here": sorted(self.world.locations[self.world.agent_location(agent)].occupants - {agent})}
+               if self.perception == "room-occupants" else {}),
         })
 
     def step(self, agent, action):
