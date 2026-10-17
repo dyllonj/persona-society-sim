@@ -463,6 +463,39 @@ def build_language_backend(
             do_sample=do_sample,
         )
     
+    if inference.get("backend") == "vllm":
+        if not suppress_alphas:
+            raise ValueError("Local vLLM pilot requires steering.enabled: false")
+        from agents.vllm_backend import VLLMBackend
+        return VLLMBackend(
+            model_name=config["model_name"], model_revision=config["model_revision"],
+            receipt_dir=inference["receipt_dir"],
+            base_url=inference.get("base_url", "http://127.0.0.1:8000/v1"),
+            temperature=temperature, top_p=top_p,
+            timeout=inference.get("timeout_seconds", 180),
+        )
+
+    if inference.get("backend") == "mlx":
+        if not suppress_alphas:
+            raise ValueError("MLX pilot requires steering.enabled: false")
+        from agents.mlx_backend import MLXBackend
+        return MLXBackend(
+            model_path=inference["model_path"], model_name=config["model_name"],
+            model_revision=config["model_revision"], temperature=temperature, top_p=top_p,
+            max_context_tokens=inference.get("max_context_tokens", 4096),
+        )
+
+    if inference.get("backend") == "anthropic":
+        if not suppress_alphas:
+            raise ValueError("Hosted backend requires steering.enabled: false")
+        from agents.anthropic_backend import AnthropicBackend
+        return AnthropicBackend(
+            model_name=config["model_name"],
+            receipt_dir=inference["receipt_dir"], temperature=temperature,
+            timeout=inference.get("timeout_seconds", 60),
+            retries=inference.get("retries", 2),
+        )
+
     if use_gemini:
         from agents.gemini_backend import GeminiBackend
 
@@ -531,6 +564,10 @@ def build_agents(
     inference = config.get("inference", {})
     optimization = config.get("optimization", {})
     max_tokens = inference.get("max_new_tokens", 120)
+    prompt_persona_cfg = config.get("prompt_persona")
+    if prompt_persona_cfg is not None and not suppress_alphas:
+        raise ValueError("prompt_persona is a separate arm; disable activation steering")
+    persona_rng = random.Random(config.get("seed", 7) + 100003)
     reflect_every_n = optimization.get("reflect_every_n_ticks", 1)
     try:
         mind_wander_probability = float(optimization.get("mind_wander_probability", 0.05))
@@ -549,6 +586,13 @@ def build_agents(
         agent_id = f"agent-{idx:03d}"
         display_name = f"Agent {idx:03d}"
         persona = sample_persona(base_persona, rng, jitter=persona_jitter)
+        prompt_persona = None
+        if prompt_persona_cfg is not None:
+            from evaluation.personality import validate_persona
+            coefficients = validate_persona(prompt_persona_cfg.get("coefficients", {}))
+            persona = sample_persona(coefficients, persona_rng,
+                                     jitter=prompt_persona_cfg.get("jitter", 0.0))
+            prompt_persona = persona.model_dump()
         location = rng.choice(locations)
         role, role_description = role_assignments[idx]
         goals = rng.sample(GOAL_LIBRARY, k=min(2, len(GOAL_LIBRARY)))
@@ -594,6 +638,8 @@ def build_agents(
             structured_actions_enabled=bool(
                 inference.get("structured_actions", False)
             ),
+            prompt_persona=prompt_persona,
+            strict_action_json=bool(inference.get("strict_action_json", False)),
         )
         agents.append(agent)
     return agents

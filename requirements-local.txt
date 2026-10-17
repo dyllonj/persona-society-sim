@@ -1,0 +1,11 @@
+# Isolated Apple Silicon runtime; does not change the legacy HF GPU environment.
+mlx-lm==0.32.2
+mlx==0.32.4
+transformers==5.20.1
+numpy==2.5.4
+pydantic==2.14.1
+PyYAML==6.0.3
+SQLAlchemy==2.1.5
+networkx==3.7
+pyarrow==26.0.0
+pytest==9.1.1

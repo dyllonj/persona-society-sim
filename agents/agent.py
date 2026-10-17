@@ -99,6 +99,8 @@ class Agent:
         sampling_seed_base: int = 0,
         persona_prompt_enabled: bool = True,
         structured_actions_enabled: bool = False,
+        prompt_persona: Optional[Dict[str, float]] = None,
+        strict_action_json: bool = False,
     ):
         self.run_id = run_id
         self.state = state
@@ -113,6 +115,8 @@ class Agent:
         self._sampling_seed_base = int(sampling_seed_base)
         self._persona_prompt_enabled = bool(persona_prompt_enabled)
         self._structured_actions_enabled = bool(structured_actions_enabled)
+        self._prompt_persona = prompt_persona
+        self._strict_action_json = strict_action_json
         self._last_plan_suggestion: Optional[PlanSuggestion] = None
         self._last_reflection: Optional[Tuple[str, List[str]]] = None
         self._last_recalled_dialogue_lines: List[str] = []
@@ -415,7 +419,7 @@ class Agent:
         
         persona_text: Optional[str] = None
         if self._persona_prompt_enabled:
-            alphas = self.persona_alphas()
+            alphas = self._prompt_persona if self._prompt_persona is not None else self.persona_alphas()
             trait_summary = []
             for trait, val in alphas.items():
                 if abs(val) > 0.3:
@@ -529,8 +533,14 @@ class Agent:
                 None,
             )
         try:
-            start = text.index("{")
-            payload, _ = json.JSONDecoder().raw_decode(text[start:])
+            if self._strict_action_json:
+                from evaluation.personality import strict_json
+                payload = strict_json(text)
+                if isinstance(payload, dict) and set(payload) != {"action", "params", "utterance"}:
+                    raise ValueError("action must contain exactly action, params, utterance")
+            else:
+                start = text.index("{")
+                payload, _ = json.JSONDecoder().raw_decode(text[start:])
             if not isinstance(payload, dict):
                 raise ValueError("top-level JSON value must be an object")
             action_type = payload.get("action")
