@@ -16,11 +16,16 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from agents.vllm_backend import VLLMBackend
-from env.distributed_clues import CONDITIONS, LAYOUTS, DistributedClues
+from env.distributed_clues import CONDITIONS, DISRUPTIONS, LAYOUTS, DistributedClues
 from evaluation.personality import strict_json
 
 PROMPT_VERSION = "phase-specific-v2"
 PROMPT_VERSIONS = (PROMPT_VERSION, "phase-v2-intersection-final-v1")
+# Served model name and immutable checkpoint revision for each local model.
+MODEL_PROFILES = {
+    "qwen3-8b": ("local-qwen3-8b", "545dc4251c05440727734bcd94334791f6ab0192"),
+    "qwen2.5-7b": ("local-qwen2.5-7b", "c26a38f6a37d0a51b4e9a1eb3026530fa35d9fed"),
+}
 
 def policy_prompt(observation, prompt_version=PROMPT_VERSION):
     if prompt_version not in PROMPT_VERSIONS:
@@ -56,9 +61,10 @@ def policy_prompt(observation, prompt_version=PROMPT_VERSION):
     )
 
 
-def run_episode(out, backend, *, seed, condition, rounds, replicate, prompt_version=PROMPT_VERSION, layout="together"):
+def run_episode(out, backend, *, seed, condition, rounds, replicate, prompt_version=PROMPT_VERSION,
+                layout="together", disruption="none"):
     out.mkdir(parents=True, exist_ok=False)
-    env = DistributedClues(seed=seed, condition=condition, rounds=rounds, layout=layout)
+    env = DistributedClues(seed=seed, condition=condition, rounds=rounds, layout=layout, disruption=disruption)
     (out / "evaluator-only.json").write_text(json.dumps(env.audit(), indent=2))
     tokens_in = tokens_out = 0
     review_packets = []
@@ -150,6 +156,8 @@ def main():
     parser.add_argument("--prompt-version", choices=PROMPT_VERSIONS, default=PROMPT_VERSION)
     parser.add_argument("--conditions", nargs="+", choices=CONDITIONS, default=list(CONDITIONS))
     parser.add_argument("--layout", choices=LAYOUTS, default="together")
+    parser.add_argument("--disruption", choices=DISRUPTIONS, default="none")
+    parser.add_argument("--model-profile", choices=sorted(MODEL_PROFILES), default="qwen3-8b")
     args = parser.parse_args()
     if not 1 <= args.replicates <= 5 or not 1 <= args.rounds <= 12 or not 1 <= len(args.seeds) <= 20:
         parser.error("Bound local runs to 1..5 replicates, 1..12 rounds, 1..20 seeds")
@@ -157,16 +165,18 @@ def main():
         parser.error("Duplicate seeds or conditions")
     with urlopen("http://127.0.0.1:8000/v1/models", timeout=10) as response:
         models = json.load(response)
-    if "local-qwen3-8b" not in [m["id"] for m in models["data"]]:
-        raise RuntimeError("Expected local-qwen3-8b server")
+    served_name, revision = MODEL_PROFILES[args.model_profile]
+    if served_name not in [m["id"] for m in models["data"]]:
+        raise RuntimeError(f"Expected {served_name} server")
     out = args.output.resolve()
     out.mkdir(parents=True, exist_ok=False)
-    backend = VLLMBackend("local-qwen3-8b", model_revision="545dc4251c05440727734bcd94334791f6ab0192",
+    backend = VLLMBackend(served_name, model_revision=revision,
                           receipt_dir=out / "receipts", temperature=0.2, top_p=0.9)
     source_files = subprocess.check_output(["git", "ls-files", "--cached", "--others", "--exclude-standard"], cwd=ROOT, text=True).splitlines()
     manifest = {
         "status": "running", "real_inference": True,
-        "task_version": DistributedClues(layout=args.layout).task_version,
+        "task_version": DistributedClues(layout=args.layout, disruption=args.disruption).task_version,
+        "served_model_name": served_name,
         "prompt_version": args.prompt_version,
         "task_family": "meeting_constraint_intersection", "split": "development",
         "expert_review": "not_performed",
@@ -190,7 +200,7 @@ def main():
                     episode = out / f"seed-{seed}-rep-{replicate}-{condition}"
                     row = run_episode(episode, backend, seed=seed, condition=condition,
                                       rounds=args.rounds, replicate=replicate, prompt_version=args.prompt_version,
-                                      layout=args.layout)
+                                      layout=args.layout, disruption=args.disruption)
                     rows.append(row)
                     with (out / "episodes.jsonl").open("a") as handle:
                         handle.write(json.dumps(row) + "\n")

@@ -17,18 +17,28 @@ CONDITIONS = ("communication", "no_communication", "all_clues_single")
 # "together" is the original layout. "scattered" starts each resident in a
 # different room, so sharing first requires finding a co-located peer.
 LAYOUTS = ("together", "scattered")
+# "dropout" makes one seed-chosen resident unavailable after round 0: it takes
+# no further turns and never submits. Peers are not told.
+DISRUPTIONS = ("none", "dropout")
 
 
 class DistributedClues:
     version = "town-distributed-clues-v1"
 
-    def __init__(self, seed=7, condition="communication", rounds=3, layout="together"):
+    def __init__(self, seed=7, condition="communication", rounds=3, layout="together", disruption="none"):
         if condition not in CONDITIONS or type(rounds) is not int or not 1 <= rounds <= 12:
             raise ValueError("Invalid condition or rounds (1..12 required)")
-        if layout not in LAYOUTS:
-            raise ValueError("Invalid layout")
-        self.seed, self.condition, self.rounds, self.layout = seed, condition, rounds, layout
-        self.task_version = self.version if layout == "together" else f"{self.version}+scattered-start-v1"
+        if layout not in LAYOUTS or disruption not in DISRUPTIONS:
+            raise ValueError("Invalid layout or disruption")
+        if disruption == "dropout" and (condition == "all_clues_single" or rounds < 2):
+            raise ValueError("Dropout requires multiple residents and at least two rounds")
+        self.seed, self.condition, self.rounds = seed, condition, rounds
+        self.layout, self.disruption = layout, disruption
+        self.task_version = self.version
+        if layout == "scattered":
+            self.task_version += "+scattered-start-v1"
+        if disruption == "dropout":
+            self.task_version += "+dropout-after-round0-v1"
         self.world = World()
         self.agents = ["resident_a", "resident_b", "resident_c"]
         rng = random.Random(seed)
@@ -75,8 +85,13 @@ class DistributedClues:
             self.world.add_agent(agent, room)
         order = self.agents.copy()
         random.Random(seed ^ 0x5A17).shuffle(order)
-        self.schedule = [(r, a, "deliberate") for r in range(rounds) for a in order]
-        self.schedule += [(rounds, a, "submit") for a in order]
+        self.dropped = None
+        if disruption == "dropout":
+            self.dropped = random.Random(seed ^ 0xD20F).choice(sorted(self.agents))
+        self.active = [a for a in self.agents if a != self.dropped]
+        self.schedule = [(r, a, "deliberate") for r in range(rounds) for a in order
+                         if r == 0 or a != self.dropped]
+        self.schedule += [(rounds, a, "submit") for a in order if a != self.dropped]
         self.cursor = 0
 
     @property
@@ -187,19 +202,22 @@ class DistributedClues:
         submitted = list(self.submissions.values())
         return {
             "task_version": self.task_version, "seed": self.seed, "condition": self.condition,
-            "complete": self.done, "agents": len(self.agents), "turn_budget": len(self.schedule),
+            # Under dropout, scores cover the residents still able to submit.
+            "complete": self.done, "agents": len(self.active), "turn_budget": len(self.schedule),
             "turns_executed": self.cursor, "invalid_actions": sum(not e["result"]["valid"] for e in self.events),
             "valid_submissions": len(submitted),
             "correct_answers": sum(s["answer_correct"] for s in submitted),
             "supported_submissions": sum(s["supported_success"] for s in submitted),
             "team_success": any(s["supported_success"] for s in submitted),
-            "supported_fraction": sum(s["supported_success"] for s in submitted) / len(self.agents),
-            "evidence_coverage": {a: len(self._known[a]) / 3 for a in self.agents},
+            "supported_fraction": sum(s["supported_success"] for s in submitted) / len(self.active),
+            "evidence_coverage": {a: len(self._known[a]) / 3 for a in self.active},
             "new_evidence_deliveries": sum(len(t["new_evidence_ids"]) for e in self.events for t in e["result"].get("transfers", [])),
+            **({"dropped_agent": self.dropped} if self.dropped else {}),
             "interpretation": "Evidence receipt is observable; it does not prove internal reasoning or human-like collaboration. No-communication cannot achieve full evidence support by construction; compare answer accuracy too.",
         }
 
     def audit(self):
         return copy.deepcopy({"task_version": self.task_version, "answer": self._answer,
                               "clues": self._clues, "owners": self._owners,
+                              **({"dropped_agent": self.dropped} if self.dropped else {}),
                               "initial_evidence": {a: sorted(e) for a, e in self._initial.items()}})

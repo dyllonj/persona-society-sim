@@ -329,3 +329,56 @@ def test_scattered_layout_prompt_and_default_prompt_unchanged():
 def test_invalid_layout_rejected():
     with pytest.raises(ValueError):
         DistributedClues(1, layout="ring")
+
+
+def test_dropout_removes_one_resident_after_round_zero():
+    base, env = DistributedClues(12), DistributedClues(12, disruption="dropout")
+    assert base.audit()["answer"] == env.audit()["answer"]
+    assert env.task_version.endswith("+dropout-after-round0-v1")
+    dropped = env.dropped
+    assert dropped in base.agents and dropped not in env.active
+    assert any(a == dropped for r, a, _ in env.schedule if r == 0)
+    assert not any(a == dropped for r, a, _ in env.schedule if r > 0)
+    while not env.done:
+        agent = env.current_agent
+        if env.schedule[env.cursor][2] == "submit":
+            env.step(agent, {"action": "submit_report", "params": {"plan_id": "plan_1", "evidence_ids": []}})
+        else:
+            env.step(agent, {"action": "wait", "params": {}})
+    summary = env.summary()
+    assert summary["agents"] == 2 and summary["dropped_agent"] == dropped
+    assert dropped not in summary["evidence_coverage"] and dropped not in env.submissions
+
+
+def test_dropout_rejects_single_agent_and_single_round():
+    with pytest.raises(ValueError):
+        DistributedClues(1, "all_clues_single", disruption="dropout")
+    with pytest.raises(ValueError):
+        DistributedClues(1, rounds=1, disruption="dropout")
+
+
+def test_default_layout_and_disruption_keep_original_version():
+    env = DistributedClues(5)
+    assert env.task_version == "town-distributed-clues-v1"
+    assert "dropped_agent" not in env.summary() and "dropped_agent" not in env.audit()
+
+
+@pytest.mark.parametrize("layout,disruption", [("scattered", "none"), ("together", "dropout"), ("scattered", "dropout")])
+def test_new_variants_replay_deterministically(tmp_path, layout, disruption):
+    from scripts.replay_distributed_clues import verify_episode
+
+    class ScriptedPolicy:
+        def generate(self, prompt, max_new_tokens, alphas, *, sampling_seed):
+            if "\nObservation:\n" in prompt and '"phase":"deliberate"' in prompt:
+                observation = json.loads(prompt.split("\nObservation:\n", 1)[1])
+                action = {"action": "share", "params": {"evidence_ids": [c["id"] for c in observation["known_evidence"]], "message": ""}}
+            else:
+                action = {"action": "submit_report", "params": {"plan_id": "plan_1", "evidence_ids": []}}
+            return GenerationResult(text=json.dumps(action), tokens_in=10, tokens_out=5)
+
+    run_episode(tmp_path / "e", ScriptedPolicy(), seed=21, condition="communication", rounds=2,
+                replicate=0, prompt_version="phase-v2-intersection-final-v1", layout=layout, disruption=disruption)
+    turns = verify_episode(tmp_path / "e", seed=21, condition="communication", rounds=2, layout=layout, disruption=disruption)
+    assert turns == (9 if disruption == "none" else 7)
+    with pytest.raises(ValueError):
+        verify_episode(tmp_path / "e", seed=21, condition="communication", rounds=2)

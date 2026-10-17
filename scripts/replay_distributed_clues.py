@@ -19,9 +19,9 @@ def require(condition, message):
         raise ValueError(message)
 
 
-def verify_episode(path, *, seed, condition, rounds, layout="together"):
+def verify_episode(path, *, seed, condition, rounds, layout="together", disruption="none"):
     from scripts.run_distributed_clues import policy_prompt
-    env = DistributedClues(seed, condition, rounds, layout=layout)
+    env = DistributedClues(seed, condition, rounds, layout=layout, disruption=disruption)
     require(json.loads((path / "evaluator-only.json").read_text()) == env.audit(), "Evaluator state mismatch")
     summary = json.loads((path / "summary.json").read_text())
     rows = [json.loads(line) for line in (path / "trace.jsonl").read_text().splitlines()]
@@ -105,6 +105,7 @@ def verify_batch(path):
     manifest = json.loads((path / "manifest.json").read_text())
     require(manifest["status"] == "complete", "Batch is not complete")
     config = manifest["config"]
+    served_name = manifest.get("served_model_name", "local-qwen3-8b")
     expected = len(config["seeds"]) * config["replicates"] * len(config["conditions"])
     require(manifest["completed_episodes"] == expected, "Episode count mismatch")
     receipts = {}
@@ -116,7 +117,7 @@ def verify_batch(path):
         req = identity["request"]
         require(identity["model_revision"] == manifest["model_revision"], "Receipt model revision mismatch")
         require(identity["backend"] == "local-vllm-v1" and identity["endpoint"] == "http://127.0.0.1:8000/v1", "Receipt backend mismatch")
-        expected_request = {"model": "local-qwen3-8b", "messages": [{"role": "user", "content": req["messages"][0]["content"]}],
+        expected_request = {"model": served_name, "messages": [{"role": "user", "content": req["messages"][0]["content"]}],
                             "max_tokens": manifest["max_new_tokens"], "temperature": manifest["temperature"],
                             "top_p": manifest["top_p"], "chat_template_kwargs": {"enable_thinking": False}, "seed": req["seed"]}
         require(req == expected_request, "Receipt generation settings mismatch")
@@ -131,7 +132,8 @@ def verify_batch(path):
             for condition in config["conditions"]:
                 episode = path / f"seed-{seed}-rep-{replicate}-{condition}"
                 count += verify_episode(episode, seed=seed, condition=condition, rounds=config["rounds"],
-                                        layout=config.get("layout", "together"))
+                                        layout=config.get("layout", "together"),
+                                        disruption=config.get("disruption", "none"))
                 rows.append(json.loads((episode / "summary.json").read_text()))
                 require(rows[-1]["prompt_version"] == manifest["prompt_version"], "Episode prompt version mismatch")
                 for line in (episode / "trace.jsonl").read_text().splitlines():
@@ -144,7 +146,7 @@ def verify_batch(path):
                     used_receipts.add(key)
                     require(receipt is not None, "Missing receipt for executed action")
                     response = receipt["response"]
-                    require(response["model"] == "local-qwen3-8b" and len(response["choices"]) == 1 and response["choices"][0]["finish_reason"] == "stop", "Incomplete or mismatched response")
+                    require(response["model"] == served_name and len(response["choices"]) == 1 and response["choices"][0]["finish_reason"] == "stop", "Incomplete or mismatched response")
                     require(response["choices"][0]["message"]["content"] == row["raw_completion"], "Response differs from trace")
                     require(response["usage"]["prompt_tokens"] == row["tokens_in"], "Receipt input token mismatch")
                     require(response["usage"]["completion_tokens"] == row["tokens_out"], "Receipt output token mismatch")
