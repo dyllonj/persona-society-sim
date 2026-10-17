@@ -189,3 +189,16 @@ The same instances (seeds 300–314, one replicate) and settings were run with `
 - **Same coordination failure.** In scattered rooms, Qwen2.5-7B also shared in all 135 deliberation turns, never moved, and delivered nothing. Its five `move` attempts in the together layout all named the room it was already in.
 
 The official strict protocol, including the rule that invalid output consumes the turn, was set before these runs and is unchanged. The content diagnostic is reported because it changes how the strict score should be read, not to replace it.
+
+## Perception ablation: seeing the empty room does not help
+
+`+visible-occupants-v1` adds `residents_here` to each observation, listing the other residents in the observer's room. The prompt says what the field means. In the scattered layout that list is empty at every turn. If the earlier failure came from not perceiving that nobody was present, this variant should produce moves. Seeds 300–314 were used, with two replicates for Qwen3-8B and one for Qwen2.5-7B, communication only. Both batches passed replay.
+
+| Model | Answer accuracy (95% CI by instance) | Moves | Evidence deliveries |
+| --- | --- | --- | --- |
+| Qwen3-8B (`clues-scattered-visible-001`) | 8/90, 9% (0–21%) | 0 of 270 actions | 0 |
+| Qwen2.5-7B (`clues-qwen25-7b-scattered-visible-001`) | 16/45, 36% (20–51%) | 0 of 135 | 0 |
+
+Neither model moved. In Qwen3-8B's last deliberation round, 80 of 90 messages were the exact sentence "What are the constraints for choosing the meeting plan?", sent while `residents_here` was empty. Qwen2.5-7B talked about its own evidence ("I have information about attendee availability…") but also never left its room. Both models could see that the room was empty, so perception does not explain the failure. With these prompts, neither model forms the plan "go to where a teammate might be". Accuracy matches each model's no-communication guessing level.
+
+A planning scaffold is the obvious next intervention, kept separate from these results. Examples are an explicit hint that sharing requires co-location, or a shared meeting point. Either one would change what is being measured, so it would need its own version label.
