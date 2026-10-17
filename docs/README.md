@@ -26,6 +26,7 @@ clarifies why.
 
 ## Explanation
 
+- [collaboration-roadmap.md](collaboration-roadmap.md) — V1 local collaboration, V2 frontier comparison, V3 personality interventions, evidence limits, and prior work.
 - [design.md](design.md) — system architecture and the reasoning behind the major structural choices.
 - [explanation-steering.md](explanation-steering.md) — why CAA instead of prompting, in depth.
 - [eval.md](eval.md) — evaluation protocols for the project's research questions.
