@@ -1,6 +1,29 @@
 # Persona Society Sim
 
-Social town simulator where 30–300 activation-steered LLM agents live, converse, collaborate, and produce emergent dynamics. Agents use persona steering vectors (Contrastive Activation Addition) instead of prompt-only roles, combining Smallville-inspired memory loops with lightweight world mechanics and measurement harnesses.
+Social town simulator where LLM agents live, converse, collaborate, and produce emergent dynamics, combining Smallville-inspired memory loops with lightweight world mechanics and measurement harnesses. The research sequence is collaboration first: V1 measures whether local agent teams collaborate effectively, V2 compares frontier models through APIs, and V3 studies personality through prompt personas, LoRA, and activation steering ([roadmap](docs/collaboration-roadmap.md)).
+
+## Current focus: swarm collaboration (V1)
+
+![Swarm collaboration evaluation pipeline](docs/assets/collaboration-evaluation-pipeline.svg)
+
+The [distributed-clue task](docs/distributed-clues-evaluation.md) splits three private constraints among residents of the original town. Agents have to pool evidence to identify the one meeting plan that satisfies every constraint. Paired conditions on the same task instance vary communication, start layout (`--layout scattered`), and dropout (`--disruption dropout`). Persona steering is off in V1. All runs use local 4-bit models on a 16 GB Apple M4, with no paid inference.
+
+- **Results:** [docs/local-v1-results.md](docs/local-v1-results.md). Completed batches, confidence intervals across task instances, failure breakdowns, and limitations.
+- **Traces:** [dyllonj/persona-society-swarm-local](https://huggingface.co/datasets/dyllonj/persona-society-swarm-local). Every prompt, raw completion, action, and inference receipt from replay-verified batches.
+
+```sh
+MAX_MODEL_LEN=1536 GPU_MEMORY_UTILIZATION=0.50 bash scripts/serve_local_8b.sh   # terminal 1
+python scripts/run_distributed_clues.py --output artifacts/my-batch --seeds 300 301 302 \
+  --replicates 2 --prompt-version phase-v2-intersection-final-v1 [--layout scattered] [--disruption dropout]
+python scripts/replay_distributed_clues.py artifacts/my-batch      # deterministic regrade, no model calls
+python scripts/analyze_distributed_clues.py artifacts/my-batch     # instance-clustered CIs, failure types
+```
+
+Setup is in [docs/howto-local-collaboration.md](docs/howto-local-collaboration.md). One synthetic task family on local models does not establish general collaboration ability or frontier-model performance.
+
+## Persona steering track (V3)
+
+The steering pipeline below predates the collaboration-first plan. Rebuild the CAA vectors before making personality-specific claims: the current extraction template omits answer-option text and does not counterbalance answer labels ([known gaps](docs/explanation-known-gaps.md)).
 
 ![Persona steering evaluation pipeline](docs/assets/persona-steering-evaluation-pipeline.svg)
 
@@ -178,9 +201,9 @@ persona-society-sim/
 
 ## Research questions & evaluation hooks
 - **RQ1 — Personality controllability**: log persona adherence metrics (self-report probes, behavioral probes) and compare CAA vs prompt-only loops.
-- **RQ2 — Social structure/outcomes**: compute homophily, polarization, productivity metrics at regular ticks.
+- **RQ2 — Social structure/outcomes**: compute homophily and productivity metrics at regular ticks. No opinion-polarization metric exists yet; the former `polarization_modularity` column was satisfaction variance and is now `satisfaction_variance`.
 - **RQ3 — Method validity**: capability probes to ensure CAA preserves base performance vs prompt steering, plus safety governor logs for alpha backoff events.
-- **RQ4 — Macro dynamics**: seed opinion topics and measure homophily/polarization trajectories across populations 30/100/300.
+- **RQ4 — Macro dynamics**: seed opinion topics and measure homophily/polarization trajectories across populations 30/100/300 (planned; requires a real opinion-polarization metric).
 
 For detailed evaluation protocols, see `docs/eval.md`.
 ### Experiment environments
