@@ -1,0 +1,38 @@
+template: run.fast.yaml
+run_id: local-8b-v1
+model_name: local-qwen3-8b
+model_revision: 545dc4251c05440727734bcd94334791f6ab0192
+population: 3
+steps: 4
+seed: 7
+max_events_per_tick: 3
+steering:
+  enabled: false
+  strength: 0.0
+inference:
+  backend: vllm
+  base_url: http://127.0.0.1:8000/v1
+  receipt_dir: ./artifacts/local-8b-v1/receipts
+  model_path: ../../work/models/Qwen3-8B-4bit
+  persona_prompt: false
+  structured_actions: true
+  strict_action_json: true
+  do_sample: true
+  temperature: 0.2
+  top_p: 0.9
+  max_new_tokens: 256
+  max_context_tokens: 2048
+meta_orchestrator:
+  enabled: false
+probes:
+  enabled: false
+interpretability:
+  enabled: true
+  sample_rate: 1.0
+  include_prompt_text: true
+optimization:
+  mind_wander_probability: 0.0
+  reflect_every_n_ticks: 1
+logging:
+  db_url: sqlite:///./artifacts/local-8b-v1/simulation.db
+  parquet_dir: ./artifacts/local-8b-v1/logs

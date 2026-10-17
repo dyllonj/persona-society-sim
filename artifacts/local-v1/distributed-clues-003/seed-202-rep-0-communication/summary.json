@@ -1,0 +1,68 @@
+{
+  "agents": 3,
+  "complete": true,
+  "condition": "communication",
+  "correct_answers": 3,
+  "evidence_coverage": {
+    "resident_a": 1.0,
+    "resident_b": 1.0,
+    "resident_c": 1.0
+  },
+  "interpretation": "Evidence receipt is observable; it does not prove internal reasoning or human-like collaboration. No-communication cannot achieve full evidence support by construction; compare answer accuracy too.",
+  "invalid_actions": 0,
+  "new_evidence_deliveries": 6,
+  "prompt_version": "phase-v2-intersection-final-v1",
+  "replicate": 0,
+  "seed": 202,
+  "submissions": {
+    "resident_a": {
+      "answer_correct": true,
+      "evidence_complete": true,
+      "evidence_ids": [
+        "e6731",
+        "e7991",
+        "ea6e8"
+      ],
+      "plan_id": "plan_6",
+      "submitted": true,
+      "supported_success": true,
+      "valid": true
+    },
+    "resident_b": {
+      "answer_correct": true,
+      "evidence_complete": true,
+      "evidence_ids": [
+        "e6731",
+        "e7991",
+        "ea6e8"
+      ],
+      "plan_id": "plan_6",
+      "submitted": true,
+      "supported_success": true,
+      "valid": true
+    },
+    "resident_c": {
+      "answer_correct": true,
+      "evidence_complete": true,
+      "evidence_ids": [
+        "e6731",
+        "e7991",
+        "ea6e8"
+      ],
+      "plan_id": "plan_6",
+      "submitted": true,
+      "supported_success": true,
+      "valid": true
+    }
+  },
+  "supported_fraction": 1.0,
+  "supported_submissions": 3,
+  "task_version": "town-distributed-clues-v1",
+  "team_success": true,
+  "tokens_in": 5854,
+  "tokens_out": 465,
+  "turn_budget": 12,
+  "turns_executed": 12,
+  "valid_submissions": 3,
+  "wall_seconds": 53.387428375077434
+}

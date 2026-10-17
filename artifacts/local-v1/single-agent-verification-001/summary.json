@@ -1,0 +1,11 @@
+{
+  "intersection-v1": {
+    "cases": 60,
+    "unique_instances": 30,
+    "valid": 60,
+    "supported_correct": 60,
+    "accuracy": 1.0,
+    "tokens_in": 11208,
+    "tokens_out": 2274
+  }
+}

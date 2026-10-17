@@ -1,0 +1,37 @@
+{
+  "status": "complete",
+  "real_inference": true,
+  "kind": "single-agent-final-decision-diagnostic",
+  "config": {
+    "output": "artifacts/local-v1/single-agent-dev-001",
+    "seeds": [
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "replicates": 1,
+    "modes": [
+      "phase-v2",
+      "intersection-v1"
+    ],
+    "purpose": "development"
+  },
+  "model_revision": "545dc4251c05440727734bcd94334791f6ab0192",
+  "source_hashes": {
+    "scripts/run_single_agent_diagnostic.py": "4aff3f3ca9c6de66729c838627d7559ceb4e28ac3d3185746abae1177d1acb17",
+    "env/distributed_clues.py": "2249292893026b483b4ee61888f3f2fbbe7f335c2adddfa890d3167cabae6202",
+    "agents/vllm_backend.py": "86215486cc30f0ffc075451953320b608ce0771c34363e690e5e05f0921fbc35",
+    "evaluation/personality.py": "ebb891cfda6ae02d3f86503d2c6db03177300085cc8e9d55bea5e51dac24294b",
+    "scripts/run_distributed_clues.py": "cee41bbd15f5a07d0b0adcfea9b3cfafbc395055c547872bcf4daf1a10971475"
+  },
+  "temperature": 0.2,
+  "top_p": 0.9,
+  "max_new_tokens": 256,
+  "steering": false,
+  "gate": "Engineering target: >=95% valid correct supported first submissions on fresh instances. Not a mastery or generalization claim.",
+  "completed_cases": 10,
+  "wall_seconds": 49.71603137499187,
+  "export_note": "Portable copy: only config.output changed from the original local absolute path. Requests, responses, traces, source hashes and scores are unchanged."
+}
