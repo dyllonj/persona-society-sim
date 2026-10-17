@@ -111,3 +111,26 @@ The power study therefore measured information pooling once teammates are togeth
 - The `+visible-occupants-v1` perception ablation, which shows residents who else is in their room.
 
 These run on Qwen3-8B, and the scattered layout also runs on Qwen2.5-7B.
+
+## Variance pilot: how to size the next study
+
+`clues-variance-001` uses 10 new instances (seeds 400–409) with 5 inference replicates each, in the communication and no-communication conditions. It passed replay with 100 episodes, 1,200 decisions and no reused requests.
+
+| Condition | Answer accuracy (95% CI by instance) | Between-instance variance | Within-instance (replicate) variance |
+| --- | --- | --- | --- |
+| Communication | 150/150, 100% | 0 | 0 |
+| No communication | 54/150, 36% (15–57%) | 0.129 | 0.012 |
+
+Communication won all 10 instances, with a mean effect of +64 points (CI 43–85). The no-communication baseline is almost deterministic within an instance. Four seeds scored zero correct answers in all five replicates; seeds 406 and 407 scored 2 of 3 in every replicate. This baseline scored 16% on seeds 300–329 and 36% here. The difference comes from how each instance happens to order its candidates, which interacts with the first-listed preference. It does not reflect a change in the model.
+
+**Decision study.** The two components give the standard error of mean no-communication accuracy for *n* instances and *r* replicates: √((0.129 + 0.012/*r*)/*n*). For a ±5-point 95% interval:
+
+| Instances | 1 replicate | 2 replicates | 5 replicates |
+| --- | --- | --- | --- |
+| 30 | ±13 | ±13 | ±13 |
+| 100 | ±7 | ±7 | ±7 |
+| 200 | ±5 | ±5 | ±5 |
+
+Extra replicates barely help. Use one or two replicates per instance and about 200 instances for a ±5-point baseline. At the measured local rate of roughly 30 s per three-resident episode, 200 instances × 2 conditions × 1 replicate takes about 3.5 hours.
+
+This is a single-facet decomposition for one model and one task family. It is not a G-study of model ranking, and it does not establish validity. Communication sits at ceiling and has no variance to decompose.
