@@ -219,3 +219,32 @@ def test_diagnostic_cli_success_and_regrading_rejects_changed_score(tmp_path, mo
     (out / "summary.json").write_text(json.dumps(summary))
     with pytest.raises(ValueError, match="summary mismatch"):
         verify_diagnostic(out)
+
+
+def test_compact_batch_reports_identical_request_reuse(tmp_path):
+    import re
+    actual_calls = []
+    def transport(request):
+        actual_calls.append(request)
+        prompt = request["messages"][0]["content"]
+        if "\nObservation:\n" in prompt:
+            return scripted_transport(request)
+        clues = re.findall(r"^(e[0-9a-f]{4}) \([^\n]+\): ([^\n]+)$", prompt, re.M)
+        candidates = set.intersection(*(set(plans.split(", ")) for _, plans in clues))
+        return response_for(json.dumps({"action": "submit_report", "params": {
+            "plan_id": sorted(candidates)[0], "evidence_ids": [key for key, _ in clues]}}))
+    backend = VLLMBackend("local-qwen3-8b", model_revision="test-revision", receipt_dir=tmp_path / "receipts", transport=transport)
+    version = "phase-v2-intersection-final-v1"
+    config = {"seeds": [7], "replicates": 1, "conditions": ["communication", "all_clues_single"], "rounds": 1}
+    rows = [run_episode(tmp_path / f"seed-7-rep-0-{c}", backend, seed=7, condition=c, rounds=1, replicate=0, prompt_version=version) for c in config["conditions"]]
+    (tmp_path / "manifest.json").write_text(json.dumps({"status": "complete", "completed_episodes": 2, "config": config, "model_revision": "test-revision", "prompt_version": version, "temperature": 0.2, "top_p": 0.9, "max_new_tokens": 256}))
+    (tmp_path / "episodes.jsonl").write_text("\n".join(json.dumps(r) for r in rows))
+    (tmp_path / "comparison.json").write_text(json.dumps(aggregate(rows)))
+    result = verify_batch(tmp_path)
+    assert result["verified_actions_and_receipts"] == 8
+    assert result["unique_inference_receipts"] == len(actual_calls) == 7
+    assert result["reused_decisions"] == 1
+    assert result["unique_inference_tokens"] == {"prompt_tokens": 700, "completion_tokens": 140}
+    next((tmp_path / "receipts").glob("*.json")).unlink()
+    with pytest.raises(ValueError, match="Missing receipt"):
+        verify_batch(tmp_path)

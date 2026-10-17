@@ -124,6 +124,7 @@ def verify_batch(path):
         require(key not in receipts, "Duplicate request identity")
         receipts[key] = receipt
     count = 0
+    used_receipts = set()
     rows = []
     for seed in config["seeds"]:
         for replicate in range(config["replicates"]):
@@ -137,19 +138,23 @@ def verify_batch(path):
                     seed_text = f"{seed}:{replicate}:{row['round']}:{row['agent']}:{row['phase']}"
                     expected_seed = int.from_bytes(hashlib.sha256(seed_text.encode()).digest()[:4], "big")
                     require(row["sampling_seed"] == expected_seed, "Episode sampling seed mismatch")
-                    receipt = receipts.pop((row["prompt"], row["sampling_seed"]), None)
+                    key = (row["prompt"], row["sampling_seed"])
+                    receipt = receipts.get(key)
+                    used_receipts.add(key)
                     require(receipt is not None, "Missing receipt for executed action")
                     response = receipt["response"]
                     require(response["model"] == "local-qwen3-8b" and len(response["choices"]) == 1 and response["choices"][0]["finish_reason"] == "stop", "Incomplete or mismatched response")
                     require(response["choices"][0]["message"]["content"] == row["raw_completion"], "Response differs from trace")
                     require(response["usage"]["prompt_tokens"] == row["tokens_in"], "Receipt input token mismatch")
                     require(response["usage"]["completion_tokens"] == row["tokens_out"], "Receipt output token mismatch")
-    require(not receipts, "Unaccounted-for receipts")
+    require(set(receipts) == used_receipts, "Unaccounted-for receipts")
     recorded = [json.loads(line) for line in (path / "episodes.jsonl").read_text().splitlines()]
     require(recorded == rows, "Batch episode ledger mismatch")
     from scripts.run_distributed_clues import aggregate
     require(json.loads((path / "comparison.json").read_text()) == aggregate(rows), "Aggregate score mismatch")
     return {"verified_episodes": expected, "verified_actions_and_receipts": count,
+            "unique_inference_receipts": len(receipts), "reused_decisions": count - len(receipts),
+            "unique_inference_tokens": {k: sum(r["response"]["usage"][k] for r in receipts.values()) for k in ("prompt_tokens", "completion_tokens")},
             "method": "Deterministic replay and receipt reconciliation; no inference calls"}
 
 
