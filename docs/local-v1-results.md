@@ -80,3 +80,34 @@ python scripts/analyze_distributed_clues.py artifacts/clues-tier1-power-a artifa
 ```
 
 Batch a launched from commit `b64868b`. Batch b launched from `6247181`, which changed only the metric naming and touched no distributed-clue code. Each manifest records its own source hashes. Wall time was 43 and 45 minutes.
+
+## What the traces show
+
+The aggregate scores hide how the agents behave. These counts come from all 60 communication episodes of the 30-instance study, read turn by turn.
+
+- **Question-first openers.** In 57 of 60 episodes, the first resident's first action was an evidence-free question such as "What are the constraints for choosing the meeting plan?" The resident did not offer its own clue. Every resident first held all three clues in round 1 in 53 episodes and in round 0 in one.
+- **Broadcasting without stopping.** Deliberation contained 539 shares and 1 wait. Only 176 shares (33%) delivered evidence a recipient lacked, and 201 messages (37%) repeated an earlier message word for word, often the previous speaker's. Rounds 2–3 were almost entirely redundant, and no resident ever noted that the team already held every clue.
+- **Failures were conversational, not inferential.** Four residents never validly shared their own clue:
+  - In seed 301, the resident who opened with a question spent the next two rounds re-sending the other two clues back to their owners.
+  - In seed 321, the holder of the equipment clue wrote messages over the 280-character limit in both replicates. It never shortened them, so the clue never moved. These are all 7 invalid turns in the study.
+
+  Teammates still chose correctly between the two remaining candidates. No resident holding all three clues answered incorrectly.
+
+These behaviors are conventions measured in this local model on this task, not established properties of LLM teams. They can be measured in later studies: opener type, redundancy rate, echo rate, and a team's failure to recognize it has finished.
+
+## Scattered start: teammates out of sight
+
+`+scattered-start-v1` starts each resident in a different room of the three-room town. Everything else matches the first 15 instances of the 30-instance study (seeds 300–314, 2 replicates, the same clues, answers and turn order), so the two layouts pair by instance. The batch passed replay (`clues-scattered-001`, 60 episodes).
+
+| Condition | Answer accuracy (95% CI by instance) | Evidence deliveries | Moves |
+| --- | --- | --- | --- |
+| Communication | 8/90, 8.9% (0–21%) | 0 | 0 of 270 deliberation actions |
+| No communication | 8/90, 8.9% (0–21%) | 0 by construction | 0 |
+
+Communication made no difference: 15 of 15 instances tied. Every deliberation action was a share. Residents asked their question into an empty room, received `delivered_to: []`, and asked again. None of them moved, although the prompt states "Residents start in different rooms" and lists `move` as an action. Because no evidence moved, the communication condition's final prompts match the no-communication ones, and so do its answers. On the same instances with everyone in one room, communication reached 100%.
+
+The power study therefore measured information pooling once teammates are together. It did not measure the coordination needed to find them. Two follow-up studies test the cause:
+- More rounds (1 and 5): does more time lead to exploration?
+- The `+visible-occupants-v1` perception ablation, which shows residents who else is in their room.
+
+These run on Qwen3-8B, and the scattered layout also runs on Qwen2.5-7B.
