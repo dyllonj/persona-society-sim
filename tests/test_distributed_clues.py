@@ -297,3 +297,35 @@ def test_review_packet_distinguishes_observation_from_actual_prompt(tmp_path):
         assert "context_available_to_agent" not in packet
     assert "recent_messages" in packets[-1]["environment_observation"]
     assert "recent_messages" not in packets[-1]["policy_prompt"]
+
+
+def test_scattered_layout_keeps_task_and_separates_residents():
+    together, scattered = DistributedClues(11), DistributedClues(11, layout="scattered")
+    assert together.audit()["answer"] == scattered.audit()["answer"]
+    assert together.audit()["clues"] == scattered.audit()["clues"]
+    assert together.schedule == scattered.schedule
+    assert together.task_version == DistributedClues.version
+    assert scattered.task_version == DistributedClues.version + "+scattered-start-v1"
+    rooms = {scattered.world.agent_location(a) for a in scattered.agents}
+    assert len(rooms) == 3
+    first = scattered.current_agent
+    observation = scattered.observe(first)
+    assert observation["start_layout"] == "scattered"
+    assert "start_layout" not in together.observe(together.current_agent)
+    own = [e["id"] for e in observation["known_evidence"]]
+    result = scattered.step(first, {"action": "share", "params": {"evidence_ids": own, "message": "hi"}})
+    assert result["valid"] and result["delivered_to"] == []
+
+
+def test_scattered_layout_prompt_and_default_prompt_unchanged():
+    from scripts.run_distributed_clues import policy_prompt
+
+    together, scattered = DistributedClues(11), DistributedClues(11, layout="scattered")
+    default_prompt = policy_prompt(together.observe(together.current_agent))
+    assert "All residents start together." in default_prompt
+    assert "Residents start in different rooms." in policy_prompt(scattered.observe(scattered.current_agent))
+
+
+def test_invalid_layout_rejected():
+    with pytest.raises(ValueError):
+        DistributedClues(1, layout="ring")

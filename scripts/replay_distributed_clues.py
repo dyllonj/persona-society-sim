@@ -19,9 +19,9 @@ def require(condition, message):
         raise ValueError(message)
 
 
-def verify_episode(path, *, seed, condition, rounds):
+def verify_episode(path, *, seed, condition, rounds, layout="together"):
     from scripts.run_distributed_clues import policy_prompt
-    env = DistributedClues(seed, condition, rounds)
+    env = DistributedClues(seed, condition, rounds, layout=layout)
     require(json.loads((path / "evaluator-only.json").read_text()) == env.audit(), "Evaluator state mismatch")
     summary = json.loads((path / "summary.json").read_text())
     rows = [json.loads(line) for line in (path / "trace.jsonl").read_text().splitlines()]
@@ -130,7 +130,8 @@ def verify_batch(path):
         for replicate in range(config["replicates"]):
             for condition in config["conditions"]:
                 episode = path / f"seed-{seed}-rep-{replicate}-{condition}"
-                count += verify_episode(episode, seed=seed, condition=condition, rounds=config["rounds"])
+                count += verify_episode(episode, seed=seed, condition=condition, rounds=config["rounds"],
+                                        layout=config.get("layout", "together"))
                 rows.append(json.loads((episode / "summary.json").read_text()))
                 require(rows[-1]["prompt_version"] == manifest["prompt_version"], "Episode prompt version mismatch")
                 for line in (episode / "trace.jsonl").read_text().splitlines():

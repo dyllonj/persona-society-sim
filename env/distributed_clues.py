@@ -14,15 +14,21 @@ from env.world import World
 
 
 CONDITIONS = ("communication", "no_communication", "all_clues_single")
+# "together" is the original layout. "scattered" starts each resident in a
+# different room, so sharing first requires finding a co-located peer.
+LAYOUTS = ("together", "scattered")
 
 
 class DistributedClues:
     version = "town-distributed-clues-v1"
 
-    def __init__(self, seed=7, condition="communication", rounds=3):
+    def __init__(self, seed=7, condition="communication", rounds=3, layout="together"):
         if condition not in CONDITIONS or type(rounds) is not int or not 1 <= rounds <= 12:
             raise ValueError("Invalid condition or rounds (1..12 required)")
-        self.seed, self.condition, self.rounds = seed, condition, rounds
+        if layout not in LAYOUTS:
+            raise ValueError("Invalid layout")
+        self.seed, self.condition, self.rounds, self.layout = seed, condition, rounds, layout
+        self.task_version = self.version if layout == "together" else f"{self.version}+scattered-start-v1"
         self.world = World()
         self.agents = ["resident_a", "resident_b", "resident_c"]
         rng = random.Random(seed)
@@ -60,8 +66,13 @@ class DistributedClues:
         self._last_result = {a: None for a in self.agents}
         self.submissions = {}
         self.events = []
-        for agent in self.agents:
-            self.world.add_agent(agent, "town_square")
+        rooms = ["town_square"] * len(self.agents)
+        if layout == "scattered":
+            # Separate stream: clues, answer and turn order match the together layout.
+            rooms = sorted(self.world.locations)
+            random.Random(seed ^ 0x5CA7).shuffle(rooms)
+        for agent, room in zip(self.agents, rooms):
+            self.world.add_agent(agent, room)
         order = self.agents.copy()
         random.Random(seed ^ 0x5A17).shuffle(order)
         self.schedule = [(r, a, "deliberate") for r in range(rounds) for a in order]
@@ -93,6 +104,7 @@ class DistributedClues:
             "known_evidence": [self._clues[e] for e in sorted(self._known[agent])],
             "recent_messages": self._inbox[agent][-3:],
             "last_result": self._last_result[agent],
+            **({"start_layout": "scattered"} if self.layout == "scattered" else {}),
         })
 
     def step(self, agent, action):
@@ -174,7 +186,7 @@ class DistributedClues:
     def summary(self):
         submitted = list(self.submissions.values())
         return {
-            "task_version": self.version, "seed": self.seed, "condition": self.condition,
+            "task_version": self.task_version, "seed": self.seed, "condition": self.condition,
             "complete": self.done, "agents": len(self.agents), "turn_budget": len(self.schedule),
             "turns_executed": self.cursor, "invalid_actions": sum(not e["result"]["valid"] for e in self.events),
             "valid_submissions": len(submitted),
@@ -188,6 +200,6 @@ class DistributedClues:
         }
 
     def audit(self):
-        return copy.deepcopy({"task_version": self.version, "answer": self._answer,
+        return copy.deepcopy({"task_version": self.task_version, "answer": self._answer,
                               "clues": self._clues, "owners": self._owners,
                               "initial_evidence": {a: sorted(e) for a, e in self._initial.items()}})
