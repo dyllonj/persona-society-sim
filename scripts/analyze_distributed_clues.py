@@ -81,6 +81,42 @@ def plurality_vote(row):
     return float(len(leaders) == 1 and hits == 1), hits / len(leaders)
 
 
+def guess_diagnostics(paths):
+    """How residents choose under missing information, using evaluator-only files.
+
+    For each valid submission from a resident holding fewer than all clues, record
+    whether the plan satisfies every clue it holds and its position in the
+    plan-ordered candidate list. Uniform choice among consistent candidates is
+    the chance reference; it is not a policy the model is asked to follow.
+    """
+    positions, consistent, total, chance = defaultdict(int), 0, 0, []
+    for path in paths:
+        for episode in sorted(path.glob("seed-*")):
+            summary = json.loads((episode / "summary.json").read_text())
+            if summary["condition"] == "all_clues_single":
+                continue
+            audit = json.loads((episode / "evaluator-only.json").read_text())
+            trace = [json.loads(line) for line in (episode / "trace.jsonl").read_text().splitlines()]
+            known = {row["agent"]: set(row["known_before"]) for row in trace if row["phase"] == "submit"}
+            for agent, sub in summary["submissions"].items():
+                held = known.get(agent, set())
+                if not sub.get("valid") or len(held) == len(audit["clues"]):
+                    continue
+                candidates = sorted(set.intersection(*(set(audit["clues"][e]["allowed_plans"]) for e in held)),
+                                    key=lambda p: int(p.split("_")[1]))
+                total += 1
+                chance.append(1 / len(candidates))
+                if sub["plan_id"] in candidates:
+                    consistent += 1
+                    positions[candidates.index(sub["plan_id"])] += 1
+    if not total:
+        return None
+    return {"partial_information_submissions": total,
+            "consistent_with_held_clues": consistent / total,
+            "candidate_position_counts": dict(sorted(positions.items())),
+            "uniform_guess_expected_accuracy": statistics.fmean(chance)}
+
+
 def episode_accuracy(row):
     return row["correct_answers"] / row["agents"]
 
@@ -185,7 +221,8 @@ def main():
     args = parser.parse_args()
     rows, identity = load_batches(args.batches)
     result = {"batches": [p.name for p in args.batches], "task_version": identity[0],
-              "prompt_version": identity[1], "model_revision": identity[2], **summarize(rows)}
+              "prompt_version": identity[1], "model_revision": identity[2], **summarize(rows),
+              "partial_information_guessing": guess_diagnostics(args.batches)}
     text = json.dumps(result, indent=2)
     if args.output:
         args.output.write_text(text + "\n")

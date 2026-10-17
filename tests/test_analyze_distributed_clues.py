@@ -85,3 +85,24 @@ def test_plurality_vote_strict_and_tie_break():
     tie = _row(1, "no_communication", 1, submissions={"a": sub("p1", True), "b": sub("p2", False), "c": sub("p3", False)})
     assert plurality_vote(majority) == (1.0, 1.0)
     assert plurality_vote(tie) == (0.0, pytest.approx(1 / 3))
+
+
+def test_guess_diagnostics_reports_candidate_position_and_chance(tmp_path):
+    from scripts.analyze_distributed_clues import guess_diagnostics
+
+    episode = tmp_path / "batch" / "seed-1-rep-0-no_communication"
+    episode.mkdir(parents=True)
+    clues = {"e1": {"allowed_plans": ["plan_2", "plan_4", "plan_6", "plan_8"]},
+             "e2": {"allowed_plans": ["plan_1", "plan_2", "plan_3", "plan_4"]},
+             "e3": {"allowed_plans": ["plan_4", "plan_5", "plan_6", "plan_7"]}}
+    (episode / "evaluator-only.json").write_text(json.dumps({"clues": clues, "answer": "plan_4"}))
+    (episode / "summary.json").write_text(json.dumps({"condition": "no_communication", "submissions": {
+        "a": {"valid": True, "plan_id": "plan_2"}, "b": {"valid": True, "plan_id": "plan_9"}}}))
+    trace = [{"agent": "a", "phase": "submit", "known_before": ["e1"]},
+             {"agent": "b", "phase": "submit", "known_before": ["e1", "e2"]}]
+    (episode / "trace.jsonl").write_text("".join(json.dumps(r) + "\n" for r in trace))
+    result = guess_diagnostics([tmp_path / "batch"])
+    assert result["partial_information_submissions"] == 2
+    assert result["consistent_with_held_clues"] == 0.5
+    assert result["candidate_position_counts"] == {0: 1}
+    assert result["uniform_guess_expected_accuracy"] == pytest.approx((1 / 4 + 1 / 2) / 2)
