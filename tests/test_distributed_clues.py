@@ -280,3 +280,20 @@ def test_compact_final_episode_replays_and_deliberation_is_unchanged(tmp_path):
     assert result["supported_submissions"] == 3
     assert result["prompt_version"] == version
     assert verify_episode(tmp_path / "episode", seed=102, condition="communication", rounds=1) == 6
+
+
+def test_review_packet_distinguishes_observation_from_actual_prompt(tmp_path):
+    class InvalidPolicy:
+        def generate(self, prompt, max_new_tokens, alphas, *, sampling_seed):
+            return GenerationResult(text="null", tokens_in=1, tokens_out=1)
+
+    run_episode(tmp_path / "episode", InvalidPolicy(), seed=1, condition="all_clues_single", rounds=1, replicate=0, prompt_version="phase-v2-intersection-final-v1")
+    packets = json.loads((tmp_path / "episode" / "review-packets.json").read_text())
+    traces = [json.loads(line) for line in (tmp_path / "episode" / "trace.jsonl").read_text().splitlines()]
+    for packet, trace in zip(packets, traces):
+        assert packet["environment_observation"] == trace["observation"]
+        assert packet["policy_prompt"] == trace["prompt"]
+        assert packet["prompt_version"] == "phase-v2-intersection-final-v1"
+        assert "context_available_to_agent" not in packet
+    assert "recent_messages" in packets[-1]["environment_observation"]
+    assert "recent_messages" not in packets[-1]["policy_prompt"]

@@ -84,7 +84,8 @@ def run_episode(out, backend, *, seed, condition, rounds, replicate, prompt_vers
             review_packets.append({
                 "packet_id": f"turn-{env.cursor - 1}", "rubric_version": "collaboration-review-draft-v1",
                 "question": "Given what this resident knew, did this action contribute relevant evidence or seek missing information?",
-                "context_available_to_agent": observation, "action": action,
+                "environment_observation": observation,
+                "policy_prompt": prompt, "prompt_version": prompt_version, "action": action,
                 "action_result": {k: v for k, v in result.items() if k not in ("answer_correct", "supported_success", "evidence_complete")},
                 "rating": None, "reviewer": None,
                 "allowed_ratings": ["yes", "no", "not_applicable", "insufficient_context"],
