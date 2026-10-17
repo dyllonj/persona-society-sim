@@ -31,10 +31,16 @@ def gini(values: List[float]) -> float:
     return (2 * weighted_sum) / (n * total) - (n + 1) / n
 
 
-def polarization(opinions: Dict[str, float]) -> float:
-    if not opinions:
+def satisfaction_variance(satisfaction: Dict[str, float]) -> float:
+    """Population variance of per-agent satisfaction.
+
+    Earlier versions stored this value as ``polarization_modularity``. It is not
+    opinion polarization or graph modularity.
+    """
+
+    if not satisfaction:
         return 0.0
-    values = list(opinions.values())
+    values = list(satisfaction.values())
     mean = sum(values) / len(values)
     variance = sum((val - mean) ** 2 for val in values) / len(values)
     return variance
@@ -62,7 +68,7 @@ def build_metrics_snapshot(
         tick=tick,
         cooperation_rate=cooperation_rate(cooperation_events),
         gini_wealth=gini(list(wealth.values())),
-        polarization_modularity=polarization(opinions),
+        satisfaction_variance=satisfaction_variance(opinions),
         conflicts=conflicts,
         rule_enforcement_cost=enforcement_cost,
         trait_key=trait_key,

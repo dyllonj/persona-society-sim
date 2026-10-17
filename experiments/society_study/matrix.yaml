@@ -81,7 +81,7 @@ analysis:
   outcomes:
     - cooperation_rate
     - gini_wealth
-    - polarization_modularity
+    - satisfaction_variance
     - conflicts_total
     - rule_enforcement_cost_total
     - action_success_rate

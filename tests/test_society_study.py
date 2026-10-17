@@ -267,6 +267,8 @@ def test_aggregate_one_run_collapses_ticks_and_actions_before_inference(tmp_path
 
     assert outcome["analysis_unit"] == "simulation_run"
     assert outcome["cooperation_rate"] == pytest.approx(0.4)
+    assert outcome["satisfaction_variance"] == pytest.approx(0.4)
+    assert "polarization_modularity" not in outcome
     assert outcome["conflicts_total"] == 3
     assert outcome["action_success_rate"] == 0.5
     assert outcome["tokens_total"] == 15

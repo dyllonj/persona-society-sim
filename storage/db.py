@@ -169,6 +169,7 @@ CREATE TABLE IF NOT EXISTS metrics_snapshot (
   action_type_entropy FLOAT,
   population_trait_variance FLOAT,
   variance_vs_mean_ratio FLOAT,
+  satisfaction_variance FLOAT,
   PRIMARY KEY (run_id, tick, trait_key)
 );
 CREATE TABLE IF NOT EXISTS research_fact_log (
@@ -305,6 +306,7 @@ class Database:
                 "action_type_entropy": "FLOAT DEFAULT 0.0",
                 "population_trait_variance": "FLOAT DEFAULT 0.0",
                 "variance_vs_mean_ratio": "FLOAT DEFAULT 0.0",
+                "satisfaction_variance": "FLOAT",
             },
             "behavior_probe_log": {
                 "trait": "TEXT",

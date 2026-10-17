@@ -170,7 +170,6 @@ class MetricsSnapshot(BaseModel):
     tick: int
     cooperation_rate: float
     gini_wealth: float
-    polarization_modularity: float
     conflicts: int
     rule_enforcement_cost: float
     trait_key: Optional[str] = None
@@ -180,6 +179,10 @@ class MetricsSnapshot(BaseModel):
     action_type_entropy: float = 0.0
     population_trait_variance: float = 0.0
     variance_vs_mean_ratio: float = 0.0
+    satisfaction_variance: float = 0.0
+    # Deprecated: legacy rows stored satisfaction variance under this name. New
+    # rows leave it null; read satisfaction_variance instead.
+    polarization_modularity: Optional[float] = None
 
 
 class ResearchFactLog(BaseModel):

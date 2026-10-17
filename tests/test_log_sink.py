@@ -173,3 +173,13 @@ def test_log_sink_flush(tmp_path: Path):
         inference_row = log_sink_module.pq.read_table(inference_files[0]).to_pylist()[0]
         assert inference_row["input_ids"] == "[1, 2]"
         assert inference_row["effective_alphas"] == '{"E": 0.5}'
+
+
+def test_satisfaction_variance_replaces_mislabeled_polarization():
+    from metrics.social_dynamics import build_metrics_snapshot
+
+    snapshot = build_metrics_snapshot(
+        "r1", 0, [], {}, {"agent-1": 0.0, "agent-2": 1.0}, 0, 0.0
+    )
+    assert snapshot.satisfaction_variance == 0.25
+    assert snapshot.polarization_modularity is None

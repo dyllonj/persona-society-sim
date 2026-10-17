@@ -25,7 +25,7 @@ During every tick the runner promotes social interactions into edges:
 - `talk`/`work`/`research`/`gift` actions generate weighted `Edge` records tagged with the interaction kind. (`trade` exists as a function in `env/actions.py` but is disabled — it always returns `success=False` and isn't registered in the action router — so it never produces edges in practice.)
 - Persona bands and active steering buckets are stored with each edge to support homophily/polarization studies.
 
-`metrics/graphs.py` turns those edges into `GraphSnapshot` entries (persisted via `LogSink` to SQL/Parquet), and `metrics/social_dynamics.py` composes tick-level macro measurements (cooperation rates, wealth Gini, polarization, enforcement cost) that land in the new `metrics_snapshot` table. These feeds provide the quantitative backbone for RQ2/RQ4 without having to reconstruct graphs from scratch.
+`metrics/graphs.py` turns those edges into `GraphSnapshot` entries (persisted via `LogSink` to SQL/Parquet), and `metrics/social_dynamics.py` composes tick-level macro measurements (cooperation rates, wealth Gini, satisfaction variance, enforcement cost) that land in the new `metrics_snapshot` table. These feeds provide the quantitative backbone for RQ2/RQ4 without having to reconstruct graphs from scratch.
 
 ## Probe scheduling
 A dedicated ProbeManager now orchestrates evaluation interventions:
