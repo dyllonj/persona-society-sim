@@ -1,0 +1,20 @@
+{
+  "phase-v2": {
+    "cases": 5,
+    "unique_instances": 5,
+    "valid": 5,
+    "supported_correct": 4,
+    "accuracy": 0.8,
+    "tokens_in": 2583,
+    "tokens_out": 183
+  },
+  "intersection-v1": {
+    "cases": 5,
+    "unique_instances": 5,
+    "valid": 5,
+    "supported_correct": 5,
+    "accuracy": 1.0,
+    "tokens_in": 933,
+    "tokens_out": 183
+  }
+}

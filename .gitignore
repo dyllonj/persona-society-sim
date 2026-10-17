@@ -27,8 +27,7 @@ wheels/
 # Virtual environments
 .venv/
 venv/
-ENV/
-env/
+# env/ contains the tracked simulation package; do not hide new task modules.
 
 # PyCharm
 .idea/

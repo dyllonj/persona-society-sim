@@ -1,0 +1,5 @@
+{
+  "verified_model_decisions_and_receipts": 60,
+  "unique_task_instances": 30,
+  "method": "Full prompt reconstruction, receipt reconciliation, deterministic regrading; no model calls"
+}

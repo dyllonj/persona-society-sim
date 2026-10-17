@@ -10,6 +10,8 @@ clarifies why.
 
 ## How-to guides
 
+- [howto-local-collaboration.md](howto-local-collaboration.md) — run the local 8B pilot and inspect inference receipts.
+- [distributed-clues-evaluation.md](distributed-clues-evaluation.md) — private-information town task, communication controls, local runs, and measurement framework.
 - [howto-run-simulations.md](howto-run-simulations.md) — environments, backends, viewing modes, throughput flags.
 - [howto-compute-steering-vectors.md](howto-compute-steering-vectors.md) — extract and evaluate CAA persona vectors.
 - [jacobian-lens-phase-two.md](jacobian-lens-phase-two.md) — run the seven-component trait report, paired live factorial, and replicated society study.
@@ -41,3 +43,5 @@ clarifies why.
 - [../AGENTS.md](../AGENTS.md) — agent cognitive loop and telemetry, from the agent-instrumentation angle.
 - [../INSTALL.md](../INSTALL.md) — installation.
 - [../OPTIMIZATION_GUIDE.md](../OPTIMIZATION_GUIDE.md) — performance tuning.
+
+- [Local V1 results and single-agent verification](local-v1-results.md)
