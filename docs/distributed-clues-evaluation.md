@@ -78,3 +78,16 @@ This run is tagged `development`. No training or RL updates happen. A later trai
 ## Engineering validation
 
 Tests check complementary information over 500 generated instances, private observations, blocked sharing/retrieval/citation of unknown evidence, no-communication delivery and location side channels, co-location, report grading without feedback leakage, malformed action handling, inference seed separation, and scripted-policy solvability. Scripted policies are engineering fixtures, never model-performance evidence.
+
+## Versioned final-turn hardening
+
+The default remains `phase-specific-v2` to preserve earlier runs. Select the compact final-turn format explicitly:
+
+```sh
+python scripts/run_distributed_clues.py --output artifacts/clues-compact-001 --seeds 200 201 202 --replicates 1 --rounds 3 --prompt-version phase-v2-intersection-final-v1
+python scripts/replay_distributed_clues.py artifacts/clues-compact-001
+```
+
+This schedules nine episodes and 84 calls. Deliberation prompts, action budgets, task generation and scoring stay the same as phase-specific-v2. Only final-turn rendering changes. With all three clues, the final prompt is byte-for-byte the renderer tested in the [single-agent diagnostic](local-v1-results.md). With fewer clues it explicitly marks missing constraints as unknown and permits an uncertain selection among the available candidates. It never fills in missing clues or computes a plan for the model. Final prompts omit conversation history and retain the structured evidence the agent actually received; this tests structured evidence aggregation, not arbitrary dialogue understanding.
+
+Both prompt versions remain supported by replay. The selected version is stored in the batch manifest and each episode summary; mismatches are rejected. The development diagnostic's `phase-v2` label refers to the original `phase-specific-v2` runner prompt, while `intersection-v1` refers to its all-clues compact final-turn renderer.

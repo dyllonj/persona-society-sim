@@ -23,13 +23,14 @@ def verify_episode(path, *, seed, condition, rounds):
     from scripts.run_distributed_clues import policy_prompt
     env = DistributedClues(seed, condition, rounds)
     require(json.loads((path / "evaluator-only.json").read_text()) == env.audit(), "Evaluator state mismatch")
+    summary = json.loads((path / "summary.json").read_text())
     rows = [json.loads(line) for line in (path / "trace.jsonl").read_text().splitlines()]
     for row in rows:
         require(not env.done, "Extra turn after episode completion")
         require(row["agent"] == env.current_agent, "Actor mismatch")
         require(row["observation"] == env.observe(env.current_agent), "Observation mismatch or private-information leak")
         require(row["prompt_sha256"] == hashlib.sha256(row["prompt"].encode()).hexdigest(), "Prompt hash mismatch")
-        require(row["prompt"] == policy_prompt(row["observation"]), "Full policy prompt mismatch")
+        require(row["prompt"] == policy_prompt(row["observation"], summary["prompt_version"]), "Full policy prompt mismatch")
         try:
             parsed = strict_json(row["raw_completion"])
         except (ValueError, TypeError, RecursionError):
@@ -130,6 +131,7 @@ def verify_batch(path):
                 episode = path / f"seed-{seed}-rep-{replicate}-{condition}"
                 count += verify_episode(episode, seed=seed, condition=condition, rounds=config["rounds"])
                 rows.append(json.loads((episode / "summary.json").read_text()))
+                require(rows[-1]["prompt_version"] == manifest["prompt_version"], "Episode prompt version mismatch")
                 for line in (episode / "trace.jsonl").read_text().splitlines():
                     row = json.loads(line)
                     seed_text = f"{seed}:{replicate}:{row['round']}:{row['agent']}:{row['phase']}"

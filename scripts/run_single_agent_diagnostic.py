@@ -18,19 +18,7 @@ from evaluation.personality import strict_json
 from scripts.run_distributed_clues import policy_prompt
 
 
-def intersection_prompt(observation):
-    # Render only available evidence. Never compute or insert the solution.
-    lists = "\n".join(f"{c['id']} ({c['subject']}): {', '.join(c['allowed_plans'])}"
-                      for c in observation["known_evidence"])
-    return (
-        "Choose a meeting plan that is allowed by EVERY constraint below. "
-        "The answer must occur in ALL THREE lists, not merely in one or two. "
-        "Find their set intersection and check your selected plan against each list. "
-        "Exactly one plan is common to all three lists. All evidence is available here; no other agent is needed.\n"
-        + lists
-        + '\nReturn ONLY JSON with this structure: {"action":"submit_report","params":{"plan_id":"plan ID","evidence_ids":["all three evidence IDs"]}}. '
-        "Use the actual IDs above."
-    )
+from evaluation.meeting_prompts import intersection_prompt
 
 
 def run_case(backend, seed, replicate, mode):
@@ -71,7 +59,7 @@ def main():
     backend = VLLMBackend("local-qwen3-8b", model_revision="545dc4251c05440727734bcd94334791f6ab0192",
                           receipt_dir=out / "receipts", temperature=0.2, top_p=0.9)
     files = [Path(__file__), ROOT / "env/distributed_clues.py", ROOT / "agents/vllm_backend.py",
-             ROOT / "evaluation/personality.py", ROOT / "scripts/run_distributed_clues.py"]
+             ROOT / "evaluation/personality.py", ROOT / "evaluation/meeting_prompts.py", ROOT / "scripts/run_distributed_clues.py"]
     manifest = {"status": "running", "real_inference": True, "kind": "single-agent-final-decision-diagnostic",
                 "config": {**vars(args), "output": str(out)}, "model_revision": backend.model_revision,
                 "source_hashes": {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in files},

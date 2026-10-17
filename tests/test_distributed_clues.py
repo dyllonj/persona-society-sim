@@ -234,3 +234,49 @@ def test_single_agent_diagnostic_counts_invalid_model_output():
     assert result["fixture_wait_turns"] == 1
     assert result["model_calls"] == 1
     assert len(result["observation"]["known_evidence"]) == 3
+
+
+def test_compact_final_preserves_verified_prompt_and_private_information():
+    from evaluation.meeting_prompts import intersection_prompt
+    version = "phase-v2-intersection-final-v1"
+    for condition in ("all_clues_single", "no_communication"):
+        env = DistributedClues(101, condition, rounds=1)
+        while env.schedule[env.cursor][2] != "submit":
+            env.step(env.current_agent, {"action": "wait", "params": {}})
+        obs = env.observe(env.current_agent)
+        prompt = policy_prompt(obs, version)
+        if condition == "all_clues_single":
+            assert prompt == intersection_prompt(obs)
+        else:
+            assert "1 of the three constraints" in prompt
+            assert "Exactly one" not in prompt
+            hidden = set(env.audit()["clues"]) - {c["id"] for c in obs["known_evidence"]}
+            assert all(clue not in prompt for clue in hidden)
+    with pytest.raises(ValueError, match="Unsupported"):
+        policy_prompt(obs, "unknown")
+
+
+def test_compact_final_episode_replays_and_deliberation_is_unchanged(tmp_path):
+    import re
+    from scripts.replay_distributed_clues import verify_episode
+    version = "phase-v2-intersection-final-v1"
+    env = DistributedClues(102)
+    obs = env.observe(env.current_agent)
+    assert policy_prompt(obs, version) == policy_prompt(obs)
+
+    class ScriptedPolicy:
+        def generate(self, prompt, max_new_tokens, alphas, *, sampling_seed):
+            if "\nObservation:\n" in prompt:
+                observation = json.loads(prompt.split("\nObservation:\n", 1)[1])
+                action = {"action": "share", "params": {"evidence_ids": [c["id"] for c in observation["known_evidence"]], "message": ""}}
+            else:
+                lines = re.findall(r"^(e[0-9a-f]{4}) \([^\n]+\): ([^\n]+)$", prompt, re.M)
+                assert len(lines) == 3
+                choices = set.intersection(*(set(plans.split(", ")) for _, plans in lines))
+                action = {"action": "submit_report", "params": {"plan_id": sorted(choices)[0], "evidence_ids": [key for key, _ in lines]}}
+            return GenerationResult(text=json.dumps(action), tokens_in=100, tokens_out=30)
+
+    result = run_episode(tmp_path / "episode", ScriptedPolicy(), seed=102, condition="communication", rounds=1, replicate=0, prompt_version=version)
+    assert result["supported_submissions"] == 3
+    assert result["prompt_version"] == version
+    assert verify_episode(tmp_path / "episode", seed=102, condition="communication", rounds=1) == 6

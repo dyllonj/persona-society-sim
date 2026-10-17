@@ -20,8 +20,14 @@ from env.distributed_clues import CONDITIONS, DistributedClues
 from evaluation.personality import strict_json
 
 PROMPT_VERSION = "phase-specific-v2"
+PROMPT_VERSIONS = (PROMPT_VERSION, "phase-v2-intersection-final-v1")
 
-def policy_prompt(observation):
+def policy_prompt(observation, prompt_version=PROMPT_VERSION):
+    if prompt_version not in PROMPT_VERSIONS:
+        raise ValueError("Unsupported policy prompt version")
+    if prompt_version == "phase-v2-intersection-final-v1" and observation["phase"] == "submit":
+        from evaluation.meeting_prompts import final_decision_prompt
+        return final_decision_prompt(observation)
     if observation["phase"] == "submit":
         instruction = (
             "FINAL TURN: submit your meeting decision now. The ONLY allowed action is submit_report. "
@@ -48,7 +54,7 @@ def policy_prompt(observation):
     )
 
 
-def run_episode(out, backend, *, seed, condition, rounds, replicate):
+def run_episode(out, backend, *, seed, condition, rounds, replicate, prompt_version=PROMPT_VERSION):
     out.mkdir(parents=True, exist_ok=False)
     env = DistributedClues(seed=seed, condition=condition, rounds=rounds)
     (out / "evaluator-only.json").write_text(json.dumps(env.audit(), indent=2))
@@ -59,7 +65,7 @@ def run_episode(out, backend, *, seed, condition, rounds, replicate):
         while not env.done:
             agent = env.current_agent
             observation = env.observe(agent)
-            prompt = policy_prompt(observation)
+            prompt = policy_prompt(observation, prompt_version)
             # Inference replication varies separately from the task instance.
             # Match round/agent seeds across communication conditions.
             round_index, _, phase = env.schedule[env.cursor]
@@ -93,7 +99,7 @@ def run_episode(out, backend, *, seed, condition, rounds, replicate):
             }, sort_keys=True) + "\n")
             trace.flush()
     summary = {**env.summary(), "replicate": replicate,
-               "prompt_version": PROMPT_VERSION,
+               "prompt_version": prompt_version,
                "tokens_in": tokens_in, "tokens_out": tokens_out,
                "wall_seconds": time.monotonic() - start,
                "submissions": env.submissions}
@@ -138,6 +144,7 @@ def main():
     parser.add_argument("--seeds", type=int, nargs="+", default=[7, 8, 9])
     parser.add_argument("--replicates", type=int, default=2)
     parser.add_argument("--rounds", type=int, default=3)
+    parser.add_argument("--prompt-version", choices=PROMPT_VERSIONS, default=PROMPT_VERSION)
     parser.add_argument("--conditions", nargs="+", choices=CONDITIONS, default=list(CONDITIONS))
     args = parser.parse_args()
     if not 1 <= args.replicates <= 5 or not 1 <= args.rounds <= 12 or not 1 <= len(args.seeds) <= 20:
@@ -155,7 +162,7 @@ def main():
     source_files = subprocess.check_output(["git", "ls-files", "--cached", "--others", "--exclude-standard"], cwd=ROOT, text=True).splitlines()
     manifest = {
         "status": "running", "real_inference": True, "task_version": DistributedClues.version,
-        "prompt_version": PROMPT_VERSION,
+        "prompt_version": args.prompt_version,
         "task_family": "meeting_constraint_intersection", "split": "development",
         "expert_review": "not_performed",
         "config": {**vars(args), "output": str(out)}, "model_revision": backend.model_revision,
@@ -177,7 +184,7 @@ def main():
                 for condition in args.conditions:
                     episode = out / f"seed-{seed}-rep-{replicate}-{condition}"
                     row = run_episode(episode, backend, seed=seed, condition=condition,
-                                      rounds=args.rounds, replicate=replicate)
+                                      rounds=args.rounds, replicate=replicate, prompt_version=args.prompt_version)
                     rows.append(row)
                     with (out / "episodes.jsonl").open("a") as handle:
                         handle.write(json.dumps(row) + "\n")

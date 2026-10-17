@@ -44,3 +44,5 @@ The primary result is not the proportion of successful action handlers. Inspect 
 The opt-in [distributed-clue task](distributed-clues-evaluation.md) now adds private information, audited communication restrictions, paired task seeds, separate inference replicates and answer-based grading. It has a dedicated runner and should not be mixed with the legacy pilot's scores. Memory controls, fixed-partner comparisons, full world checkpoint/resume, repair of legacy metric labels, and confirmatory statistical analysis remain work to do.
 
 V2 hosted adapters and V3 persona controls are separate tracks. Jev integration, human calibration and RL training are not implemented by this pilot.
+
+The [single-agent verification report](local-v1-results.md) records the later 60-decision diagnostic and portable raw traces. The newer distributed-clue runner supports an opt-in compact final-turn prompt, retaining the old prompt version for comparison and replay. Its smaller-context server flags are documented in the [distributed-clue guide](distributed-clues-evaluation.md).
