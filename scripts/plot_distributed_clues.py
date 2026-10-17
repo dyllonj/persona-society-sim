@@ -33,7 +33,7 @@ STYLE = """
   .title { font-size: 21px; }
   .sub { font-size: 14px; fill: #666; }
   .label { font-size: 15px; }
-  .value { font-size: 14px; fill: #111; }
+  .value { font-size: 14px; fill: #111; paint-order: stroke; stroke: #fffff8; stroke-width: 5px; stroke-linejoin: round; }
   .note { font-size: 13px; fill: #666; }
   .tick { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 11px; fill: #777; }
   .axis { stroke: #bbb; stroke-width: 1; }
@@ -48,6 +48,7 @@ STYLE = """
   @media (prefers-color-scheme: dark) {
     .bg { fill: #151515; }
     .t, .value { fill: #ddd; }
+    .value { stroke: #151515; }
     .sub, .note { fill: #999; }
     .tick { fill: #888; }
     .axis { stroke: #555; }
@@ -104,7 +105,7 @@ def strip_rows(rows, top, row_height, reference=None):
     if reference is not None:
         value, text = reference
         body.append(f'<line class="ref" x1="{x_of(value):.1f}" x2="{x_of(value):.1f}" y1="{top:.1f}" y2="{bottom:.1f}"/>')
-        body.append(f'<text class="t note" x="{x_of(value) + 6:.1f}" y="{top + 12:.1f}">{escape(text)}</text>')
+        body.append(f'<text class="t note" x="{x_of(value) + 6:.1f}" y="{bottom - 2:.1f}">{escape(text)}</text>')
     body.append(f'<line class="axis" x1="{x_of(0):.1f}" x2="{x_of(1):.1f}" y1="{bottom + 8:.1f}" y2="{bottom + 8:.1f}"/>')
     for tick in (0, 0.25, 0.5, 0.75, 1):
         body.append(f'<text class="tick" x="{x_of(tick):.1f}" y="{bottom + 26:.1f}" text-anchor="middle">{pct(tick)}</text>')

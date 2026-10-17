@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="350" viewBox="0 0 900 350" role="img" aria-labelledby="title desc">
+<title id="title">Without the missing clues, agents take the first listed candidate 78% of the time</title>
+<desc id="desc">Horizontal bars: share of partial-information answers by candidate position. 1st listed candidate 78%, 2nd 22%, 3rd 1%, 4th 0%. Uniform reference 25%.</desc>
+<style>
+  .bg { fill: #fffff8; }
+  .t { font-family: "ET Book", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif; fill: #111; }
+  .title { font-size: 21px; }
+  .sub { font-size: 14px; fill: #666; }
+  .label { font-size: 15px; }
+  .value { font-size: 14px; fill: #111; paint-order: stroke; stroke: #fffff8; stroke-width: 5px; stroke-linejoin: round; }
+  .note { font-size: 13px; fill: #666; }
+  .tick { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 11px; fill: #777; }
+  .axis { stroke: #bbb; stroke-width: 1; }
+  .ref { stroke: #999; stroke-width: 1; stroke-dasharray: 4 4; }
+  .dot { fill: #666; fill-opacity: 0.55; }
+  .dot-hi { fill: #c0392b; fill-opacity: 0.6; }
+  .mean { stroke: #111; stroke-width: 2.5; }
+  .mean-hi { stroke: #c0392b; stroke-width: 2.5; }
+  .ci { stroke: #111; stroke-width: 1.2; }
+  .bar { fill: #7a7a7a; }
+  .bar-hi { fill: #c0392b; }
+  @media (prefers-color-scheme: dark) {
+    .bg { fill: #151515; }
+    .t, .value { fill: #ddd; }
+    .value { stroke: #151515; }
+    .sub, .note { fill: #999; }
+    .tick { fill: #888; }
+    .axis { stroke: #555; }
+    .ref { stroke: #777; }
+    .dot { fill: #999; }
+    .dot-hi { fill: #fc8d62; }
+    .mean, .ci { stroke: #ddd; }
+    .mean-hi { stroke: #fc8d62; }
+    .bar { fill: #888; }
+    .bar-hi { fill: #fc8d62; }
+  }
+</style>
+<rect class="bg" width="900" height="350"/>
+<text class="t title" x="24" y="38">Without the missing clues, agents take the first listed candidate 78% of the time</text>
+<text class="t sub" x="24" y="62">188 final answers given with partial information; 100% satisfied every clue the agent held</text>
+<text class="t label" x="234" y="122.0" text-anchor="end">1st listed candidate</text>
+<rect class="bar-hi" x="250" y="100" width="572.7" height="34"/>
+<text class="t value" x="830.7" y="122.0">78%</text>
+<text class="t label" x="234" y="174.0" text-anchor="end">2nd</text>
+<rect class="bar" x="250" y="152" width="160.8" height="34"/>
+<text class="t value" x="418.8" y="174.0">22%</text>
+<text class="t label" x="234" y="226.0" text-anchor="end">3rd</text>
+<rect class="bar" x="250" y="204" width="3.9" height="34"/>
+<text class="t value" x="261.9" y="226.0">1%</text>
+<text class="t label" x="234" y="278.0" text-anchor="end">4th</text>
+<text class="t value" x="258.0" y="278.0">0%</text>
+<line class="ref" x1="434.4" x2="434.4" y1="92" y2="294"/>
+<text class="t note" x="440.4" y="86">uniform guess among 4 candidates: 25% each</text>
+<text class="t note" x="24" y="330.0">Plans are listed in ID order. Position bias, not rule-breaking, explains below-chance accuracy without communication.</text>
+</svg>

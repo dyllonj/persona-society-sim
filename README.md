@@ -8,6 +8,18 @@ Social town simulator where LLM agents live, converse, collaborate, and produce 
 
 The [distributed-clue task](docs/distributed-clues-evaluation.md) splits three private constraints among residents of the original town. Agents have to pool evidence to identify the one meeting plan that satisfies every constraint. Paired conditions on the same task instance vary communication, start layout (`--layout scattered`), and dropout (`--disruption dropout`). Persona steering is off in V1. All runs use local 4-bit models on a 16 GB Apple M4, with no paid inference.
 
+### Results so far
+
+Across 30 fresh task instances (Qwen3-8B 4-bit, 2 inference replicates each, all replay-verified), communicating agents answered every instance correctly. Isolated agents with the same private clues answered 16% correctly. The paired difference is **+84 points (95% CI 74–94, resampling task instances)**, and communication won 29 of 30 instances, tying the other. A majority vote over the isolated agents' answers reached only 15%, so the gain comes from sharing information, not from aggregating guesses.
+
+![Sharing evidence lifts accuracy from 16% to 100%](docs/assets/fig-communication-effect.svg)
+
+Isolated agents never broke the rules: every answer satisfied every clue they held. They still scored below the 26% uniform-guess reference because they nearly always chose the first plan listed. This position bias is a measurable model behavior to control for in future task designs, especially when no-communication accuracy serves as a baseline.
+
+![Without the missing clues, agents take the first listed candidate 78% of the time](docs/assets/fig-partial-information-guesses.svg)
+
+With everyone starting in the same room, communication hits the ceiling, so this layout cannot separate coordination strategies. The scattered-start, dropout, and second-model studies in the results doc test the regimes where coordination can fail.
+
 - **Results:** [docs/local-v1-results.md](docs/local-v1-results.md). Completed batches, confidence intervals across task instances, failure breakdowns, and limitations.
 - **Traces:** [dyllonj/persona-society-swarm-local](https://huggingface.co/datasets/dyllonj/persona-society-swarm-local). Every prompt, raw completion, action, and inference receipt from replay-verified batches.
 

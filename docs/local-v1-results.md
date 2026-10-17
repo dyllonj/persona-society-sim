@@ -51,3 +51,32 @@ The batch's unique responses used 35,833 input tokens and 2,865 output tokens. P
 The enabled condition got every resident all three clues. Raw answer accuracy increased from 1/9 to 9/9 across these three cases. Complete-support gains are partly built into the information restriction, so interpret them alongside raw accuracy. More task families, cases, inference replicates and partner configurations remain necessary before making general collaboration claims.
 
 [Complete comparison, traces, receipts and review packets](../artifacts/local-v1/distributed-clues-003/) are published. Portable export changes only local path metadata and review-packet context labeling; inference requests, responses, trace rows and scores are unchanged. The manifest identifies the archived source commit whose file hashes match the launch-time source. Review packets are unrated and do not provide an ethics assessment. See [the plain-language model journey and scoring rubric](collaboration-walkthrough.md).
+
+## Powered communication comparison: 30 fresh instances
+
+This replaces the three-case check with an estimate. The setup has 30 new task instances (seeds 300–329, never used for development) and two inference replicates per instance. It uses the compact final-turn prompt (`phase-v2-intersection-final-v1`), the same model and serving settings as above, and all three conditions. The runner caps a batch at 20 seeds, so the study ran as two complete batches of 15 instances. Both passed deterministic replay. Each batch covers 90 episodes and 840 decisions, with 812 unique inference receipts and 28 identical-request reuses. Neither batch had a failed or excluded episode.
+
+| Condition | Answer accuracy (95% CI by instance) | Fully supported | Invalid turns | Input / output tokens |
+| --- | --- | --- | --- | --- |
+| Communication | **180/180, 100%** | 172/180 | 1.0% | 353,913 / 31,077 |
+| No communication | **28/180, 15.6%** (6–26%) | 0/180 by construction | 0% | 268,932 / 19,870 |
+| Plurality vote over no-communication answers | 15.0% of episodes | — | — | no extra calls |
+| Single agent, all clues | 60/60, 100% | 60/60 | 0% | 104,652 / 10,307 |
+
+- **Paired effect.** Communication minus no communication averaged **+84 points (95% CI 74–94)**. Communication won 29 of 30 instances and tied the other. The confidence interval resamples task instances, after averaging over residents and replicates within each instance.
+- **Talking versus voting.** A fixed plurality vote over the isolated answers adds no inference and reached 15%. That is 85 points below communication (CI 72–97). The gain comes from moving information, not from pooling guesses.
+- **Where communication failed.** No resident answered incorrectly despite holding every clue, and no answer was invalid. In 8 of 180 communication submissions, the resident answered correctly without holding all three clues. Instruction failures were 1% of turns, and every one consumed its turn without a fallback.
+- **How isolated agents guess.** All 188 partial-information answers satisfied every clue the resident held. Across both conditions, 78% chose the first listed candidate, 22% the second, and one chose the third. Uniform guessing among consistent candidates would score 26%; isolated agents scored 16%. This is a position preference in the model, not a generator artifact. Over 2,000 seeds the answer's position is uniform. A no-communication baseline therefore reflects how each instance happens to order its candidates. Compare it with the uniform-guess reference, not with zero.
+- **Variance.** For no-communication accuracy, 91% of the variance is between task instances (0.079), not between inference replicates of the same instance (0.007). Precision improves much faster with more instances than with more replicates. Use that ratio to size a confirmatory study.
+- **Ceiling.** Communication is 100% on every instance, so the together layout cannot distinguish coordination strategies, roles, or personalities. The scattered-start and dropout variants exist to create that headroom.
+
+Figures: [communication effect](assets/fig-communication-effect.svg), [partial-information guesses](assets/fig-partial-information-guesses.svg). Traces are in [dyllonj/persona-society-swarm-local](https://huggingface.co/datasets/dyllonj/persona-society-swarm-local) as `batches/clues-tier1-power-a` and `-b`.
+
+```sh
+python scripts/run_distributed_clues.py --output artifacts/clues-tier1-power-a --seeds $(seq 300 314) --replicates 2 --rounds 3 --prompt-version phase-v2-intersection-final-v1
+python scripts/run_distributed_clues.py --output artifacts/clues-tier1-power-b --seeds $(seq 315 329) --replicates 2 --rounds 3 --prompt-version phase-v2-intersection-final-v1
+python scripts/replay_distributed_clues.py artifacts/clues-tier1-power-a   # and -b
+python scripts/analyze_distributed_clues.py artifacts/clues-tier1-power-a artifacts/clues-tier1-power-b
+```
+
+Batch a launched from commit `b64868b`. Batch b launched from `6247181`, which changed only the metric naming and touched no distributed-clue code. Each manifest records its own source hashes. Wall time was 43 and 45 minutes.
