@@ -158,3 +158,34 @@ The dropped resident's round-0 speaking position decides whether its clue surviv
 A resident that speaks first opens with an evidence-free question (28 of 30 episodes), as in the main study. When that resident is the one who drops out, its clue never moves. The two remaining candidates then come down to the first-listed preference. The question-first convention costs nothing while every teammate stays available, but it turns a single unavailable teammate into lost information.
 
 This is an observed association across speaking positions within one model and task. Speaking order is assigned by the seed rather than chosen by the agent, which supports reading it as the mechanism. Still, no intervention on the opener was run. A direct test would add a prompt or protocol variant that requires sharing one's own clue first and repeat the dropout runs.
+
+## More time does not lead to exploration
+
+The scattered layout on seeds 300–314 (communication, one replicate each) was repeated with different numbers of deliberation rounds. All batches passed replay.
+
+| Rounds | Answer accuracy (95% CI by instance) | Moves | Evidence deliveries |
+| --- | --- | --- | --- |
+| 1 (`clues-scattered-rounds1-001`) | 4/45, 9% (0–20%) | 0 of 45 actions | 0 |
+| 3 (`clues-scattered-001`, 2 replicates) | 8/90, 9% (0–21%) | 0 of 270 | 0 |
+| 5 (`clues-scattered-rounds5-001`) | 3/45, 7% (0–18%) | 0 of 225 | 0 |
+| 3, with dropout (`clues-dropout-scattered-001`) | 2/30, 7% | 0 of 105 | 0 |
+
+Across 645 deliberation actions in scattered rooms, Qwen3-8B chose `share` every time and never chose `move`. Five rounds of unanswered questions and `delivered_to: []` feedback did not lead any resident to look for a teammate. The coordination failure is not caused by too little time.
+
+## Second model: Qwen2.5-7B-Instruct 4-bit
+
+The same instances (seeds 300–314, one replicate) and settings were run with `mlx-community/Qwen2.5-7B-Instruct-4bit` at revision `c26a38f`, served the same way (`--model-profile qwen2.5-7b`). Both batches passed replay. Strict scoring is the official result. The content column is a post-hoc diagnostic (`rejected_final_answer_content` in the analyzer). It counts rejected final turns whose embedded JSON names the correct plan and cites only evidence the resident held.
+
+| Condition | Official answer accuracy (strict) | Plus rejected answers with correct content | Invalid turns |
+| --- | --- | --- | --- |
+| Single agent, all clues | **0/15** | 15/15 | 25% (every final turn) |
+| Communication, together | 12/45, 27% | 27/45, 60% | 10% |
+| No communication | 16/45, 36% | 16/45, 36% | 0% |
+| Communication, scattered | 16/45, 36% | 16/45, 36% | 0% |
+
+- **Format failure tracks information.** Qwen2.5-7B wrapped its final JSON in Markdown code fences when it held all three clues, and those answers named the correct plan. With missing clues it returned bare JSON. Strict scoring therefore makes communication look harmful: −9 points against no communication (CI −27 to +9). On content, communication helps. A cross-model comparison must report format compliance separately from task success, or this artifact can reverse the conclusion.
+- **Less pooling.** Mean evidence coverage with communication was 76%, against 99% for Qwen3-8B on the same instances.
+- **No first-listed preference.** Qwen2.5-7B's partial-information choices spread across candidate positions (30, 16, 26 and 2 choices for the first through fourth). Its no-communication accuracy (36%) is close to the uniform-guess reference (34%). The position bias reported above is specific to Qwen3-8B.
+- **Same coordination failure.** In scattered rooms, Qwen2.5-7B also shared in all 135 deliberation turns, never moved, and delivered nothing. Its five `move` attempts in the together layout all named the room it was already in.
+
+The official strict protocol, including the rule that invalid output consumes the turn, was set before these runs and is unchanged. The content diagnostic is reported because it changes how the strict score should be read, not to replace it.
