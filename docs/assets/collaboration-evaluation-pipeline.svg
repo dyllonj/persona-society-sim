@@ -1,0 +1,149 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="860" viewBox="0 0 1800 860" role="img" aria-labelledby="title desc">
+  <title id="title">Swarm collaboration evaluation pipeline</title>
+  <desc id="desc">Five stages: a generated task instance splits three private constraints across residents; paired conditions vary communication, start layout and dropout on the same instance; local models act through logged inference receipts with no planner fallback; deterministic replay verifies every batch; instance-level analysis reports accuracy, failure types and variance before replay-verified batches are published.</desc>
+
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#172b3a"/>
+    </marker>
+    <style>
+      .text { font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #172b3a; }
+      .title { font-size: 38px; font-weight: 600; letter-spacing: -0.8px; }
+      .subtitle { font-size: 19px; font-weight: 400; fill: #536675; }
+      .eyebrow { font-size: 13px; font-weight: 600; letter-spacing: 2.2px; fill: #1c7399; }
+      .stage-title { font-size: 24px; font-weight: 600; letter-spacing: -0.35px; }
+      .section { font-size: 13px; font-weight: 600; letter-spacing: 1.65px; fill: #526674; }
+      .node-title { font-size: 17px; font-weight: 600; }
+      .body { font-size: 15.5px; font-weight: 400; fill: #405563; }
+      .small { font-size: 14px; font-weight: 500; fill: #5c6f7b; }
+      .gate { font-size: 12px; font-weight: 600; letter-spacing: 1.5px; fill: #1c7399; }
+      .panel { fill: #ffffff; stroke: #1c7399; stroke-width: 2.4; }
+      .card { fill: #ffffff; fill-opacity: 0.78; stroke: #8ca2af; stroke-width: 1.5; }
+      .card-blue { fill: #d5ebfb; stroke: #1898d0; stroke-width: 1.5; }
+      .card-green { fill: #dff2e5; stroke: #57a06a; stroke-width: 1.5; }
+      .card-amber { fill: #fff0c9; stroke: #d4a235; stroke-width: 1.5; }
+      .ink-line { stroke: #172b3a; stroke-width: 2.5; fill: none; stroke-linecap: round; }
+    </style>
+  </defs>
+
+  <rect width="1800" height="860" fill="#f6f9fb"/>
+
+  <text class="text eyebrow" x="60" y="62">EVALUATION DESIGN · V1 COLLABORATION</text>
+  <text class="text title" x="60" y="108">Swarm collaboration evaluation pipeline</text>
+  <text class="text subtitle" x="60" y="142">Every condition shares the same generated task instance; only replay-verified batches are analyzed or published.</text>
+
+  <!-- Stage 1 -->
+  <rect class="panel" x="60" y="180" width="300" height="600" rx="18"/>
+  <text class="text section" x="84" y="214">STEP 1</text>
+  <text class="text stage-title" x="84" y="246">Task instance</text>
+  <rect class="card" x="84" y="270" width="252" height="168" rx="12"/>
+  <text class="text node-title" x="102" y="298">Environment seed</text>
+  <text class="text body" x="102" y="326">8 candidate meeting plans</text>
+  <text class="text body" x="102" y="350">3 private constraints</text>
+  <text class="text body" x="102" y="374">1 clue → 4 plans</text>
+  <text class="text body" x="102" y="398">2 clues → 2 plans</text>
+  <text class="text body" x="102" y="422">3 clues → exactly 1</text>
+  <rect class="card-amber" x="84" y="458" width="252" height="120" rx="12"/>
+  <text class="text node-title" x="102" y="486">evaluator-only.json</text>
+  <text class="text body" x="102" y="514">Answer and every clue.</text>
+  <text class="text body" x="102" y="538">Never enters a policy</text>
+  <text class="text body" x="102" y="562">prompt.</text>
+  <text class="text small" x="84" y="620">Owners, plan mapping and turn</text>
+  <text class="text small" x="84" y="642">order come from the seed;</text>
+  <text class="text small" x="84" y="664">labels do not reveal clues.</text>
+  <text class="text gate" x="84" y="752">GENERATED · HIDDEN ANSWER</text>
+
+  <!-- Stage 2 -->
+  <rect class="panel" x="405" y="180" width="300" height="600" rx="18"/>
+  <text class="text section" x="429" y="214">STEP 2</text>
+  <text class="text stage-title" x="429" y="246">Paired conditions</text>
+  <rect class="card-blue" x="429" y="270" width="252" height="62" rx="12"/>
+  <text class="text node-title" x="447" y="296">communication</text>
+  <text class="text small" x="447" y="318">share to co-located residents</text>
+  <rect class="card" x="429" y="344" width="252" height="62" rx="12"/>
+  <text class="text node-title" x="447" y="370">no_communication</text>
+  <text class="text small" x="447" y="392">same clues, nothing delivered</text>
+  <rect class="card" x="429" y="418" width="252" height="62" rx="12"/>
+  <text class="text node-title" x="447" y="444">all_clues_single</text>
+  <text class="text small" x="447" y="466">solvability reference only</text>
+  <text class="text section" x="429" y="516">VERSIONED VARIANTS</text>
+  <rect class="card-green" x="429" y="530" width="252" height="62" rx="12"/>
+  <text class="text node-title" x="447" y="556">+scattered-start-v1</text>
+  <text class="text small" x="447" y="578">find a peer before sharing</text>
+  <rect class="card-green" x="429" y="604" width="252" height="62" rx="12"/>
+  <text class="text node-title" x="447" y="630">+dropout-after-round0-v1</text>
+  <text class="text small" x="447" y="652">one resident goes silent</text>
+  <text class="text gate" x="429" y="752">SAME SEED ACROSS ARMS</text>
+
+  <!-- Stage 3 -->
+  <rect class="panel" x="750" y="180" width="300" height="600" rx="18"/>
+  <text class="text section" x="774" y="214">STEP 3</text>
+  <text class="text stage-title" x="774" y="246">Local inference</text>
+  <rect class="card" x="774" y="270" width="252" height="144" rx="12"/>
+  <text class="text node-title" x="792" y="298">Pinned 4-bit models</text>
+  <text class="text body" x="792" y="326">Qwen3-8B · Qwen2.5-7B</text>
+  <text class="text body" x="792" y="350">vLLM Metal, loopback only</text>
+  <text class="text body" x="792" y="374">temp 0.2 · top-p 0.9</text>
+  <text class="text body" x="792" y="398">thinking disabled</text>
+  <rect class="card" x="774" y="430" width="252" height="144" rx="12"/>
+  <text class="text node-title" x="792" y="458">Every turn logged</text>
+  <text class="text body" x="792" y="486">observation · exact prompt</text>
+  <text class="text body" x="792" y="510">raw completion · action</text>
+  <text class="text body" x="792" y="534">request/response receipt</text>
+  <text class="text body" x="792" y="558">derived sampling seed</text>
+  <text class="text small" x="774" y="616">Invalid output consumes the</text>
+  <text class="text small" x="774" y="638">turn. No planner fallback;</text>
+  <text class="text small" x="774" y="660">truncation fails the batch.</text>
+  <text class="text gate" x="774" y="752">NO PAID INFERENCE</text>
+
+  <!-- Stage 4 -->
+  <rect class="panel" x="1095" y="180" width="300" height="600" rx="18"/>
+  <text class="text section" x="1119" y="214">STEP 4</text>
+  <text class="text stage-title" x="1119" y="246">Deterministic replay</text>
+  <rect class="card" x="1119" y="270" width="252" height="216" rx="12"/>
+  <text class="text node-title" x="1137" y="298">No model calls</text>
+  <text class="text body" x="1137" y="326">rebuild observations</text>
+  <text class="text body" x="1137" y="350">rebuild full prompts</text>
+  <text class="text body" x="1137" y="374">match receipts to trace</text>
+  <text class="text body" x="1137" y="398">check request settings</text>
+  <text class="text body" x="1137" y="422">re-execute actions</text>
+  <text class="text body" x="1137" y="446">regrade every submission</text>
+  <text class="text body" x="1137" y="470">reconcile token counts</text>
+  <rect class="card-amber" x="1119" y="502" width="252" height="96" rx="12"/>
+  <text class="text node-title" x="1137" y="530">Batch gate</text>
+  <text class="text body" x="1137" y="558">status complete and</text>
+  <text class="text body" x="1137" y="582">replay passes, or excluded</text>
+  <text class="text small" x="1119" y="640">Consistency check, not proof</text>
+  <text class="text small" x="1119" y="662">of when a run happened.</text>
+  <text class="text gate" x="1119" y="752">VERIFIED BATCHES ONLY</text>
+
+  <!-- Stage 5 -->
+  <rect class="panel" x="1440" y="180" width="300" height="600" rx="18"/>
+  <text class="text section" x="1464" y="214">STEP 5</text>
+  <text class="text stage-title" x="1464" y="246">Analysis &amp; release</text>
+  <rect class="card" x="1464" y="270" width="252" height="240" rx="12"/>
+  <text class="text node-title" x="1482" y="298">Instance is the unit</text>
+  <text class="text body" x="1482" y="326">answer accuracy</text>
+  <text class="text body" x="1482" y="350">vs uniform-guess chance</text>
+  <text class="text body" x="1482" y="374">paired effect, bootstrap</text>
+  <text class="text body" x="1482" y="398">over task instances</text>
+  <text class="text body" x="1482" y="422">delivery vs synthesis</text>
+  <text class="text body" x="1482" y="446">failure breakdown</text>
+  <text class="text body" x="1482" y="470">instance vs replicate</text>
+  <text class="text body" x="1482" y="494">variance split</text>
+  <rect class="card-blue" x="1464" y="526" width="252" height="96" rx="12"/>
+  <text class="text node-title" x="1482" y="554">Hugging Face</text>
+  <text class="text body" x="1482" y="582">portable export, replayed</text>
+  <text class="text body" x="1482" y="606">again after copying</text>
+  <text class="text small" x="1464" y="664">Messages and residents are</text>
+  <text class="text small" x="1464" y="686">not independent samples.</text>
+  <text class="text gate" x="1464" y="752">CIs ACROSS INSTANCES</text>
+
+  <!-- Arrows between stages -->
+  <path class="ink-line" d="M 362 480 L 401 480" marker-end="url(#arrow)"/>
+  <path class="ink-line" d="M 707 480 L 746 480" marker-end="url(#arrow)"/>
+  <path class="ink-line" d="M 1052 480 L 1091 480" marker-end="url(#arrow)"/>
+  <path class="ink-line" d="M 1397 480 L 1436 480" marker-end="url(#arrow)"/>
+
+  <text class="text small" x="60" y="822">One synthetic task family. Structured evidence transfer is easier than open negotiation. Persona steering is off in V1.</text>
+</svg>

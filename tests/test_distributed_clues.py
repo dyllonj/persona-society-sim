@@ -382,3 +382,50 @@ def test_new_variants_replay_deterministically(tmp_path, layout, disruption):
     assert turns == (9 if disruption == "none" else 7)
     with pytest.raises(ValueError):
         verify_episode(tmp_path / "e", seed=21, condition="communication", rounds=2)
+
+
+def test_visible_occupants_reports_room_and_requires_communication():
+    env = DistributedClues(13, layout="scattered", perception="room-occupants")
+    assert env.task_version.endswith("+scattered-start-v1+visible-occupants-v1")
+    agent = env.current_agent
+    observation = env.observe(agent)
+    assert observation["residents_here"] == []
+    from scripts.run_distributed_clues import policy_prompt
+    assert "residents_here lists the other residents" in policy_prompt(observation)
+    together = DistributedClues(13, perception="room-occupants")
+    first = together.current_agent
+    assert together.observe(first)["residents_here"] == sorted(set(together.agents) - {first})
+    assert "residents_here" not in DistributedClues(13).observe(first)
+    with pytest.raises(ValueError):
+        DistributedClues(13, "no_communication", perception="room-occupants")
+
+
+def test_visible_occupants_episode_replays(tmp_path):
+    from scripts.replay_distributed_clues import verify_episode
+
+    class Mover:
+        def generate(self, prompt, max_new_tokens, alphas, *, sampling_seed):
+            if '"phase":"deliberate"' in prompt:
+                action = {"action": "move", "params": {"destination": "town_square"}}
+            else:
+                action = {"action": "submit_report", "params": {"plan_id": "plan_1", "evidence_ids": []}}
+            return GenerationResult(text=json.dumps(action), tokens_in=10, tokens_out=5)
+
+    run_episode(tmp_path / "e", Mover(), seed=13, condition="communication", rounds=1, replicate=0,
+                prompt_version="phase-v2-intersection-final-v1", layout="scattered", perception="room-occupants")
+    assert verify_episode(tmp_path / "e", seed=13, condition="communication", rounds=1, layout="scattered",
+                          perception="room-occupants") == 6
+
+
+def test_share_first_prompt_changes_only_deliberation_instruction():
+    from scripts.run_distributed_clues import SHARE_FIRST, SHARE_FIRST_NORM
+
+    env = DistributedClues(14)
+    observation = env.observe(env.current_agent)
+    base = policy_prompt(observation, "phase-v2-intersection-final-v1")
+    norm = policy_prompt(observation, SHARE_FIRST)
+    assert norm == base.replace("{}}. ", "{}}. " + SHARE_FIRST_NORM, 1)
+    while not env.done and env.schedule[env.cursor][2] != "submit":
+        env.step(env.current_agent, {"action": "wait", "params": {}})
+    final = env.observe(env.current_agent)
+    assert policy_prompt(final, SHARE_FIRST) == policy_prompt(final, "phase-v2-intersection-final-v1")

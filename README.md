@@ -1,6 +1,49 @@
 # Persona Society Sim
 
-Social town simulator where 30–300 activation-steered LLM agents live, converse, collaborate, and produce emergent dynamics. Agents use persona steering vectors (Contrastive Activation Addition) instead of prompt-only roles, combining Smallville-inspired memory loops with lightweight world mechanics and measurement harnesses.
+Social town simulator where LLM agents live, converse, collaborate, and produce emergent dynamics, combining Smallville-inspired memory loops with lightweight world mechanics and measurement harnesses. The research sequence is collaboration first: V1 measures whether local agent teams collaborate effectively, V2 compares frontier models through APIs, and V3 studies personality through prompt personas, LoRA, and activation steering ([roadmap](docs/collaboration-roadmap.md)).
+
+## Current focus: swarm collaboration (V1)
+
+![Swarm collaboration evaluation pipeline](docs/assets/collaboration-evaluation-pipeline.svg)
+
+The [distributed-clue task](docs/distributed-clues-evaluation.md) splits three private constraints among residents of the original town. Agents have to pool evidence to identify the one meeting plan that satisfies every constraint. Paired conditions on the same task instance vary communication, start layout (`--layout scattered`), and dropout (`--disruption dropout`). Persona steering is off in V1. All runs use local 4-bit models on a 16 GB Apple M4, with no paid inference.
+
+### Results so far
+
+Across 30 fresh task instances (Qwen3-8B 4-bit, 2 inference replicates each, all replay-verified), communicating agents answered every instance correctly. Isolated agents with the same private clues answered 16% correctly. The paired difference is **+84 points (95% CI 74–94, resampling task instances)**, and communication won 29 of 30 instances, tying the other. A majority vote over the isolated agents' answers reached only 15%, so the gain comes from sharing information, not from aggregating guesses.
+
+![Sharing evidence lifts accuracy from 16% to 100%](docs/assets/fig-communication-effect.svg)
+
+Isolated agents never broke the rules: every answer satisfied every clue they held. They still scored below the 26% uniform-guess reference because they nearly always chose the first plan listed. This position bias is a measurable model behavior to control for in future task designs, especially when no-communication accuracy serves as a baseline.
+
+![Without the missing clues, agents take the first listed candidate 78% of the time](docs/assets/fig-partial-information-guesses.svg)
+
+Communication succeeds only when teammates already share a room. Each row below uses the same 15 task instances:
+
+![Agents pool evidence when together but never go looking for teammates](docs/assets/fig-coordination-conditions.svg)
+
+- **Separate rooms:** across 915 deliberation turns, Qwen3-8B never moved to find a teammate. More rounds did not change that, and neither did showing agents their room was empty. Accuracy fell to the no-communication level. Qwen2.5-7B behaved the same way. The failure is in planning, not perception.
+- **Dropout:** silencing one teammate after round 0 cut accuracy to 82%. A clue survived only when its holder had shared before leaving. First speakers almost always open with a question and never shared before dropping (0/8).
+- **Share-first norm:** adding "Share your own evidence before asking others for theirs" made dropout *worse* (53%). Agents began describing evidence in text without attaching the evidence records.
+- **Second model:** Qwen2.5-7B wraps its answer in code fences only when it holds every clue. Under strict scoring, communication therefore looks harmful (−9 points), although on content it helps (+24). Format compliance and task success must be reported separately.
+- **Sizing:** 91% of baseline variance is between task instances. A ±5-point estimate needs about 200 instances, not more replicates.
+
+- **Results:** [docs/local-v1-results.md](docs/local-v1-results.md). Completed batches, confidence intervals across task instances, failure breakdowns, and limitations.
+- **Traces:** [dyllonj/persona-society-swarm-local](https://huggingface.co/datasets/dyllonj/persona-society-swarm-local). Every prompt, raw completion, action, and inference receipt from replay-verified batches.
+
+```sh
+MAX_MODEL_LEN=1536 GPU_MEMORY_UTILIZATION=0.50 bash scripts/serve_local_8b.sh   # terminal 1
+python scripts/run_distributed_clues.py --output artifacts/my-batch --seeds 300 301 302 \
+  --replicates 2 --prompt-version phase-v2-intersection-final-v1 [--layout scattered] [--disruption dropout]
+python scripts/replay_distributed_clues.py artifacts/my-batch      # deterministic regrade, no model calls
+python scripts/analyze_distributed_clues.py artifacts/my-batch     # instance-clustered CIs, failure types
+```
+
+Setup is in [docs/howto-local-collaboration.md](docs/howto-local-collaboration.md). One synthetic task family on local models does not establish general collaboration ability or frontier-model performance.
+
+## Persona steering track (V3)
+
+The steering pipeline below predates the collaboration-first plan. Rebuild the CAA vectors before making personality-specific claims: the current extraction template omits answer-option text and does not counterbalance answer labels ([known gaps](docs/explanation-known-gaps.md)).
 
 ![Persona steering evaluation pipeline](docs/assets/persona-steering-evaluation-pipeline.svg)
 
@@ -178,9 +221,9 @@ persona-society-sim/
 
 ## Research questions & evaluation hooks
 - **RQ1 — Personality controllability**: log persona adherence metrics (self-report probes, behavioral probes) and compare CAA vs prompt-only loops.
-- **RQ2 — Social structure/outcomes**: compute homophily, polarization, productivity metrics at regular ticks.
+- **RQ2 — Social structure/outcomes**: compute homophily and productivity metrics at regular ticks. No opinion-polarization metric exists yet; the former `polarization_modularity` column was satisfaction variance and is now `satisfaction_variance`.
 - **RQ3 — Method validity**: capability probes to ensure CAA preserves base performance vs prompt steering, plus safety governor logs for alpha backoff events.
-- **RQ4 — Macro dynamics**: seed opinion topics and measure homophily/polarization trajectories across populations 30/100/300.
+- **RQ4 — Macro dynamics**: seed opinion topics and measure homophily/polarization trajectories across populations 30/100/300 (planned; requires a real opinion-polarization metric).
 
 For detailed evaluation protocols, see `docs/eval.md`.
 ### Experiment environments

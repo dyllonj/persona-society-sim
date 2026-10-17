@@ -106,3 +106,23 @@ def test_guess_diagnostics_reports_candidate_position_and_chance(tmp_path):
     assert result["consistent_with_held_clues"] == 0.5
     assert result["candidate_position_counts"] == {0: 1}
     assert result["uniform_guess_expected_accuracy"] == pytest.approx((1 / 4 + 1 / 2) / 2)
+
+
+def test_format_diagnostic_separates_content_from_format(tmp_path):
+    from scripts.analyze_distributed_clues import format_diagnostic
+
+    episode = tmp_path / "batch" / "seed-1-rep-0-all_clues_single"
+    episode.mkdir(parents=True)
+    (episode / "summary.json").write_text(json.dumps({"condition": "all_clues_single"}))
+    (episode / "evaluator-only.json").write_text(json.dumps({"answer": "plan_3"}))
+    fenced = '```json\n{"action": "submit_report", "params": {"plan_id": "plan_3", "evidence_ids": ["e1"]}}\n```'
+    rows = [
+        {"phase": "submit", "result": {"valid": False}, "raw_completion": fenced, "known_before": ["e1"]},
+        {"phase": "submit", "result": {"valid": False}, "raw_completion": fenced.replace("plan_3", "plan_4"), "known_before": ["e1"]},
+        {"phase": "submit", "result": {"valid": False}, "raw_completion": fenced, "known_before": []},
+        {"phase": "submit", "result": {"valid": False}, "raw_completion": "no json", "known_before": []},
+        {"phase": "submit", "result": {"valid": True}, "raw_completion": "{}", "known_before": []},
+    ]
+    (episode / "trace.jsonl").write_text("".join(json.dumps(r) + "\n" for r in rows))
+    assert format_diagnostic([tmp_path / "batch"]) == {"all_clues_single": {
+        "cites_unheld_evidence": 1, "content_correct": 1, "content_wrong": 1, "no_recoverable_json": 1}}

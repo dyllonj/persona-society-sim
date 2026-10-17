@@ -19,9 +19,9 @@ def require(condition, message):
         raise ValueError(message)
 
 
-def verify_episode(path, *, seed, condition, rounds, layout="together", disruption="none"):
+def verify_episode(path, *, seed, condition, rounds, layout="together", disruption="none", perception="none"):
     from scripts.run_distributed_clues import policy_prompt
-    env = DistributedClues(seed, condition, rounds, layout=layout, disruption=disruption)
+    env = DistributedClues(seed, condition, rounds, layout=layout, disruption=disruption, perception=perception)
     require(json.loads((path / "evaluator-only.json").read_text()) == env.audit(), "Evaluator state mismatch")
     summary = json.loads((path / "summary.json").read_text())
     rows = [json.loads(line) for line in (path / "trace.jsonl").read_text().splitlines()]
@@ -133,7 +133,8 @@ def verify_batch(path):
                 episode = path / f"seed-{seed}-rep-{replicate}-{condition}"
                 count += verify_episode(episode, seed=seed, condition=condition, rounds=config["rounds"],
                                         layout=config.get("layout", "together"),
-                                        disruption=config.get("disruption", "none"))
+                                        disruption=config.get("disruption", "none"),
+                                        perception=config.get("perception", "none"))
                 rows.append(json.loads((episode / "summary.json").read_text()))
                 require(rows[-1]["prompt_version"] == manifest["prompt_version"], "Episode prompt version mismatch")
                 for line in (episode / "trace.jsonl").read_text().splitlines():

@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="484" viewBox="0 0 900 484" role="img" aria-labelledby="title desc">
+<title id="title">Sharing evidence lifts accuracy from 16% to 100%</title>
+<desc id="desc">Strip plot over 30 task instances. Mean answer accuracy: isolated agents 16%, majority vote 15%, communicating agents 100%. Uniform-guess reference 26%.</desc>
+<style>
+  .bg { fill: #fffff8; }
+  .t { font-family: "ET Book", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif; fill: #111; }
+  .title { font-size: 21px; }
+  .sub { font-size: 14px; fill: #666; }
+  .label { font-size: 15px; }
+  .value { font-size: 14px; fill: #111; paint-order: stroke; stroke: #fffff8; stroke-width: 5px; stroke-linejoin: round; }
+  .note { font-size: 13px; fill: #666; }
+  .tick { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 11px; fill: #777; }
+  .axis { stroke: #bbb; stroke-width: 1; }
+  .ref { stroke: #999; stroke-width: 1; stroke-dasharray: 4 4; }
+  .dot { fill: #666; fill-opacity: 0.55; }
+  .dot-hi { fill: #c0392b; fill-opacity: 0.6; }
+  .mean { stroke: #111; stroke-width: 2.5; }
+  .mean-hi { stroke: #c0392b; stroke-width: 2.5; }
+  .ci { stroke: #111; stroke-width: 1.2; }
+  .bar { fill: #7a7a7a; }
+  .bar-hi { fill: #c0392b; }
+  @media (prefers-color-scheme: dark) {
+    .bg { fill: #151515; }
+    .t, .value { fill: #ddd; }
+    .value { stroke: #151515; }
+    .sub, .note { fill: #999; }
+    .tick { fill: #888; }
+    .axis { stroke: #555; }
+    .ref { stroke: #777; }
+    .dot { fill: #999; }
+    .dot-hi { fill: #fc8d62; }
+    .mean, .ci { stroke: #ddd; }
+    .mean-hi { stroke: #fc8d62; }
+    .bar { fill: #888; }
+    .bar-hi { fill: #fc8d62; }
+  }
+</style>
+<rect class="bg" width="900" height="484"/>
+<text class="t title" x="24" y="38">Sharing evidence lifts accuracy from 16% to 100%</text>
+<text class="t sub" x="24" y="62">30 fresh task instances, Qwen3-8B 4-bit, 3 residents each; dot = one instance, bar = mean, line = 95% CI</text>
+<text class="t label" x="234" y="147.0" text-anchor="end">Isolated agents</text>
+<line class="ci" x1="286.1" x2="404.1" y1="142.0" y2="142.0"/>
+<circle class="dot" cx="250.0" cy="142.0" r="7.2"/>
+<text class="tick" x="250.0" y="166.0" text-anchor="middle">×21</text>
+<circle class="dot" cx="348.5" cy="142.0" r="4.6"/>
+<text class="tick" x="348.5" y="166.0" text-anchor="middle">×2</text>
+<circle class="dot" cx="446.5" cy="142.0" r="4.6"/>
+<text class="tick" x="446.5" y="166.0" text-anchor="middle">×2</text>
+<circle class="dot" cx="545.0" cy="142.0" r="4.2"/>
+<circle class="dot" cx="643.5" cy="142.0" r="4.6"/>
+<text class="tick" x="643.5" y="166.0" text-anchor="middle">×2</text>
+<circle class="dot" cx="741.5" cy="142.0" r="4.2"/>
+<circle class="dot" cx="840.0" cy="142.0" r="4.2"/>
+<line class="mean" x1="341.8" x2="341.8" y1="128.0" y2="156.0"/>
+<text class="t value" x="351.8" y="124.0" text-anchor="start">16% (CI 6%–26%)</text>
+<text class="t label" x="234" y="239.0" text-anchor="end">Majority vote of isolated agents</text>
+<line class="ci" x1="269.7" x2="417.2" y1="234.0" y2="234.0"/>
+<circle class="dot" cx="250.0" cy="234.0" r="7.2"/>
+<text class="tick" x="250.0" y="258.0" text-anchor="middle">×25</text>
+<circle class="dot" cx="545.0" cy="234.0" r="4.2"/>
+<circle class="dot" cx="840.0" cy="234.0" r="5.2"/>
+<text class="tick" x="840.0" y="258.0" text-anchor="middle">×4</text>
+<line class="mean" x1="338.5" x2="338.5" y1="220.0" y2="248.0"/>
+<text class="t value" x="348.5" y="216.0" text-anchor="start">15% (CI 3%–28%)</text>
+<text class="t label" x="234" y="331.0" text-anchor="end">Agents who can share evidence</text>
+<line class="ci" x1="840.0" x2="840.0" y1="326.0" y2="326.0"/>
+<circle class="dot-hi" cx="840.0" cy="326.0" r="7.2"/>
+<text class="tick" x="840.0" y="350.0" text-anchor="middle">×30</text>
+<line class="mean-hi" x1="840.0" x2="840.0" y1="312.0" y2="340.0"/>
+<text class="t value" x="830.0" y="308.0" text-anchor="end">100%</text>
+<line class="ref" x1="403.8" x2="403.8" y1="96.0" y2="372.0"/>
+<text class="t note" x="409.8" y="370.0">uniform guess 26%</text>
+<line class="axis" x1="250.0" x2="840.0" y1="380.0" y2="380.0"/>
+<text class="tick" x="250.0" y="398.0" text-anchor="middle">0%</text>
+<text class="tick" x="397.5" y="398.0" text-anchor="middle">25%</text>
+<text class="tick" x="545.0" y="398.0" text-anchor="middle">50%</text>
+<text class="tick" x="692.5" y="398.0" text-anchor="middle">75%</text>
+<text class="tick" x="840.0" y="398.0" text-anchor="middle">100%</text>
+<text class="tick" x="545.0" y="416.0" text-anchor="middle">answer accuracy per task instance</text>
+<text class="t note" x="24" y="446.0">Isolated agents fall below the uniform-guess reference because they choose early-listed candidates (next figure).</text>
+<text class="t note" x="24" y="464.0">Voting cannot recover information nobody holds. Circle area grows with the number of tied instances.</text>
+</svg>
