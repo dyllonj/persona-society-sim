@@ -12,6 +12,7 @@ from collections import defaultdict
 import json
 from pathlib import Path
 import random
+import re
 import statistics
 
 BOOTSTRAP_DRAWS = 10_000
@@ -115,6 +116,35 @@ def guess_diagnostics(paths):
             "consistent_with_held_clues": consistent / total,
             "candidate_position_counts": dict(sorted(positions.items())),
             "uniform_guess_expected_accuracy": statistics.fmean(chance)}
+
+
+def format_diagnostic(paths):
+    """Post-hoc only: rejected final answers whose JSON is wrapped in extra text.
+
+    Official scores treat these as invalid (strict parsing is part of the
+    protocol). This counts, per condition, how many rejected final turns contain
+    one JSON object naming the correct plan with evidence the resident held, so
+    format compliance and content can be reported separately.
+    """
+    counts = defaultdict(lambda: defaultdict(int))
+    for path in paths:
+        for episode in sorted(path.glob("seed-*")):
+            condition = json.loads((episode / "summary.json").read_text())["condition"]
+            answer = json.loads((episode / "evaluator-only.json").read_text())["answer"]
+            for line in (episode / "trace.jsonl").read_text().splitlines():
+                row = json.loads(line)
+                if row["phase"] != "submit" or row["result"]["valid"]:
+                    continue
+                match = re.search(r"\{.*\}", row["raw_completion"], re.S)
+                try:
+                    action = json.loads(match.group(0))
+                    params = action["params"]
+                    held = set(params["evidence_ids"]) <= set(row["known_before"])
+                    key = ("content_correct" if params["plan_id"] == answer else "content_wrong") if held else "cites_unheld_evidence"
+                except (AttributeError, ValueError, KeyError, TypeError):
+                    key = "no_recoverable_json"
+                counts[condition][key] += 1
+    return {condition: dict(sorted(v.items())) for condition, v in sorted(counts.items())} or None
 
 
 def episode_accuracy(row):
@@ -222,7 +252,8 @@ def main():
     rows, identity = load_batches(args.batches)
     result = {"batches": [p.name for p in args.batches], "task_version": identity[0],
               "prompt_version": identity[1], "model_revision": identity[2], **summarize(rows),
-              "partial_information_guessing": guess_diagnostics(args.batches)}
+              "partial_information_guessing": guess_diagnostics(args.batches),
+              "rejected_final_answer_content": format_diagnostic(args.batches)}
     text = json.dumps(result, indent=2)
     if args.output:
         args.output.write_text(text + "\n")
