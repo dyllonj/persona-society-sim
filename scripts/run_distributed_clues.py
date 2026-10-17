@@ -20,7 +20,11 @@ from env.distributed_clues import CONDITIONS, DISRUPTIONS, LAYOUTS, PERCEPTIONS,
 from evaluation.personality import strict_json
 
 PROMPT_VERSION = "phase-specific-v2"
-PROMPT_VERSIONS = (PROMPT_VERSION, "phase-v2-intersection-final-v1")
+SHARE_FIRST = "phase-v2-intersection-final-share-first-v1"
+PROMPT_VERSIONS = (PROMPT_VERSION, "phase-v2-intersection-final-v1", SHARE_FIRST)
+# SHARE_FIRST adds one deliberation norm to the intersection-final prompt; it is a
+# protocol intervention on the question-first opener, not a hint about the answer.
+SHARE_FIRST_NORM = "Share your own evidence before asking others for theirs. "
 # Served model name and immutable checkpoint revision for each local model.
 MODEL_PROFILES = {
     "qwen3-8b": ("local-qwen3-8b", "545dc4251c05440727734bcd94334791f6ab0192"),
@@ -30,7 +34,7 @@ MODEL_PROFILES = {
 def policy_prompt(observation, prompt_version=PROMPT_VERSION):
     if prompt_version not in PROMPT_VERSIONS:
         raise ValueError("Unsupported policy prompt version")
-    if prompt_version == "phase-v2-intersection-final-v1" and observation["phase"] == "submit":
+    if prompt_version in ("phase-v2-intersection-final-v1", SHARE_FIRST) and observation["phase"] == "submit":
         from evaluation.meeting_prompts import final_decision_prompt
         return final_decision_prompt(observation)
     if observation["phase"] == "submit":
@@ -47,6 +51,8 @@ def policy_prompt(observation, prompt_version=PROMPT_VERSION):
             '{"action":"move","params":{"destination":"adjacent location"}}, '
             '{"action":"wait","params":{}}. '
         )
+        if prompt_version == SHARE_FIRST:
+            instruction += SHARE_FIRST_NORM
     return (
         instruction
         + "You control one resident in a town meeting task. "

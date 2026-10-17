@@ -415,3 +415,17 @@ def test_visible_occupants_episode_replays(tmp_path):
                 prompt_version="phase-v2-intersection-final-v1", layout="scattered", perception="room-occupants")
     assert verify_episode(tmp_path / "e", seed=13, condition="communication", rounds=1, layout="scattered",
                           perception="room-occupants") == 6
+
+
+def test_share_first_prompt_changes_only_deliberation_instruction():
+    from scripts.run_distributed_clues import SHARE_FIRST, SHARE_FIRST_NORM
+
+    env = DistributedClues(14)
+    observation = env.observe(env.current_agent)
+    base = policy_prompt(observation, "phase-v2-intersection-final-v1")
+    norm = policy_prompt(observation, SHARE_FIRST)
+    assert norm == base.replace("{}}. ", "{}}. " + SHARE_FIRST_NORM, 1)
+    while not env.done and env.schedule[env.cursor][2] != "submit":
+        env.step(env.current_agent, {"action": "wait", "params": {}})
+    final = env.observe(env.current_agent)
+    assert policy_prompt(final, SHARE_FIRST) == policy_prompt(final, "phase-v2-intersection-final-v1")
