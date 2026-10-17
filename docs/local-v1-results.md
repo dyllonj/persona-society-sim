@@ -131,6 +131,6 @@ Communication won all 10 instances, with a mean effect of +64 points (CI 43–85
 | 100 | ±7 | ±7 | ±7 |
 | 200 | ±5 | ±5 | ±5 |
 
-Extra replicates barely help. Use one or two replicates per instance and about 200 instances for a ±5-point baseline. At the measured local rate of roughly 30 s per three-resident episode, 200 instances × 2 conditions × 1 replicate takes about 3.5 hours.
+Extra replicates barely help. Use one or two replicates per instance and about 200 instances for a ±5-point baseline. At the measured local rates (about 45 s per communication episode and 30 s per no-communication episode), 200 instances × 2 conditions × 1 replicate takes about 4 hours.
 
 This is a single-facet decomposition for one model and one task family. It is not a G-study of model ranking, and it does not establish validity. Communication sits at ceiling and has no variance to decompose.
